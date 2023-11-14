@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "rowifi",
+    "rowifi_database"
+]
+resolver = "2"

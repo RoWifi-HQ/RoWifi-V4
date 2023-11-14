@@ -1,0 +1,9 @@
+[package]
+name = "rowifi"
+version = "4.0.0"
+edition = "2021"
+
+[dependencies]
+rowifi_database = { path = "../rowifi_database" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
