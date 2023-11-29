@@ -5,9 +5,7 @@ use rowifi_database::Database;
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     tracing_subscriber::fmt::init();
 
-    let connection_string = std::env::var("DATABASE_CONN").expect("expected a database connection string.");
-
-    let database = Database::new(&connection_string).await;
+    let database = Database::new().await;
 
     Ok(())
 }
