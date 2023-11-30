@@ -959,6 +959,7 @@ name = "rowifi"
 version = "4.0.0"
 dependencies = [
  "rowifi_database",
+ "rowifi_models",
  "tokio",
  "tracing-subscriber",
 ]
@@ -971,6 +972,10 @@ dependencies = [
  "aws-sdk-dynamodb",
  "tracing",
 ]
+
+[[package]]
+name = "rowifi_models"
+version = "0.1.0"
 
 [[package]]
 name = "rustc-demangle"

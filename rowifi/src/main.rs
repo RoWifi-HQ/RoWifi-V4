@@ -1,5 +1,5 @@
-use std::error::Error;
 use rowifi_database::Database;
+use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
