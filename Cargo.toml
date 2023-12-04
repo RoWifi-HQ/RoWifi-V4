@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "rowifi",
-    "rowifi_database", 
+    "rowifi", "rowifi_cache",
+    "rowifi_database", "rowifi_framework", 
     "rowifi_models"
 ]
 resolver = "2"
