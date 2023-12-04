@@ -2,7 +2,8 @@ use std::{
     error::Error as StdError,
     fmt::{Display, Formatter},
 };
-use aws_sdk_dynamodb::Error as DynamoError;
+use deadpool_postgres::PoolError;
+use tokio_postgres::Error as PostgresError;
 
 #[derive(Debug)]
 pub struct DatabaseError {
@@ -12,7 +13,8 @@ pub struct DatabaseError {
 
 #[derive(Debug)]
 pub enum ErrorKind {
-    Dynamo,
+    Pool,
+    Postgres,
 }
 
 impl DatabaseError {
@@ -29,11 +31,20 @@ impl DatabaseError {
     }
 }
 
-impl From<DynamoError> for DatabaseError {
-    fn from(value: DynamoError) -> Self {
+impl From<PoolError> for DatabaseError {
+    fn from(value: PoolError) -> Self {
         DatabaseError {
             source: Some(Box::new(value)),
-            kind: ErrorKind::Dynamo,
+            kind: ErrorKind::Pool,
+        }
+    }
+}
+
+impl From<PostgresError> for DatabaseError {
+    fn from(value: PostgresError) -> Self {
+        DatabaseError {
+            source: Some(Box::new(value)),
+            kind: ErrorKind::Postgres,
         }
     }
 }
@@ -41,7 +52,8 @@ impl From<DynamoError> for DatabaseError {
 impl Display for DatabaseError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.kind {
-            ErrorKind::Dynamo => write!(f, "dynamo error - {:?}", self.source),
+            ErrorKind::Postgres => write!(f, "postgres error - {:?}", self.source),
+            ErrorKind::Pool => write!(f, "pool error - {:?}", self.source),
         }
     }
 }
