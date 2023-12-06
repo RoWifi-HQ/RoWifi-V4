@@ -4,7 +4,16 @@ version = "4.0.0"
 edition = "2021"
 
 [dependencies]
+deadpool-redis = { version = "0.13" }
+redis = { version = "0.23", default-features = false, features = ["aio", "tokio-comp", "connection-manager"] }
+rowifi_cache = { path = "../rowifi_cache" }
 rowifi_database = { path = "../rowifi_database" }
+rowifi_framework = { path = "../rowifi_framework" }
 rowifi_models = { path = "../rowifi_models" }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tokio-stream = { version = "0.1" }
+tower = { version = "0.4", default-features = false }
+tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+twilight-gateway = { branch = "main", git = "https://github.com/twilight-rs/twilight", default-features = false, features= ["zlib-stock", "rustls-webpki-roots"] }
+twilight-http = { branch = "main", git = "https://github.com/twilight-rs/twilight", default-features = false, features = ["rustls-webpki-roots"] }

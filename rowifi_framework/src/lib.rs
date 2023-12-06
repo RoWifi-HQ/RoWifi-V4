@@ -1,4 +1,4 @@
-mod context;
+pub mod context;
 
 use rowifi_models::discord::application::command::CommandOption;
 
