@@ -1028,9 +1028,11 @@ dependencies = [
 name = "rowifi_framework"
 version = "4.0.0"
 dependencies = [
+ "futures-util",
  "rowifi_cache",
  "rowifi_database",
  "rowifi_models",
+ "tower",
  "twilight-http",
 ]
 

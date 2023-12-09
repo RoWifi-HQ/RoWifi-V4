@@ -7,7 +7,7 @@ use rowifi_models::discord::gateway::{
 };
 use tokio::task::JoinError;
 use tower::Service;
-use std::{error::Error, sync::Arc, time::Duration, future::{Ready, ready}, task::Poll};
+use std::{error::Error, sync::Arc, time::Duration, future::{Ready, ready}, task::{Poll, Context}};
 use twilight_gateway::{Config as GatewayConfig, Intents, stream::ShardEventStream, Event};
 use twilight_http::Client as TwilightClient;
 use deadpool_redis::{Pool as RedisPool, Manager as RedisManager, Runtime};
@@ -36,6 +36,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let database = Arc::new(Database::new(&connection_string).await);
     let twilight_http = Arc::new(TwilightClient::new(bot_token.clone()));
     let bot_context = BotContext::new(twilight_http, database, cache);
+    let framework = Framework::new(bot_context.clone());
+    let mut rowifi = RoWifi { bot: bot_context, framework };
 
     let activity = MinimalActivity {
         kind: ActivityType::Playing,
@@ -63,6 +65,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     )
     .collect::<Vec<_>>();
 
+
     let mut stream = ShardEventStream::new(shards.iter_mut());
     loop {
         let (shard, event) = match stream.next().await {
@@ -78,6 +81,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             },
             None => break
         };
+        if let Err(err) = rowifi.bot.cache.update(&event).await {
+            tracing::error!(err = ?err, "cache error: ");
+        }
+        let _ = rowifi.call((shard.id().number(), event)).await;
     }
 
     Ok(())
@@ -93,7 +100,7 @@ impl Service<(u64, Event)> for RoWifi {
     type Error = JoinError;
     type Future = Ready<Result<Self::Response, Self::Error>>;
 
-    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(&mut self, _: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         Poll::Ready(Ok(()))
     }
 
