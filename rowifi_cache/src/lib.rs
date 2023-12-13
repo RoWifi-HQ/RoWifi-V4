@@ -5,8 +5,8 @@ pub mod error;
 
 use deadpool_redis::{redis::AsyncCommands, Connection, Pool as RedisPool, PoolError};
 use rowifi_models::{
-    discord::cache::{CachedGuild, CachedMember},
-    id::{GuildId, UserId},
+    discord::{cache::{CachedGuild, CachedMember}, guild::Member},
+    id::{GuildId, UserId, RoleId},
 };
 use std::sync::Arc;
 
@@ -57,5 +57,28 @@ impl Cache {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn cache_member(
+        &self,
+        guild_id: GuildId,
+        member: &Member,
+    ) -> Result<CachedMember, CacheError> {
+        let cached = CachedMember {
+            id: UserId(member.user.id),
+            roles: member.roles.iter().map(|r| RoleId(*r)).collect(),
+            nickname: member.nick.clone(),
+            username: member.user.name.clone(),
+            discriminator: member.user.discriminator,
+        };
+
+        let mut conn = self.get().await?;
+        conn.set(
+            CachedMember::key(guild_id, cached.id),
+            rmp_serde::to_vec(&cached)?,
+        )
+        .await?;
+
+        Ok(cached)
     }
 }

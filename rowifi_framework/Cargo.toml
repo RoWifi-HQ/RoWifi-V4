@@ -10,5 +10,7 @@ futures-util = { version = "0.3" }
 rowifi_cache = { path = "../rowifi_cache" }
 rowifi_database = { path = "../rowifi_database" }
 rowifi_models = { path = "../rowifi_models" }
+time = { version = "0.3", default-features = false, features = ["std"] }
 tower = { version = "0.4", default-features = false }
 twilight-http = { branch = "main", git = "https://github.com/twilight-rs/twilight", default-features = false, features = ["rustls-webpki-roots"] }
+twilight-util = { branch = "main", git = "https://github.com/twilight-rs/twilight", default-features = false, features = ["builder"] }

@@ -3,6 +3,7 @@ pub mod command;
 pub mod context;
 pub mod error;
 mod handler;
+pub mod prelude;
 
 use futures_util::{
     future::{ready, Either, Ready},
@@ -15,7 +16,7 @@ use rowifi_models::{
         },
         gateway::event::Event,
     },
-    id::{ChannelId, GuildId},
+    id::{ChannelId, GuildId, UserId},
 };
 use std::{
     collections::HashMap,
@@ -50,6 +51,10 @@ impl Framework {
             bot,
             commands: HashMap::new()
         }
+    }
+
+    pub fn add_command(&mut self, command: Command) {
+        self.commands.insert(command.name().to_string(), command);
     }
 }
 
@@ -91,7 +96,7 @@ impl Service<&Event> for Framework {
                             .map(|c| c.id)
                             .map(ChannelId)
                             .unwrap(),
-                        member,
+                        author_id: UserId(member.user.map(|u| u.id).unwrap()),
                         interaction_id: interaction.id,
                         interaction_token: interaction.token.clone(),
                         resolved: interaction_data.resolved.clone().unwrap(),

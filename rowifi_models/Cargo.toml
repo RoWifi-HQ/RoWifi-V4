@@ -6,5 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bytes = { version = "1.5" }
+tokio-postgres = { version = "0.7" }
 twilight-model = { branch = "main", git = "https://github.com/twilight-rs/twilight" }
 serde = { version = "1.0" }

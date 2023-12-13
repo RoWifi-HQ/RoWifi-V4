@@ -1032,15 +1032,19 @@ dependencies = [
  "rowifi_cache",
  "rowifi_database",
  "rowifi_models",
+ "time",
  "tower",
  "twilight-http",
+ "twilight-util",
 ]
 
 [[package]]
 name = "rowifi_models"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "serde",
+ "tokio-postgres",
  "twilight-model",
 ]
 
@@ -1616,6 +1620,15 @@ dependencies = [
  "serde-value",
  "serde_repr",
  "time",
+]
+
+[[package]]
+name = "twilight-util"
+version = "0.15.4"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#ad7260461a7e532fcc522f823931d05143eb3029"
+dependencies = [
+ "twilight-model",
+ "twilight-validate",
 ]
 
 [[package]]

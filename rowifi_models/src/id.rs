@@ -1,5 +1,10 @@
+use bytes::BytesMut;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::{
+    error::Error as StdError,
+    fmt::{Display, Formatter, Result as FmtResult},
+};
+use tokio_postgres::types::{to_sql_checked, IsNull, ToSql, Type, FromSql};
 use twilight_model::id::{
     marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
     Id,
@@ -86,5 +91,113 @@ impl Display for RoleId {
 impl Display for ChannelId {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         Display::fmt(&self.0, f)
+    }
+}
+
+impl ToSql for GuildId {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        i64::to_sql(&(self.get() as i64), ty, out)
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+impl ToSql for UserId {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        i64::to_sql(&(self.get() as i64), ty, out)
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+impl ToSql for RoleId {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        i64::to_sql(&(self.get() as i64), ty, out)
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+impl ToSql for ChannelId {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        i64::to_sql(&(self.get() as i64), ty, out)
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+impl<'a> FromSql<'a> for GuildId {
+    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
+        let id = i64::from_sql(ty, raw)?;
+        Ok(Self::new(id as u64))
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as FromSql>::accepts(ty)
+    }
+}
+
+impl<'a> FromSql<'a> for UserId {
+    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
+        let id = i64::from_sql(ty, raw)?;
+        Ok(Self::new(id as u64))
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as FromSql>::accepts(ty)
+    }
+}
+
+impl<'a> FromSql<'a> for RoleId {
+    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
+        let id = i64::from_sql(ty, raw)?;
+        Ok(Self::new(id as u64))
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as FromSql>::accepts(ty)
+    }
+}
+
+impl<'a> FromSql<'a> for ChannelId {
+    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
+        let id = i64::from_sql(ty, raw)?;
+        Ok(Self::new(id as u64))
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as FromSql>::accepts(ty)
     }
 }

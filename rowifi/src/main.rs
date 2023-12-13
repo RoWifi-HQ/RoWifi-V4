@@ -1,3 +1,5 @@
+mod commands;
+
 use rowifi_cache::Cache;
 use rowifi_database::Database;
 use rowifi_framework::{context::BotContext, Framework};

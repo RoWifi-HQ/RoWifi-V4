@@ -1,4 +1,5 @@
 use rowifi_models::discord::application::interaction::application_command::CommandDataOption;
+use std::{error::Error as StdError, fmt::{Display, Formatter, Result as FmtResult}};
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -30,3 +31,13 @@ impl<T: Arguments> Arguments for Option<T> {
         Ok(T::from_interaction(options).ok())
     }
 }
+
+impl Display for ArgumentError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            ArgumentError::BadArgument => write!(f, "argument error")
+        }
+    }
+}
+
+impl StdError for ArgumentError {}

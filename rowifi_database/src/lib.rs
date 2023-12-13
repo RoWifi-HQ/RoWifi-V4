@@ -4,6 +4,7 @@ use tokio_postgres::types::ToSql;
 use tokio_postgres::{Config as TokioPostgresConfig, NoTls, Row};
 
 pub use crate::error::DatabaseError;
+pub use tokio_postgres as postgres;
 
 mod error;
 
@@ -60,7 +61,7 @@ impl Database {
     }
 
     /// Get an item from a query. Returns [None] if the item does not exist.
-    pub async fn get_opt<T>(
+    pub async fn query_opt<T>(
         &self,
         statement: &str,
         params: &[&(dyn ToSql + Sync)],
@@ -76,5 +77,17 @@ impl Database {
             Some(r) => Ok(Some(T::try_from(r)?)),
             None => Ok(None),
         }
+    }
+
+    /// Execute the given query. Returns the number of rows modified.
+    pub async fn execute(
+        &self,
+        statement: &str,
+        params: &[&(dyn ToSql + Sync)],
+    ) -> Result<u64, DatabaseError> {
+        let conn = self.get().await?;
+        let statement = conn.prepare_cached(statement).await?;
+        let row = conn.execute(&statement, params).await?;
+        Ok(row)
     }
 }
