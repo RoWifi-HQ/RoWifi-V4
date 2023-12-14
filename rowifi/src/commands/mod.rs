@@ -2,7 +2,7 @@ use std::{fmt::{Display, Formatter, Result as FmtResult}, error::Error as StdErr
 use rowifi_framework::error::{FrameworkError, ErrorKind};
 use rowifi_models::discord::channel::message::Embed;
 
-mod user;
+pub mod user;
 
 #[derive(Debug)]
 pub struct CommandError {
@@ -19,7 +19,6 @@ pub enum CommandErrorResponse {
 #[derive(Debug)]
 pub enum CommandErrorType {
     UserNotFound = 1000,
-    NoServerOwner = 2000,
 }
 
 impl Display for CommandError {

@@ -20,14 +20,14 @@ pub struct CommandNodeBuilder {
 }
 
 impl CommandBuilder {
-    pub fn group() -> CommandGroupBuilder {
+    pub fn group(self) -> CommandGroupBuilder {
         CommandGroupBuilder {
             name: "".into(),
             subcommands: HashMap::new(),
         }
     }
 
-    pub fn node() -> CommandNodeBuilder {
+    pub fn node(self) -> CommandNodeBuilder {
         CommandNodeBuilder { name: "".into() }
     }
 }

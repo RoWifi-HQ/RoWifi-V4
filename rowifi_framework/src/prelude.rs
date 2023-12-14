@@ -1,4 +1,4 @@
-pub use crate::context::CommandContext;
+pub use crate::context::{CommandContext, DeferredResponse};
 pub use crate::error::FrameworkError;
 
 pub use time::OffsetDateTime;

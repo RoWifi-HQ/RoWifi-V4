@@ -1,28 +1,45 @@
 mod commands;
 
+use commands::user::user_config;
+use deadpool_redis::{Manager as RedisManager, Pool as RedisPool, Runtime};
 use rowifi_cache::Cache;
 use rowifi_database::Database;
 use rowifi_framework::{context::BotContext, Framework};
-use rowifi_models::discord::gateway::{
-    payload::outgoing::update_presence::UpdatePresencePayload,
-    presence::{ActivityType, MinimalActivity, Status},
+use rowifi_models::discord::{
+    gateway::{
+        payload::outgoing::update_presence::UpdatePresencePayload,
+        presence::{ActivityType, MinimalActivity, Status},
+    },
+    id::{marker::ApplicationMarker, Id},
+};
+use std::{
+    error::Error,
+    future::{ready, Ready},
+    sync::Arc,
+    task::{Context, Poll},
+    time::Duration,
 };
 use tokio::task::JoinError;
-use tower::Service;
-use std::{error::Error, sync::Arc, time::Duration, future::{Ready, ready}, task::{Poll, Context}};
-use twilight_gateway::{Config as GatewayConfig, Intents, stream::ShardEventStream, Event};
-use twilight_http::Client as TwilightClient;
-use deadpool_redis::{Pool as RedisPool, Manager as RedisManager, Runtime};
 use tokio_stream::StreamExt;
+use tower::Service;
+use twilight_gateway::{stream::ShardEventStream, Config as GatewayConfig, Event, Intents};
+use twilight_http::Client as TwilightClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     tracing_subscriber::fmt::init();
 
+    let application_id = std::env::var("APPLICATION_ID")
+        .expect("expected the application id")
+        .parse()
+        .unwrap();
     let connection_string =
         std::env::var("DATABASE_CONN").expect("expected a database connection string.");
     let bot_token = std::env::var("BOT_TOKEN").expect("expected the bot token");
-    let shard_count = std::env::var("SHARDS_COUNT").expect("expected the shard count").parse().unwrap();
+    let shard_count = std::env::var("SHARDS_COUNT")
+        .expect("expected the shard count")
+        .parse()
+        .unwrap();
     let redis_url = std::env::var("REDIS_CONN").expect("Expected the redis connection url");
 
     let redis = RedisPool::builder(RedisManager::new(redis_url).unwrap())
@@ -37,9 +54,20 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let cache = Cache::new(redis);
     let database = Arc::new(Database::new(&connection_string).await);
     let twilight_http = Arc::new(TwilightClient::new(bot_token.clone()));
-    let bot_context = BotContext::new(twilight_http, database, cache);
-    let framework = Framework::new(bot_context.clone());
-    let mut rowifi = RoWifi { bot: bot_context, framework };
+    let bot_context = BotContext::new(
+        Id::<ApplicationMarker>::new(application_id),
+        twilight_http,
+        database,
+        cache,
+    );
+
+    let mut framework = Framework::new(bot_context.clone());
+    user_config(&mut framework);
+
+    let mut rowifi = RoWifi {
+        bot: bot_context,
+        framework,
+    };
 
     let activity = MinimalActivity {
         kind: ActivityType::Playing,
@@ -67,7 +95,6 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     )
     .collect::<Vec<_>>();
 
-
     let mut stream = ShardEventStream::new(shards.iter_mut());
     loop {
         let (shard, event) = match stream.next().await {
@@ -80,8 +107,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                 }
 
                 continue;
-            },
-            None => break
+            }
+            None => break,
         };
         if let Err(err) = rowifi.bot.cache.update(&event).await {
             tracing::error!(err = ?err, "cache error: ");
@@ -94,7 +121,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
 pub struct RoWifi {
     pub framework: Framework,
-    pub bot: BotContext
+    pub bot: BotContext,
 }
 
 impl Service<(u64, Event)> for RoWifi {
@@ -107,6 +134,11 @@ impl Service<(u64, Event)> for RoWifi {
     }
 
     fn call(&mut self, req: (u64, Event)) -> Self::Future {
+        let fut = self.framework.call(&req.1);
+        tokio::spawn(async move {
+            let _ = fut.await;
+        });
+
         ready(Ok(()))
     }
 }

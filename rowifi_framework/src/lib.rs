@@ -1,4 +1,4 @@
-mod arguments;
+pub mod arguments;
 pub mod command;
 pub mod context;
 pub mod error;
@@ -21,7 +21,7 @@ use rowifi_models::{
 use std::{
     collections::HashMap,
     pin::Pin,
-    task::{Context, Poll},
+    task::{Context, Poll}, sync::atomic::AtomicBool,
 };
 use tower::Service;
 
@@ -63,7 +63,7 @@ impl Service<&Event> for Framework {
     type Error = FrameworkError;
     type Future = Either<
         Ready<Result<Self::Response, Self::Error>>,
-        Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>,
+        Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>,
     >;
 
     fn poll_ready(&mut self, _: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
@@ -99,7 +99,8 @@ impl Service<&Event> for Framework {
                         author_id: UserId(member.user.map(|u| u.id).unwrap()),
                         interaction_id: interaction.id,
                         interaction_token: interaction.token.clone(),
-                        resolved: interaction_data.resolved.clone().unwrap(),
+                        resolved: interaction_data.resolved.clone(),
+                        callback_invoked: AtomicBool::new(false),
                     };
                     let interaction = Interaction {
                         data: interaction_data.options.clone(),
@@ -114,6 +115,7 @@ impl Service<&Event> for Framework {
             }
             _ => {}
         }
-        todo!()
+        let fut = ready(Ok(()));
+        Either::Left(fut)
     }
 }

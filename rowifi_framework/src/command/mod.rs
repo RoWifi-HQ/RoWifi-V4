@@ -65,7 +65,7 @@ impl Command {
 impl Service<Request> for Command {
     type Response = ();
     type Error = FrameworkError;
-    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
+    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
 
     fn poll_ready(&mut self, _: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         Poll::Ready(Ok(()))
@@ -88,7 +88,17 @@ impl Service<Request> for Command {
                 }
                 return Box::pin(async move { Ok(()) });
             }
-            Command::Node(node) => node.service.call(req),
+            Command::Node(node) => { 
+                let command_fut = node.service.call(req);
+                let fut = async move {
+                    let res = command_fut.await;
+                    if let Err(err) = res {
+                        tracing::error!("{}", err);
+                    }
+                    Ok(())
+                };
+                Box::pin(fut)
+            },
         }
     }
 }
