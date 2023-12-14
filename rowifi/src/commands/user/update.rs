@@ -1,34 +1,14 @@
-use rowifi_framework::{prelude::*, arguments::{Arguments, Argument}};
-use rowifi_models::{id::UserId, discord::application::interaction::application_command::CommandDataOption};
+use rowifi_framework::prelude::*;
+use rowifi_models::id::UserId;
 
 use crate::commands::{CommandError, CommandErrorType};
 
-#[derive(Debug)]
+#[derive(Arguments, Debug)]
 pub struct UpdateArguments {
     pub user_id: Option<UserId>,
 }
 
-impl Arguments for UpdateArguments {
-    fn from_interaction(options: &[rowifi_models::discord::application::interaction::application_command::CommandDataOption]) -> Result<Self, rowifi_framework::arguments::ArgumentError> {
-        let options = options.iter().map(|c| (c.name.as_str(), c))
-                    .collect::<std::collections::HashMap<&str, &CommandDataOption>>();
-        
-        let user = match options.get("user_id").map(|s| Option::<UserId>::from_interaction(s)) {
-            Some(Ok(s)) => s,
-            Some(Err(err)) => return Err(err),
-            None => None
-        };
-
-        Ok(Self {
-            user_id: user
-        })
-    }
-}
-
-pub async fn update_func(
-    ctx: CommandContext,
-    args: UpdateArguments,
-) -> Result<(), FrameworkError> {
+pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(), FrameworkError> {
     tracing::debug!("update command invoked");
     ctx.defer_response(DeferredResponse::Normal).await?;
     let server = ctx.bot.cache.guild(ctx.guild_id).await?.unwrap();

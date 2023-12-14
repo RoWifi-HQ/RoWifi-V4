@@ -9,6 +9,7 @@ edition = "2021"
 futures-util = { version = "0.3" }
 rowifi_cache = { path = "../rowifi_cache" }
 rowifi_database = { path = "../rowifi_database" }
+rowifi_derive = { path = "../rowifi_derive" }
 rowifi_models = { path = "../rowifi_models" }
 time = { version = "0.3", default-features = false, features = ["std"] }
 tower = { version = "0.4", default-features = false }

@@ -1027,12 +1027,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rowifi_derive"
+version = "4.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "rowifi_framework"
 version = "4.0.0"
 dependencies = [
  "futures-util",
  "rowifi_cache",
  "rowifi_database",
+ "rowifi_derive",
  "rowifi_models",
  "time",
  "tower",
