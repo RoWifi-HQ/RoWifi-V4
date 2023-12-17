@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 deadpool-redis = { version = "0.13" }
+itertools = { version = "0.12" }
 redis = { version = "0.23", default-features = false, features = ["aio", "tokio-comp", "connection-manager"] }
 rowifi_cache = { path = "../rowifi_cache" }
 rowifi_database = { path = "../rowifi_database" }

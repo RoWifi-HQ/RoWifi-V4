@@ -1,5 +1,6 @@
+use itertools::Itertools;
 use rowifi_framework::prelude::*;
-use rowifi_models::id::UserId;
+use rowifi_models::{id::UserId, user::RoUser};
 
 use crate::commands::{CommandError, CommandErrorType};
 
@@ -35,13 +36,13 @@ pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(
         }
     };
 
-    if server.owner_id == member.id {
-        let message = r#"
-        👋 Hey there Mr. Server Owner, Discord prevents bots from modifying a server owner's nickname. Hence, RoWifi does not allow running the `/update` command on server owners.
-        "#;
-        ctx.respond().content(&message).unwrap().exec().await?;
-        return Ok(());
-    }
+    // if server.owner_id == member.id {
+    //     let message = r#"
+    //     👋 Hey there Server Owner, Discord prevents bots from modifying a server owner's nickname. Hence, RoWifi does not allow running the `/update` command on server owners.
+    //     "#;
+    //     ctx.respond().content(&message).unwrap().exec().await?;
+    //     return Ok(());
+    // }
 
     let guild = ctx
         .bot
@@ -65,6 +66,44 @@ You have a role (<@&{bypass_role}>) which has been marked as a bypass role.
             return Ok(());
         }
     }
+
+    let user = match ctx
+        .bot
+        .database
+        .query_opt::<RoUser>(
+            "SELECT * FROM roblox_users WHERE user_id = $1",
+            &[&member.id],
+        )
+        .await?
+    {
+        Some(u) => u,
+        None => {
+            let message = if args.user_id.is_some() {
+                format!(
+                    r#"
+Oops, I did not find <@{}> in my database. They are not verified with RoWifi.
+                "#,
+                    member.id
+                )
+            } else {
+                format!(
+                    r#"
+Hey there, it looks like you're not verified with us. Please run `/verify` to register with us.
+                "#
+                )
+            };
+            ctx.respond().content(&message).unwrap().exec().await?;
+            return Ok(());
+        }
+    };
+
+    let all_roles = guild
+        .rankbinds
+        .0
+        .iter()
+        .flat_map(|b| b.discord_roles.clone())
+        .unique()
+        .collect::<Vec<_>>();
 
     Ok(())
 }

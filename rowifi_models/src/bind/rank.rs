@@ -19,3 +19,9 @@ pub struct Rankbind {
     /// The format of the nickname
     pub template: Template
 }
+
+impl Rankbind {
+    pub fn discord_roles(&self) -> &[RoleId] {
+        &self.discord_roles
+    }
+}

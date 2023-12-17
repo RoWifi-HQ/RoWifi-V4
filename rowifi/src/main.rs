@@ -1,4 +1,5 @@
 mod commands;
+mod utils;
 
 use commands::user::user_config;
 use deadpool_redis::{Manager as RedisManager, Pool as RedisPool, Runtime};
