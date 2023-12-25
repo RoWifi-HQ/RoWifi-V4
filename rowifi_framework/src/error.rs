@@ -1,5 +1,6 @@
 use rowifi_cache::error::CacheError;
 use rowifi_database::DatabaseError;
+use rowifi_roblox::error::RobloxError;
 use std::{
     error::Error as StdError,
     fmt::{Display, Formatter, Result as FmtResult},
@@ -20,6 +21,7 @@ pub enum ErrorKind {
     Command,
     Database,
     Discord,
+    Roblox,
 }
 
 impl FrameworkError {
@@ -47,6 +49,7 @@ impl Display for FrameworkError {
             ErrorKind::Command => f.write_str("command error: ")?,
             ErrorKind::Database => f.write_str("database error: ")?,
             ErrorKind::Discord => f.write_str("discord error: ")?,
+            ErrorKind::Roblox => f.write_str("roblox error: ")?,
         }
         match &self.source {
             Some(err) => Display::fmt(&err, f),
@@ -104,6 +107,15 @@ impl From<DatabaseError> for FrameworkError {
         Self {
             source: Some(Box::new(err)),
             kind: ErrorKind::Database
+        }
+    }
+}
+
+impl From<RobloxError> for FrameworkError {
+    fn from(err: RobloxError) -> Self {
+        Self {
+            source: Some(Box::new(err)),
+            kind: ErrorKind::Roblox
         }
     }
 }

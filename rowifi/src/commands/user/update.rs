@@ -2,7 +2,7 @@ use itertools::Itertools;
 use rowifi_framework::prelude::*;
 use rowifi_models::{id::UserId, user::RoUser};
 
-use crate::commands::{CommandError, CommandErrorType};
+use crate::{commands::{CommandError, CommandErrorType}, utils::update_user::{UpdateUser, UpdateUserError}};
 
 #[derive(Arguments, Debug)]
 pub struct UpdateArguments {
@@ -53,8 +53,8 @@ pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(
         .await?;
 
     // Check if the user has a bypass role
-    for bypass_role in guild.bypass_roles {
-        if member.roles.contains(&bypass_role) {
+    for bypass_role in &guild.bypass_roles {
+        if member.roles.contains(bypass_role) {
             let message = format!(
                 r#"
 <:rowifi:733311296732266577> **Update Bypass Detected**
@@ -104,6 +104,23 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         .flat_map(|b| b.discord_roles.clone())
         .unique()
         .collect::<Vec<_>>();
+
+    let update_user = UpdateUser {
+        ctx: &ctx.bot,
+        member: &member,
+        user: &user,
+        server: &server,
+        guild: &guild,
+        all_roles: &all_roles
+    };
+    let (added_roles, removed_roles, nickname) = match update_user.execute().await {
+        Ok(u) => u,
+        Err(err) => match err {
+            UpdateUserError::DenyList(_) => todo!(),
+            UpdateUserError::InvalidNickname(_) => todo!(),
+            UpdateUserError::Generic(err) => return Err(err) 
+        }
+    };
 
     Ok(())
 }

@@ -14,6 +14,7 @@ use rowifi_models::{
     guild::PartialRoGuild,
     id::{ChannelId, GuildId, UserId},
 };
+use rowifi_roblox::RobloxClient;
 use std::{
     future::IntoFuture,
     ops::Deref,
@@ -38,6 +39,7 @@ pub struct BotContextInner {
     pub database: Arc<Database>,
     /// The cache holding all discord data
     pub cache: Cache,
+    pub roblox: RobloxClient,
 }
 
 #[derive(Clone)]
@@ -60,12 +62,13 @@ pub enum DeferredResponse {
 }
 
 impl BotContext {
-    pub fn new(application_id: Id<ApplicationMarker>, http: Arc<TwilightClient>, database: Arc<Database>, cache: Cache) -> Self {
+    pub fn new(application_id: Id<ApplicationMarker>, http: Arc<TwilightClient>, database: Arc<Database>, cache: Cache, roblox: RobloxClient) -> Self {
         Self(Arc::new(BotContextInner {
             application_id,
             http,
             database,
             cache,
+            roblox
         }))
     }
 

@@ -13,6 +13,7 @@ use rowifi_models::discord::{
     },
     id::{marker::ApplicationMarker, Id},
 };
+use rowifi_roblox::RobloxClient;
 use std::{
     error::Error,
     future::{ready, Ready},
@@ -55,11 +56,13 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let cache = Cache::new(redis);
     let database = Arc::new(Database::new(&connection_string).await);
     let twilight_http = Arc::new(TwilightClient::new(bot_token.clone()));
+    let roblox = RobloxClient::new();
     let bot_context = BotContext::new(
         Id::<ApplicationMarker>::new(application_id),
         twilight_http,
         database,
         cache,
+        roblox,
     );
 
     let mut framework = Framework::new(bot_context.clone());

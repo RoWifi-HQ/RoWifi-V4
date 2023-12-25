@@ -1013,6 +1013,7 @@ dependencies = [
  "rowifi_database",
  "rowifi_framework",
  "rowifi_models",
+ "rowifi_roblox",
  "tokio",
  "tokio-stream",
  "tower",
@@ -1060,6 +1061,7 @@ dependencies = [
  "rowifi_database",
  "rowifi_derive",
  "rowifi_models",
+ "rowifi_roblox",
  "time",
  "tower",
  "tracing",
@@ -1077,6 +1079,17 @@ dependencies = [
  "serde_repr",
  "tokio-postgres",
  "twilight-model",
+]
+
+[[package]]
+name = "rowifi_roblox"
+version = "4.0.0"
+dependencies = [
+ "hyper",
+ "hyper-rustls",
+ "rowifi_models",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

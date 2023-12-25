@@ -11,6 +11,7 @@ rowifi_cache = { path = "../rowifi_cache" }
 rowifi_database = { path = "../rowifi_database" }
 rowifi_derive = { path = "../rowifi_derive" }
 rowifi_models = { path = "../rowifi_models" }
+rowifi_roblox = { path = "../rowifi_roblox" }
 time = { version = "0.3", default-features = false, features = ["std"] }
 tower = { version = "0.4", default-features = false }
 tracing = "0.1"

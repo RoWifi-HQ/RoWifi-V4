@@ -1,0 +1,13 @@
+[package]
+name = "rowifi_roblox"
+version = "4.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hyper = { version = "0.14", default-features = false, features = ["client", "http2", "runtime"] }
+hyper-rustls = { version = "0.23", default-features = false, features = ["webpki-tokio", "http1", "http2"] }
+rowifi_models = { path = "../rowifi_models" }
+serde = { version = "1.0" }
+serde_json = { version = "1.0" }

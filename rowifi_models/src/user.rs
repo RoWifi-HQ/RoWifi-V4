@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use crate::id::{UserId, GuildId};
+use crate::{id::{UserId, GuildId}, roblox::id::UserId as RobloxUserId};
 
 #[derive(Debug)]
 pub struct RoUser {
     pub user_id: UserId,
-    pub default_account_id: i64,
-    pub linked_accounts: HashMap<GuildId, i64>,
+    pub default_account_id: RobloxUserId,
+    pub linked_accounts: HashMap<GuildId, RobloxUserId>,
 }
 
 impl TryFrom<tokio_postgres::Row> for RoUser {
@@ -20,7 +20,7 @@ impl TryFrom<tokio_postgres::Row> for RoUser {
         let linked_accounts = linked_accounts_sql.into_iter()
             .map(|(k, v)| {
                 let discord_id = k.parse::<u64>().map(GuildId::new).unwrap();
-                let roblox_id = v.unwrap().parse::<i64>().unwrap();
+                let roblox_id = v.unwrap().parse::<u64>().map(RobloxUserId).unwrap();
                 (discord_id, roblox_id)
             })
             .collect::<HashMap<_, _>>();
