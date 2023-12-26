@@ -116,7 +116,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
     let (added_roles, removed_roles, nickname) = match update_user.execute().await {
         Ok(u) => u,
         Err(err) => match err {
-            UpdateUserError::DenyList(_) => todo!(),
+            UpdateUserError::BlockList(_) => todo!(),
             UpdateUserError::InvalidNickname(_) => todo!(),
             UpdateUserError::Generic(err) => return Err(err) 
         }

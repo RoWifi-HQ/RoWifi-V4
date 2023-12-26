@@ -1,15 +1,21 @@
 use bytes::BytesMut;
-use serde::{Deserialize, Serialize};
-use std::error::Error as StdError;
+use serde::{
+    de::{Deserializer, Error as DeError, Unexpected, Visitor},
+    Deserialize, Serialize,
+};
+use std::{
+    error::Error as StdError,
+    fmt::{Formatter, Result as FmtResult},
+};
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize,)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct GroupId(pub u64);
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct RoleId(pub u64);
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize)]
 pub struct UserId(pub u64);
 
 impl ToSql for UserId {
@@ -36,5 +42,46 @@ impl<'a> FromSql<'a> for UserId {
 
     fn accepts(ty: &Type) -> bool {
         <i64 as FromSql>::accepts(ty)
+    }
+}
+
+struct IdVisitor;
+
+impl<'de> Visitor<'de> for IdVisitor {
+    type Value = UserId;
+
+    fn expecting(&self, f: &mut Formatter) -> FmtResult {
+        f.write_str("a roblox id")
+    }
+
+    fn visit_u64<E: DeError>(self, v: u64) -> Result<Self::Value, E> {
+        Ok(UserId(v))
+    }
+
+    fn visit_i64<E: DeError>(self, v: i64) -> Result<Self::Value, E> {
+        let val = v as u64;
+        self.visit_u64(val)
+    }
+
+    fn visit_newtype_struct<D: Deserializer<'de>>(
+        self,
+        deserializer: D,
+    ) -> Result<Self::Value, D::Error> {
+        deserializer.deserialize_any(IdVisitor)
+    }
+
+    fn visit_str<E: DeError>(self, v: &str) -> Result<Self::Value, E> {
+        let value = v.parse().map_err(|_| {
+            let unexpected = Unexpected::Str(v);
+            DeError::invalid_value(unexpected, &"a u64 string")
+        })?;
+
+        self.visit_u64(value)
+    }
+}
+
+impl<'de> Deserialize<'de> for UserId {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        deserializer.deserialize_any(IdVisitor)
     }
 }

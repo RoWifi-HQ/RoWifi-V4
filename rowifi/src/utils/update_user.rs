@@ -20,7 +20,7 @@ pub struct UpdateUser<'u> {
 type UpdateUserSuccess = (Vec<RoleId>, Vec<RoleId>, String);
 
 pub enum UpdateUserError {
-    DenyList(String),
+    BlockList(String),
     InvalidNickname(String),
     Generic(FrameworkError),
 }
@@ -59,6 +59,8 @@ impl UpdateUser<'_> {
             .into_iter()
             .map(|r| (r.group.id, r.role.rank))
             .collect::<HashMap<_, _>>();
+
+        let roblox_user = self.ctx.roblox.get_user(*user_id).await?;
 
         todo!()
     }

@@ -5,10 +5,11 @@ use error::DeserializeBodyError;
 use hyper::{
     body::{self, Buf},
     client::HttpConnector,
+    http::response::Parts,
     Body, Client as HyperClient, Method, Request,
 };
 use hyper_rustls::HttpsConnector;
-use rowifi_models::roblox::{group::GroupUserRole, id::UserId};
+use rowifi_models::roblox::{group::GroupUserRole, id::UserId, user::PartialUser};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -19,6 +20,7 @@ use crate::{
 #[derive(Clone)]
 pub struct RobloxClient {
     client: HyperClient<HttpsConnector<HttpConnector>>,
+    open_cloud_auth: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -27,7 +29,7 @@ pub struct VecWrapper<T> {
 }
 
 impl RobloxClient {
-    pub fn new() -> Self {
+    pub fn new(open_cloud_auth: &str) -> Self {
         let connector = hyper_rustls::HttpsConnectorBuilder::new()
             .with_webpki_roots()
             .https_or_http()
@@ -35,14 +37,17 @@ impl RobloxClient {
             .enable_http2()
             .build();
         let client = HyperClient::builder().build(connector);
-        Self { client }
+        Self {
+            client,
+            open_cloud_auth: open_cloud_auth.to_string(),
+        }
     }
 
     pub async fn get_user_roles(&self, user_id: UserId) -> Result<Vec<GroupUserRole>, RobloxError> {
-        let route = Route::UserGroupRoles { user_id: user_id.0 };
+        let route = Route::GetUserGroupRoles { user_id: user_id.0 };
 
         let request = Request::builder()
-            .uri(format!("{route}"))
+            .uri(route.to_string())
             .method(Method::GET)
             .body(Body::empty())
             .map_err(|source| RobloxError {
@@ -50,6 +55,71 @@ impl RobloxClient {
                 kind: ErrorKind::BuildingRequest,
             })?;
 
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json =
+            serde_json::from_slice::<VecWrapper<GroupUserRole>>(&bytes).map_err(|source| {
+                RobloxError {
+                    source: Some(Box::new(DeserializeBodyError {
+                        source: Some(Box::new(source)),
+                        bytes,
+                    })),
+                    kind: ErrorKind::Deserialize,
+                }
+            })?;
+
+        Ok(json.data)
+    }
+
+    pub async fn get_user(&self, user_id: UserId) -> Result<PartialUser, RobloxError> {
+        let route = Route::GetUser { user_id: user_id.0 };
+
+        let request = Request::builder()
+            .uri(route.to_string())
+            .method(Method::GET)
+            .header("x-api-key", &self.open_cloud_auth)
+            .body(Body::empty())
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json = serde_json::from_slice::<PartialUser>(&bytes).map_err(|source| RobloxError {
+            source: Some(Box::new(DeserializeBodyError {
+                source: Some(Box::new(source)),
+                bytes,
+            })),
+            kind: ErrorKind::Deserialize,
+        })?;
+
+        Ok(json)
+    }
+
+    async fn request(&self, request: Request<Body>) -> Result<(Parts, Vec<u8>), RobloxError> {
         let res = self
             .client
             .request(request)
@@ -67,20 +137,6 @@ impl RobloxClient {
         let mut bytes = vec![0; buf.remaining()];
         buf.copy_to_slice(&mut bytes);
 
-        let json =
-            serde_json::from_slice::<VecWrapper<GroupUserRole>>(&bytes).map_err(|source| {
-                RobloxError {
-                    source: Some(Box::new(DeserializeBodyError {
-                        source: Some(Box::new(source)),
-                        bytes,
-                    })),
-                    kind: ErrorKind::Response {
-                        route: route.to_string(),
-                        status: parts.status,
-                    },
-                }
-            })?;
-
-        Ok(json.data)
+        Ok((parts, bytes))
     }
 }

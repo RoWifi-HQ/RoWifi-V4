@@ -43,6 +43,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .parse()
         .unwrap();
     let redis_url = std::env::var("REDIS_CONN").expect("Expected the redis connection url");
+    let open_cloud_auth = std::env::var("OPEN_CLOUD_AUTH").expect("Expected the open cloud auth key");
 
     let redis = RedisPool::builder(RedisManager::new(redis_url).unwrap())
         .max_size(16)
@@ -56,7 +57,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let cache = Cache::new(redis);
     let database = Arc::new(Database::new(&connection_string).await);
     let twilight_http = Arc::new(TwilightClient::new(bot_token.clone()));
-    let roblox = RobloxClient::new();
+    let roblox = RobloxClient::new(&open_cloud_auth);
     let bot_context = BotContext::new(
         Id::<ApplicationMarker>::new(application_id),
         twilight_http,
