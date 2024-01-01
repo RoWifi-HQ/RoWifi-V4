@@ -24,4 +24,12 @@ impl Bind {
             Self::Asset(a) => a.discord_roles(),
         }
     }
+
+    pub fn priority(&self) -> i32 {
+        match self {
+            Self::Rank(r) => r.priority,
+            Self::Group(g) => g.priority,
+            Self::Asset(a) => a.priority,
+        }
+    }
 }

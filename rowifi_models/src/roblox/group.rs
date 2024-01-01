@@ -14,7 +14,7 @@ pub struct PartialGroup {
 pub struct PartialRank {
     pub id: RoleId,
     pub name: String,
-    pub rank: u8,
+    pub rank: u32,
     #[serde(rename = "memberCount")]
     pub member_count: Option<u64>,
 }

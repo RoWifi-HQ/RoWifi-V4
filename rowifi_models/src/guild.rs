@@ -1,7 +1,8 @@
 use tokio_postgres::types::Json;
 
-use crate::{id::{GuildId, RoleId}, bind::{Rankbind, Groupbind, Assetbind}};
+use crate::{id::{GuildId, RoleId}, bind::{Rankbind, Groupbind, Assetbind}, deny_list::DenyList};
 
+#[derive(Debug)]
 pub struct RoGuild {
     pub guild_id: GuildId
 }
@@ -15,6 +16,7 @@ pub struct PartialRoGuild {
     pub rankbinds: Json<Vec<Rankbind>>,
     pub groupbinds: Json<Vec<Groupbind>>,
     pub assetbinds: Json<Vec<Assetbind>>,
+    pub deny_lists: Json<Vec<DenyList>>
 }
 
 impl PartialRoGuild {
@@ -26,7 +28,8 @@ impl PartialRoGuild {
             verified_roles: Vec::new(),
             rankbinds: Json(Vec::new()),
             groupbinds: Json(Vec::new()),
-            assetbinds: Json(Vec::new())
+            assetbinds: Json(Vec::new()),
+            deny_lists: Json(Vec::new()),
         }
     }
 }
@@ -42,6 +45,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
         let rankbinds = row.try_get("rankbinds")?;
         let groupbinds = row.try_get("groupbinds")?;
         let assetbinds = row.try_get("assetbinds")?;
+        let deny_lists = row.try_get("denylists")?;
 
         Ok(Self {
             guild_id,
@@ -51,6 +55,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             rankbinds,
             groupbinds,
             assetbinds,
+            deny_lists,
         })
     }
 }
