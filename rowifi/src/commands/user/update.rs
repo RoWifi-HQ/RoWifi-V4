@@ -1,8 +1,15 @@
+use std::error::Error;
 use itertools::Itertools;
 use rowifi_framework::prelude::*;
-use rowifi_models::{id::UserId, user::RoUser, guild::BypassRoleKind};
+use rowifi_models::{
+    deny_list::DenyListActionType, guild::BypassRoleKind, id::UserId, user::RoUser, discord::util::Timestamp,
+};
+use twilight_http::error::{ErrorType as DiscordErrorType, Error as DiscordHttpError};
 
-use crate::{commands::{CommandError, CommandErrorType}, utils::update_user::{UpdateUser, UpdateUserError}};
+use crate::{
+    commands::{CommandError, CommandErrorType},
+    utils::update_user::{UpdateUser, UpdateUserError},
+};
 
 #[derive(Arguments, Debug)]
 pub struct UpdateArguments {
@@ -47,7 +54,7 @@ pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(
     let guild = ctx
         .bot
         .get_guild(
-            "SELECT guild_id, bypass_roles, rankbinds FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, assetbinds, deny_lists, default_template FROM guilds WHERE guild_id = $1",
             server.id,
         )
         .await?;
@@ -112,16 +119,104 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         user: &user,
         server: &server,
         guild: &guild,
-        all_roles: &all_roles
+        all_roles: &all_roles,
     };
     let (added_roles, removed_roles, nickname) = match update_user.execute().await {
         Ok(u) => u,
         Err(err) => match err {
-            UpdateUserError::DenyList(_) => todo!(),
-            UpdateUserError::InvalidNickname(_) => todo!(),
-            UpdateUserError::Generic(err) => return Err(err) 
-        }
+            UpdateUserError::DenyList(deny_list) => {
+                let message = if args.user_id.is_some() {
+                    format!(
+                        r#"
+    <@{}> is not allowed to be updated since they were found on a deny list. Reason: {}
+                    "#,
+                        member.id, deny_list.reason
+                    )
+                } else {
+                    format!(
+                        r#"
+    You are not allowed to run `/update` due to being on a deny list. Reason: {}
+                    "#,
+                        deny_list.reason
+                    )
+                };
+                ctx.respond().content(&message).unwrap().exec().await?;
+
+                match deny_list.action_type {
+                    DenyListActionType::None => {}
+                    DenyListActionType::Kick => {
+                        let _ = ctx
+                            .bot
+                            .http
+                            .remove_guild_member(ctx.guild_id.0, member.id.0)
+                            .await;
+                    }
+                    DenyListActionType::Ban => {
+                        let _ = ctx.bot.http.create_ban(ctx.guild_id.0, member.id.0).await;
+                    }
+                }
+
+                return Ok(());
+            }
+            UpdateUserError::InvalidNickname(nickname) => {
+                let message = if args.user_id.is_some() {
+                    format!(
+                        r#"
+<@{}>'s supposed nickname ({nickname}) is greater than 32 characters. Hence, I cannot update them.
+                    "#,
+                    member.id
+                    )
+                } else {
+                    format!(
+                        r#"
+Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cannot update you.
+                    "#,
+                    )
+                };
+                ctx.respond().content(&message).unwrap().exec().await?;
+
+                return Ok(());
+            }
+            UpdateUserError::Generic(err) => {
+                if let Some(source) = err.source().and_then(|e| e.downcast_ref::<DiscordHttpError>()) {
+                    if let DiscordErrorType::Response { body: _, error: _, status } = source.kind() {
+                        if *status == 403 {
+                            let message = "There was an error in updating. Run `/debug update` to find potential issues";
+                            ctx.respond().content(message).unwrap().exec().await?;
+                            return Ok(());
+                        }
+                    }
+                }
+                return Err(err);
+            },
+        },
     };
+
+    let mut added_str = added_roles
+        .iter()
+        .map(|a| format!("- <@&{}>\n", a.0))
+        .collect::<String>();
+    let mut removed_str = removed_roles
+        .iter()
+        .map(|r| format!("- <@&{}>\n", r.0))
+        .collect::<String>();
+    if added_str.is_empty() {
+        added_str = "None".into();
+    }
+    if removed_str.is_empty() {
+        removed_str = "None".into();
+    }
+
+    let embed = EmbedBuilder::new()
+        .color(DARK_GREEN)
+        .footer(EmbedFooterBuilder::new("RoWifi").build())
+        .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+        .title("Update")
+        .field(EmbedFieldBuilder::new("Nickname", nickname))
+        .field(EmbedFieldBuilder::new("Added Roles", added_str))
+        .field(EmbedFieldBuilder::new("Removed Roles", removed_str))
+        .build();
+    ctx.respond().embeds(&[embed]).unwrap().exec().await?;
 
     Ok(())
 }

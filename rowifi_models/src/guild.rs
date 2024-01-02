@@ -63,7 +63,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
         let rankbinds = row.try_get("rankbinds")?;
         let groupbinds = row.try_get("groupbinds")?;
         let assetbinds = row.try_get("assetbinds")?;
-        let deny_lists = row.try_get("denylists")?;
+        let deny_lists = row.try_get("deny_lists")?;
         let default_template = row.try_get("default_template").unwrap_or_default();
 
         Ok(Self {

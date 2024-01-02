@@ -9,3 +9,4 @@ pub use rowifi_derive::Arguments;
 pub type CommandResult = Result<(), FrameworkError>;
 
 pub const RED: u32 = 0x00E7_4C3C;
+pub const DARK_GREEN: u32 = 0x001F_8B4C;
