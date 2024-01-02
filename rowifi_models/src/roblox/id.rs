@@ -5,7 +5,7 @@ use serde::{
 };
 use std::{
     error::Error as StdError,
-    fmt::{Formatter, Result as FmtResult, Display},
+    fmt::{Display, Formatter, Result as FmtResult},
 };
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
 

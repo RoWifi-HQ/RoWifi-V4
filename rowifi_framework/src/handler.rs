@@ -6,7 +6,7 @@ use std::{
 };
 use tower::Service;
 
-use crate::{Request, error::FrameworkError, context::CommandContext, arguments::Arguments};
+use crate::{arguments::Arguments, context::CommandContext, error::FrameworkError, Request};
 
 pub trait Handler<T, R>: 'static
 where
@@ -58,7 +58,7 @@ where
             Ok(args) => {
                 let fut = self.hnd.call(req.context, args);
                 Box::pin(fut)
-            },
+            }
             Err(err) => {
                 let fut = async move { Err(err.into()) };
                 Box::pin(fut)

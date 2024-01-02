@@ -8,8 +8,14 @@ use rowifi_models::{
             message::{Component, Embed, MessageFlags},
             Message,
         },
-        http::{attachment::Attachment, interaction::{InteractionResponse, InteractionResponseType, InteractionResponseData}},
-        id::{marker::{InteractionMarker, ApplicationMarker}, Id},
+        http::{
+            attachment::Attachment,
+            interaction::{InteractionResponse, InteractionResponseData, InteractionResponseType},
+        },
+        id::{
+            marker::{ApplicationMarker, InteractionMarker},
+            Id,
+        },
     },
     guild::PartialRoGuild,
     id::{ChannelId, GuildId, UserId},
@@ -58,17 +64,23 @@ pub struct CommandContext {
 
 pub enum DeferredResponse {
     Ephemeral,
-    Normal
+    Normal,
 }
 
 impl BotContext {
-    pub fn new(application_id: Id<ApplicationMarker>, http: Arc<TwilightClient>, database: Arc<Database>, cache: Cache, roblox: RobloxClient) -> Self {
+    pub fn new(
+        application_id: Id<ApplicationMarker>,
+        http: Arc<TwilightClient>,
+        database: Arc<Database>,
+        cache: Cache,
+        roblox: RobloxClient,
+    ) -> Self {
         Self(Arc::new(BotContextInner {
             application_id,
             http,
             database,
             cache,
-            roblox
+            roblox,
         }))
     }
 
@@ -142,14 +154,20 @@ impl CommandContext {
                 flags: Some(MessageFlags::EPHEMERAL),
                 ..Default::default()
             },
-            DeferredResponse::Normal => InteractionResponseData::default()
+            DeferredResponse::Normal => InteractionResponseData::default(),
         };
 
-        self.bot.http.interaction(self.bot.application_id)
-            .create_response(self.interaction_id, &self.interaction_token, &InteractionResponse {
-                kind: InteractionResponseType::DeferredChannelMessageWithSource,
-                data: Some(data)
-            })
+        self.bot
+            .http
+            .interaction(self.bot.application_id)
+            .create_response(
+                self.interaction_id,
+                &self.interaction_token,
+                &InteractionResponse {
+                    kind: InteractionResponseType::DeferredChannelMessageWithSource,
+                    data: Some(data),
+                },
+            )
             .await?;
         Ok(())
     }

@@ -1,8 +1,8 @@
+use deadpool_postgres::PoolError;
 use std::{
     error::Error as StdError,
     fmt::{Display, Formatter},
 };
-use deadpool_postgres::PoolError;
 use tokio_postgres::Error as PostgresError;
 
 #[derive(Debug)]

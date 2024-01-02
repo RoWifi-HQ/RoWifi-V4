@@ -36,7 +36,7 @@ impl AssetFilterBuilder {
             let asset_ids = self.asset_ids.into_iter().join(",");
             filters.push(filter + &asset_ids);
         }
-        
+
         if !self.badge_ids.is_empty() {
             let filter = String::from("badgeIds=");
             let badge_ids = self.badge_ids.into_iter().join(",");

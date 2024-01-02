@@ -9,7 +9,11 @@ pub enum ErrorKind {
     BuildingRequest,
     Sending,
     ChunkingResponse,
-    Response { route: String, status: StatusCode, bytes: Vec<u8> },
+    Response {
+        route: String,
+        status: StatusCode,
+        bytes: Vec<u8>,
+    },
     Deserialize,
 }
 
@@ -45,7 +49,11 @@ impl Display for RobloxError {
             ErrorKind::BuildingRequest => write!(f, "failed to build the request"),
             ErrorKind::Sending => write!(f, "sending the request failed"),
             ErrorKind::ChunkingResponse => write!(f, "chunking the response failed"),
-            ErrorKind::Response { route, status, bytes: _ } => write!(f, "failed with {status} on {route}"),
+            ErrorKind::Response {
+                route,
+                status,
+                bytes: _,
+            } => write!(f, "failed with {status} on {route}"),
             ErrorKind::Deserialize => write!(f, "error deserializing"),
         }
     }

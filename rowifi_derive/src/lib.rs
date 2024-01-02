@@ -1,3 +1,5 @@
+#![deny(clippy::all)]
+
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
 use syn::{parse_macro_input, spanned::Spanned, Data, DeriveInput, Fields, Type};
@@ -15,7 +17,7 @@ pub fn arguments_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStre
                 use rowifi_models::discord::application::interaction::application_command::CommandDataOption;
 
                 let options = options.iter().map(|c| (c.name.as_str(), c)).collect::<std::collections::HashMap<&str, &CommandDataOption>>();
-                
+
                 #interaction_derives
             }
         }
@@ -60,10 +62,10 @@ fn from_interaction_derive(data: &Data) -> TokenStream {
                         #(#field_names),*
                     })
                 }
-            },
-            _ => unimplemented!()
+            }
+            _ => unimplemented!(),
         },
-        _ => unimplemented!()
+        _ => unimplemented!(),
     }
 }
 

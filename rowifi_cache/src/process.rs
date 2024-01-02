@@ -1,9 +1,10 @@
 use deadpool_redis::redis::Pipeline;
 use rowifi_models::{
     discord::{
+        cache::{CachedChannel, CachedGuild, CachedMember, CachedRole, CachedTextChannel},
         channel::{Channel, ChannelType},
         guild::{Guild, Member, PartialMember, Role},
-        user::User, cache::{CachedGuild, CachedTextChannel, CachedChannel, CachedRole, CachedMember},
+        user::User,
     },
     id::{ChannelId, GuildId, RoleId, UserId},
 };

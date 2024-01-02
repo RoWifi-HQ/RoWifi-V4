@@ -1,3 +1,5 @@
+#![deny(clippy::all)]
+
 mod commands;
 mod utils;
 
@@ -43,7 +45,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .parse()
         .unwrap();
     let redis_url = std::env::var("REDIS_CONN").expect("Expected the redis connection url");
-    let open_cloud_auth = std::env::var("OPEN_CLOUD_AUTH").expect("Expected the open cloud auth key");
+    let open_cloud_auth =
+        std::env::var("OPEN_CLOUD_AUTH").expect("Expected the open cloud auth key");
 
     let redis = RedisPool::builder(RedisManager::new(redis_url).unwrap())
         .max_size(16)

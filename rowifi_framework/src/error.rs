@@ -106,7 +106,7 @@ impl From<DatabaseError> for FrameworkError {
     fn from(err: DatabaseError) -> Self {
         Self {
             source: Some(Box::new(err)),
-            kind: ErrorKind::Database
+            kind: ErrorKind::Database,
         }
     }
 }
@@ -115,7 +115,7 @@ impl From<RobloxError> for FrameworkError {
     fn from(err: RobloxError) -> Self {
         Self {
             source: Some(Box::new(err)),
-            kind: ErrorKind::Roblox
+            kind: ErrorKind::Roblox,
         }
     }
 }

@@ -1,19 +1,19 @@
+mod asset;
+mod group;
 mod rank;
 mod template;
-mod group;
-mod asset;
 
-pub use template::Template;
-pub use rank::Rankbind;
-pub use group::Groupbind;
 pub use asset::{AssetType, Assetbind};
+pub use group::Groupbind;
+pub use rank::Rankbind;
+pub use template::Template;
 
 use crate::id::RoleId;
 
 pub enum Bind {
     Rank(Rankbind),
     Group(Groupbind),
-    Asset(Assetbind)
+    Asset(Assetbind),
 }
 
 impl Bind {

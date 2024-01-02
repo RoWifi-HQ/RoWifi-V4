@@ -17,7 +17,7 @@ pub struct Rankbind {
     /// The priority of the bind. Used for determining the nickname
     pub priority: i32,
     /// The format of the nickname
-    pub template: Template
+    pub template: Template,
 }
 
 impl Rankbind {

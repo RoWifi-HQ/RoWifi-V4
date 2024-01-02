@@ -1,10 +1,11 @@
-use std::error::Error;
 use itertools::Itertools;
 use rowifi_framework::prelude::*;
 use rowifi_models::{
-    deny_list::DenyListActionType, guild::BypassRoleKind, id::UserId, user::RoUser, discord::util::Timestamp,
+    deny_list::DenyListActionType, discord::util::Timestamp, guild::BypassRoleKind, id::UserId,
+    user::RoUser,
 };
-use twilight_http::error::{ErrorType as DiscordErrorType, Error as DiscordHttpError};
+use std::{error::Error, fmt::Write};
+use twilight_http::error::{Error as DiscordHttpError, ErrorType as DiscordErrorType};
 
 use crate::{
     commands::{CommandError, CommandErrorType},
@@ -164,7 +165,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                         r#"
 <@{}>'s supposed nickname ({nickname}) is greater than 32 characters. Hence, I cannot update them.
                     "#,
-                    member.id
+                        member.id
                     )
                 } else {
                     format!(
@@ -178,8 +179,16 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
                 return Ok(());
             }
             UpdateUserError::Generic(err) => {
-                if let Some(source) = err.source().and_then(|e| e.downcast_ref::<DiscordHttpError>()) {
-                    if let DiscordErrorType::Response { body: _, error: _, status } = source.kind() {
+                if let Some(source) = err
+                    .source()
+                    .and_then(|e| e.downcast_ref::<DiscordHttpError>())
+                {
+                    if let DiscordErrorType::Response {
+                        body: _,
+                        error: _,
+                        status,
+                    } = source.kind()
+                    {
                         if *status == 403 {
                             let message = "There was an error in updating. Run `/debug update` to find potential issues";
                             ctx.respond().content(message).unwrap().exec().await?;
@@ -188,18 +197,18 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
                     }
                 }
                 return Err(err);
-            },
+            }
         },
     };
 
-    let mut added_str = added_roles
-        .iter()
-        .map(|a| format!("- <@&{}>\n", a.0))
-        .collect::<String>();
-    let mut removed_str = removed_roles
-        .iter()
-        .map(|r| format!("- <@&{}>\n", r.0))
-        .collect::<String>();
+    let mut added_str = added_roles.iter().fold(String::new(), |mut s, a| {
+        let _ = write!(s, "- <@&{}>\n", a.0);
+        s
+    });
+    let mut removed_str = removed_roles.iter().fold(String::new(), |mut s, a| {
+        let _ = write!(s, "- <@&{}>\n", a.0);
+        s
+    });
     if added_str.is_empty() {
         added_str = "None".into();
     }

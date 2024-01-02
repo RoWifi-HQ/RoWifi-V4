@@ -1,3 +1,5 @@
+#![deny(clippy::all)]
+
 pub mod arguments;
 pub mod command;
 pub mod context;
@@ -21,7 +23,8 @@ use rowifi_models::{
 use std::{
     collections::HashMap,
     pin::Pin,
-    task::{Context, Poll}, sync::atomic::AtomicBool,
+    sync::atomic::AtomicBool,
+    task::{Context, Poll},
 };
 use tower::Service;
 
@@ -49,7 +52,7 @@ impl Framework {
     pub fn new(bot: BotContext) -> Self {
         Self {
             bot,
-            commands: HashMap::new()
+            commands: HashMap::new(),
         }
     }
 
@@ -71,6 +74,7 @@ impl Service<&Event> for Framework {
     }
 
     fn call(&mut self, req: &Event) -> Self::Future {
+        #[allow(clippy::single_match)]
         match req {
             Event::InteractionCreate(interaction) => {
                 if interaction.kind == InteractionType::ApplicationCommand {

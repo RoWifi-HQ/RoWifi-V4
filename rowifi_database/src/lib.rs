@@ -1,5 +1,7 @@
-use std::{str::FromStr, time::Duration};
+#![deny(clippy::all)]
+
 use deadpool_postgres::{Manager, Object, Pool, Runtime};
+use std::{str::FromStr, time::Duration};
 use tokio_postgres::types::ToSql;
 use tokio_postgres::{Config as TokioPostgresConfig, NoTls, Row};
 
@@ -48,7 +50,7 @@ impl Database {
     ) -> Result<Vec<T>, DatabaseError>
     where
         T: TryFrom<Row>,
-        DatabaseError: From<<T as TryFrom<Row>>::Error>
+        DatabaseError: From<<T as TryFrom<Row>>::Error>,
     {
         let conn = self.get().await?;
         let statement = conn.prepare_cached(statement).await?;
@@ -68,7 +70,7 @@ impl Database {
     ) -> Result<Option<T>, DatabaseError>
     where
         T: TryFrom<Row>,
-        DatabaseError: From<<T as TryFrom<Row>>::Error>
+        DatabaseError: From<<T as TryFrom<Row>>::Error>,
     {
         let conn = self.get().await?;
         let statement = conn.prepare_cached(statement).await?;

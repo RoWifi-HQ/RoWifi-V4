@@ -52,7 +52,7 @@ impl Template {
                 "roblox-username" => parts.push(&roblox_user.name),
                 "roblox-id" => parts.push(&roblox_id),
                 "discord-id" => parts.push(&discord_id),
-                "discord-name" => parts.push(&discord_name),
+                "discord-name" => parts.push(discord_name),
                 "display-name" => parts.push(&display_name),
                 _ => parts.push(arg),
             }

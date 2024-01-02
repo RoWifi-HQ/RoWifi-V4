@@ -4,7 +4,7 @@ use std::{
     error::Error as StdError,
     fmt::{Display, Formatter, Result as FmtResult},
 };
-use tokio_postgres::types::{to_sql_checked, IsNull, ToSql, Type, FromSql};
+use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
 use twilight_model::id::{
     marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
     Id,

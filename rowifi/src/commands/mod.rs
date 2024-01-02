@@ -1,19 +1,22 @@
-use std::{fmt::{Display, Formatter, Result as FmtResult}, error::Error as StdError};
-use rowifi_framework::error::{FrameworkError, ErrorKind};
+use rowifi_framework::error::{ErrorKind, FrameworkError};
 use rowifi_models::discord::channel::message::Embed;
+use std::{
+    error::Error as StdError,
+    fmt::{Display, Formatter, Result as FmtResult},
+};
 
 pub mod user;
 
 #[derive(Debug)]
 pub struct CommandError {
     pub kind: CommandErrorType,
-    pub response: Option<CommandErrorResponse>
+    pub response: Option<CommandErrorResponse>,
 }
 
 #[derive(Debug)]
 pub enum CommandErrorResponse {
     Text(String),
-    Embed(Embed)
+    Embed(Box<Embed>),
 }
 
 #[derive(Debug)]
@@ -39,7 +42,7 @@ impl From<(CommandErrorType, String)> for CommandError {
     fn from(value: (CommandErrorType, String)) -> Self {
         Self {
             kind: value.0,
-            response: Some(CommandErrorResponse::Text(value.1))
+            response: Some(CommandErrorResponse::Text(value.1)),
         }
     }
 }

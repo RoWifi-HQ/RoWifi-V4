@@ -8,12 +8,12 @@ use super::Template;
 pub struct Groupbind {
     /// The Id of the Roblox Group
     pub group_id: GroupId,
-     /// The discord roles bound to the group
-     pub discord_roles: Vec<RoleId>,
-     /// The number that decides whether this bind is chosen for the nickname
-     pub priority: i32,
-     /// The format of the nickname if this bind is chosen
-     pub template: Template,
+    /// The discord roles bound to the group
+    pub discord_roles: Vec<RoleId>,
+    /// The number that decides whether this bind is chosen for the nickname
+    pub priority: i32,
+    /// The format of the nickname if this bind is chosen
+    pub template: Template,
 }
 
 impl Groupbind {

@@ -1,10 +1,13 @@
 use itertools::Itertools;
 use rowifi_framework::{context::BotContext, error::FrameworkError};
 use rowifi_models::{
+    bind::{AssetType, Bind},
+    deny_list::{DenyList, DenyListData},
     discord::cache::{CachedGuild, CachedMember},
-    guild::{PartialRoGuild, BypassRoleKind},
+    guild::{BypassRoleKind, PartialRoGuild},
     id::RoleId,
-    user::RoUser, deny_list::{DenyList, DenyListData}, bind::{Bind, AssetType}, roblox::inventory::InventoryItem,
+    roblox::inventory::InventoryItem,
+    user::RoUser,
 };
 use rowifi_roblox::{error::RobloxError, filter::AssetFilterBuilder};
 use std::collections::{HashMap, HashSet};
@@ -72,21 +75,27 @@ impl UpdateUser<'_> {
             }
         }
         let asset_filter = asset_filter.build();
-        let inventory_items = self.ctx.roblox.get_inventory_items(*user_id, asset_filter).await?
+        let inventory_items = self
+            .ctx
+            .roblox
+            .get_inventory_items(*user_id, asset_filter)
+            .await?
             .into_iter()
             .map(|i| match i {
                 InventoryItem::Asset(a) => a.asset_id,
                 InventoryItem::Badge(b) => b.badge_id,
-                InventoryItem::Gamepass(g) => g.gamepass_id
+                InventoryItem::Gamepass(g) => g.gamepass_id,
             })
             .collect::<HashSet<_>>();
 
-        let active_deny_lists = self.guild.deny_lists.0.iter()
-            .filter(|d| {
-                match d.data {
-                    DenyListData::User(u) => u == roblox_user.id,
-                    DenyListData::Group(g) => user_ranks.contains_key(&g)
-                }
+        let active_deny_lists = self
+            .guild
+            .deny_lists
+            .0
+            .iter()
+            .filter(|d| match d.data {
+                DenyListData::User(u) => u == roblox_user.id,
+                DenyListData::Group(g) => user_ranks.contains_key(&g),
             })
             .sorted_by_key(|d| d.action_type)
             .last();
@@ -101,8 +110,8 @@ impl UpdateUser<'_> {
             // or check if the bind is for the Guest role and the user is not in
             // the group
             let to_add = match user_ranks.get(&rankbind.group_id) {
-                Some(rank_id) => *rank_id == rankbind.group_rank_id   ,
-                None => rankbind.group_rank_id == 0
+                Some(rank_id) => *rank_id == rankbind.group_rank_id,
+                None => rankbind.group_rank_id == 0,
             };
             if to_add {
                 if let Some(ref highest) = nickname_bind {
@@ -152,29 +161,60 @@ impl UpdateUser<'_> {
             }
         }
 
-        let mut update = self.ctx.http.update_guild_member(self.server.id.0, self.member.id.0);
-        
-        let has_role_bypass = self.guild.bypass_roles.0.iter().any(|b| b.kind == BypassRoleKind::Roles && self.member.roles.contains(&b.role_id));
+        let mut update = self
+            .ctx
+            .http
+            .update_guild_member(self.server.id.0, self.member.id.0);
+
+        let has_role_bypass = self
+            .guild
+            .bypass_roles
+            .0
+            .iter()
+            .any(|b| b.kind == BypassRoleKind::Roles && self.member.roles.contains(&b.role_id));
         let mut new_roles = self.member.roles.clone();
         new_roles.extend_from_slice(&added_roles);
         new_roles.retain(|r| !removed_roles.contains(r));
-        let new_roles = new_roles.into_iter().unique().map(|r| r.0).collect::<Vec<_>>();
-        if !has_role_bypass {
-            if !added_roles.is_empty() || !removed_roles.is_empty() {
-                update = update.roles(&new_roles);
-            }
+        let new_roles = new_roles
+            .into_iter()
+            .unique()
+            .map(|r| r.0)
+            .collect::<Vec<_>>();
+        // Check if the user has a roles bypass or if no roles are being added or removed
+        if !has_role_bypass && (!added_roles.is_empty() || !removed_roles.is_empty()) {
+            update = update.roles(&new_roles);
         }
 
-        let original_nickname = self.member.nickname.as_ref().map_or_else(|| self.member.username.as_str(), String::as_str);
-        let has_nickname_bypass = self.guild.bypass_roles.0.iter().any(|b| b.kind == BypassRoleKind::Nickname && self.member.roles.contains(&b.role_id));
+        let original_nickname = self
+            .member
+            .nickname
+            .as_ref()
+            .map_or_else(|| self.member.username.as_str(), String::as_str);
+        let has_nickname_bypass =
+            self.guild.bypass_roles.0.iter().any(|b| {
+                b.kind == BypassRoleKind::Nickname && self.member.roles.contains(&b.role_id)
+            });
         let new_nickname = if let Some(nickname_bind) = nickname_bind {
             match nickname_bind {
-                Bind::Rank(r) => r.template.nickname(&roblox_user, self.user.user_id, &self.member.username),
-                Bind::Group(g) => g.template.nickname(&roblox_user, self.user.user_id, &self.member.username),
-                Bind::Asset(a) => a.template.nickname(&roblox_user, self.user.user_id, &self.member.username)
+                Bind::Rank(r) => {
+                    r.template
+                        .nickname(&roblox_user, self.user.user_id, &self.member.username)
+                }
+                Bind::Group(g) => {
+                    g.template
+                        .nickname(&roblox_user, self.user.user_id, &self.member.username)
+                }
+                Bind::Asset(a) => {
+                    a.template
+                        .nickname(&roblox_user, self.user.user_id, &self.member.username)
+                }
             }
         } else {
-            self.guild.default_template.as_ref().unwrap().nickname(&roblox_user, self.user.user_id, &self.member.username)
+            self.guild.default_template.as_ref().unwrap().nickname(
+                &roblox_user,
+                self.user.user_id,
+                &self.member.username,
+            )
         };
 
         if !has_nickname_bypass && (original_nickname != new_nickname) {

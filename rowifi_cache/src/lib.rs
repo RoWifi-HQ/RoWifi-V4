@@ -1,3 +1,5 @@
+#![deny(clippy::all)]
+
 mod event;
 mod process;
 
@@ -5,8 +7,11 @@ pub mod error;
 
 use deadpool_redis::{redis::AsyncCommands, Connection, Pool as RedisPool, PoolError};
 use rowifi_models::{
-    discord::{cache::{CachedGuild, CachedMember}, guild::Member},
-    id::{GuildId, UserId, RoleId},
+    discord::{
+        cache::{CachedGuild, CachedMember},
+        guild::Member,
+    },
+    id::{GuildId, RoleId, UserId},
 };
 use std::sync::Arc;
 

@@ -29,7 +29,7 @@ pub enum Command {
 
 pub enum CommandType {
     Group,
-    Node
+    Node,
 }
 
 pub struct CommandNode {
@@ -86,9 +86,9 @@ impl Service<Request> for Command {
                         _ => {}
                     }
                 }
-                return Box::pin(async move { Ok(()) });
+                Box::pin(async move { Ok(()) })
             }
-            Command::Node(node) => { 
+            Command::Node(node) => {
                 let command_fut = node.service.call(req);
                 let fut = async move {
                     let res = command_fut.await;
@@ -98,7 +98,7 @@ impl Service<Request> for Command {
                     Ok(())
                 };
                 Box::pin(fut)
-            },
+            }
         }
     }
 }

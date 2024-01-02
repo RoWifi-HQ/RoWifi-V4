@@ -1,4 +1,4 @@
-pub mod id;
 pub mod group;
-pub mod user;
+pub mod id;
 pub mod inventory;
+pub mod user;

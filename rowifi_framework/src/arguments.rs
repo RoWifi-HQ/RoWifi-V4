@@ -1,18 +1,30 @@
-use rowifi_models::{discord::application::interaction::application_command::{CommandDataOption, CommandOptionValue}, id::UserId};
-use std::{error::Error as StdError, fmt::{Display, Formatter, Result as FmtResult}};
+use rowifi_models::{
+    discord::application::interaction::application_command::{
+        CommandDataOption, CommandOptionValue,
+    },
+    id::UserId,
+};
+use std::{
+    error::Error as StdError,
+    fmt::{Display, Formatter, Result as FmtResult},
+};
 
 #[allow(dead_code)]
 #[derive(Debug)]
 pub enum ArgumentError {
-    BadArgument
+    BadArgument,
 }
 
 pub trait Arguments {
-    fn from_interaction(options: &[CommandDataOption]) -> Result<Self, ArgumentError> where Self: Sized;
+    fn from_interaction(options: &[CommandDataOption]) -> Result<Self, ArgumentError>
+    where
+        Self: Sized;
 }
 
 pub trait Argument {
-    fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> where Self: Sized;
+    fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError>
+    where
+        Self: Sized;
 }
 
 impl Arguments for () {
@@ -21,11 +33,11 @@ impl Arguments for () {
     }
 }
 
-impl<T: Arguments> Arguments for (T, ) {
+impl<T: Arguments> Arguments for (T,) {
     fn from_interaction(options: &[CommandDataOption]) -> Result<Self, ArgumentError> {
         match T::from_interaction(options) {
             Ok(a) => Ok((a,)),
-            Err(err) => Err(err)
+            Err(err) => Err(err),
         }
     }
 }
@@ -49,7 +61,7 @@ impl Argument for UserId {
 impl Display for ArgumentError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
-            ArgumentError::BadArgument => write!(f, "argument error")
+            ArgumentError::BadArgument => write!(f, "argument error"),
         }
     }
 }

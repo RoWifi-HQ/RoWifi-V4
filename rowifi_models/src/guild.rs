@@ -2,11 +2,15 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use tokio_postgres::types::Json;
 
-use crate::{id::{GuildId, RoleId}, bind::{Rankbind, Groupbind, Assetbind, Template}, deny_list::DenyList};
+use crate::{
+    bind::{Assetbind, Groupbind, Rankbind, Template},
+    deny_list::DenyList,
+    id::{GuildId, RoleId},
+};
 
 #[derive(Debug)]
 pub struct RoGuild {
-    pub guild_id: GuildId
+    pub guild_id: GuildId,
 }
 
 #[derive(Debug)]
@@ -25,7 +29,7 @@ pub struct PartialRoGuild {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BypassRole {
     pub role_id: RoleId,
-    pub kind: BypassRoleKind
+    pub kind: BypassRoleKind,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize_repr, Eq, PartialEq, Serialize_repr)]

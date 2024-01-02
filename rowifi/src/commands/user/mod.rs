@@ -1,11 +1,12 @@
 mod update;
 
-use rowifi_framework::{Framework, command::Command};
+use rowifi_framework::{command::Command, Framework};
 
 use self::update::update_func;
 
 pub fn user_config(framework: &mut Framework) {
-    let update_cmd = Command::builder().node()
+    let update_cmd = Command::builder()
+        .node()
         .name("update")
         .handler(update_func);
 
