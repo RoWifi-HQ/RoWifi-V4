@@ -5,9 +5,12 @@ use serde::{
 };
 use std::{
     error::Error as StdError,
-    fmt::{Formatter, Result as FmtResult},
+    fmt::{Formatter, Result as FmtResult, Display},
 };
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct AssetId(pub u64);
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct GroupId(pub u64);
@@ -17,6 +20,12 @@ pub struct RoleId(pub u64);
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize)]
 pub struct UserId(pub u64);
+
+impl Display for AssetId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        Display::fmt(&self.0, f)
+    }
+}
 
 impl ToSql for UserId {
     fn to_sql(

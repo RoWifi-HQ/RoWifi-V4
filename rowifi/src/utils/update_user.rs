@@ -2,12 +2,12 @@ use itertools::Itertools;
 use rowifi_framework::{context::BotContext, error::FrameworkError};
 use rowifi_models::{
     discord::cache::{CachedGuild, CachedMember},
-    guild::PartialRoGuild,
+    guild::{PartialRoGuild, BypassRoleKind},
     id::RoleId,
-    user::RoUser, deny_list::{DenyList, DenyListData}, bind::Bind,
+    user::RoUser, deny_list::{DenyList, DenyListData}, bind::{Bind, AssetType}, roblox::inventory::InventoryItem,
 };
-use rowifi_roblox::error::RobloxError;
-use std::collections::HashMap;
+use rowifi_roblox::{error::RobloxError, filter::AssetFilterBuilder};
+use std::collections::{HashMap, HashSet};
 
 pub struct UpdateUser<'u> {
     pub ctx: &'u BotContext,
@@ -63,6 +63,24 @@ impl UpdateUser<'_> {
 
         let roblox_user = self.ctx.roblox.get_user(*user_id).await?;
 
+        let mut asset_filter = AssetFilterBuilder::new();
+        for assetbind in &self.guild.assetbinds.0 {
+            match assetbind.asset_type {
+                AssetType::Asset => asset_filter = asset_filter.asset(assetbind.asset_id),
+                AssetType::Badge => asset_filter = asset_filter.badge(assetbind.asset_id),
+                AssetType::Gamepass => asset_filter = asset_filter.gamepass(assetbind.asset_id),
+            }
+        }
+        let asset_filter = asset_filter.build();
+        let inventory_items = self.ctx.roblox.get_inventory_items(*user_id, asset_filter).await?
+            .into_iter()
+            .map(|i| match i {
+                InventoryItem::Asset(a) => a.asset_id,
+                InventoryItem::Badge(b) => b.badge_id,
+                InventoryItem::Gamepass(g) => g.gamepass_id
+            })
+            .collect::<HashSet<_>>();
+
         let active_deny_lists = self.guild.deny_lists.0.iter()
             .filter(|d| {
                 match d.data {
@@ -97,8 +115,7 @@ impl UpdateUser<'_> {
         }
 
         for groupbind in &self.guild.groupbinds.0 {
-            let to_add = user_ranks.contains_key(&groupbind.group_id);
-            if to_add {
+            if user_ranks.contains_key(&groupbind.group_id) {
                 if let Some(ref highest) = nickname_bind {
                     if highest.priority() < groupbind.priority {
                         nickname_bind = Some(Bind::Group(groupbind.clone()));
@@ -108,16 +125,80 @@ impl UpdateUser<'_> {
             }
         }
 
+        // TODO: Add custombinds
+
         for assetbind in &self.guild.assetbinds.0 {
-            
+            if inventory_items.contains(&assetbind.asset_id.0.to_string()) {
+                if let Some(ref highest) = nickname_bind {
+                    if highest.priority() < assetbind.priority {
+                        nickname_bind = Some(Bind::Asset(assetbind.clone()));
+                    }
+                    roles_to_add.extend(assetbind.discord_roles.iter().copied());
+                }
+            }
         }
 
-        todo!()
+        let mut added_roles = Vec::new();
+        let mut removed_roles = Vec::new();
+        for bind_role in self.all_roles {
+            if self.server.roles.contains(bind_role) {
+                if roles_to_add.contains(bind_role) {
+                    if !self.member.roles.contains(bind_role) {
+                        added_roles.push(*bind_role);
+                    }
+                } else if self.member.roles.contains(bind_role) {
+                    removed_roles.push(*bind_role);
+                }
+            }
+        }
+
+        let mut update = self.ctx.http.update_guild_member(self.server.id.0, self.member.id.0);
+        
+        let has_role_bypass = self.guild.bypass_roles.0.iter().any(|b| b.kind == BypassRoleKind::Roles && self.member.roles.contains(&b.role_id));
+        let mut new_roles = self.member.roles.clone();
+        new_roles.extend_from_slice(&added_roles);
+        new_roles.retain(|r| !removed_roles.contains(r));
+        let new_roles = new_roles.into_iter().unique().map(|r| r.0).collect::<Vec<_>>();
+        if !has_role_bypass {
+            if !added_roles.is_empty() || !removed_roles.is_empty() {
+                update = update.roles(&new_roles);
+            }
+        }
+
+        let original_nickname = self.member.nickname.as_ref().map_or_else(|| self.member.username.as_str(), String::as_str);
+        let has_nickname_bypass = self.guild.bypass_roles.0.iter().any(|b| b.kind == BypassRoleKind::Nickname && self.member.roles.contains(&b.role_id));
+        let new_nickname = if let Some(nickname_bind) = nickname_bind {
+            match nickname_bind {
+                Bind::Rank(r) => r.template.nickname(&roblox_user, self.user.user_id, &self.member.username),
+                Bind::Group(g) => g.template.nickname(&roblox_user, self.user.user_id, &self.member.username),
+                Bind::Asset(a) => a.template.nickname(&roblox_user, self.user.user_id, &self.member.username)
+            }
+        } else {
+            self.guild.default_template.as_ref().unwrap().nickname(&roblox_user, self.user.user_id, &self.member.username)
+        };
+
+        if !has_nickname_bypass && (original_nickname != new_nickname) {
+            if new_nickname.len() > 32 {
+                return Err(UpdateUserError::InvalidNickname(new_nickname));
+            }
+
+            update = update.nick(Some(&new_nickname)).unwrap();
+        }
+
+        let _res = update.await?;
+
+        Ok((added_roles, removed_roles, new_nickname))
     }
 }
 
 impl From<RobloxError> for UpdateUserError {
     fn from(err: RobloxError) -> Self {
+        UpdateUserError::Generic(err.into())
+    }
+}
+
+impl From<twilight_http::Error> for UpdateUserError {
+    fn from(err: twilight_http::Error) -> Self {
         UpdateUserError::Generic(err.into())
     }
 }

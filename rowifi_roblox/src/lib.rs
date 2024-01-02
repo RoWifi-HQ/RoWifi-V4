@@ -1,5 +1,6 @@
 pub mod error;
 mod route;
+pub mod filter;
 
 use error::DeserializeBodyError;
 use hyper::{
@@ -9,7 +10,7 @@ use hyper::{
     Body, Client as HyperClient, Method, Request,
 };
 use hyper_rustls::HttpsConnector;
-use rowifi_models::roblox::{group::GroupUserRole, id::UserId, user::PartialUser};
+use rowifi_models::roblox::{group::GroupUserRole, id::UserId, user::PartialUser, inventory::InventoryItem};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -26,6 +27,14 @@ pub struct RobloxClient {
 #[derive(Serialize, Deserialize)]
 pub struct VecWrapper<T> {
     pub data: Vec<T>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct InventoryItems {
+    #[serde(rename = "inventoryItems")]
+    pub inventory_items: Vec<InventoryItem>,
+    #[serde(rename = "nextPageToken")]
+    pub next_page_token: String,
 }
 
 impl RobloxClient {
@@ -117,6 +126,43 @@ impl RobloxClient {
         })?;
 
         Ok(json)
+    }
+
+    pub async fn get_inventory_items(&self, user_id: UserId, asset_filter: String) -> Result<Vec<InventoryItem>, RobloxError> {
+        let route = Route::ListInventoryItems { user_id: user_id.0, filter: asset_filter };
+
+        let request = Request::builder()
+            .uri(route.to_string())
+            .method(Method::GET)
+            .header("x-api-key", &self.open_cloud_auth)
+            .body(Body::empty())
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json = serde_json::from_slice::<InventoryItems>(&bytes).map_err(|source| RobloxError {
+            source: Some(Box::new(DeserializeBodyError {
+                source: Some(Box::new(source)),
+                bytes,
+            })),
+            kind: ErrorKind::Deserialize,
+        })?;
+
+        Ok(json.inventory_items)
     }
 
     async fn request(&self, request: Request<Body>) -> Result<(Parts, Vec<u8>), RobloxError> {

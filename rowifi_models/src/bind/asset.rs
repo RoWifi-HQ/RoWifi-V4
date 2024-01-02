@@ -2,14 +2,14 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use crate::id::RoleId;
+use crate::{id::RoleId, roblox::id::AssetId};
 
 use super::Template;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Assetbind {
     /// The ID of the asset
-    pub asset_id: i64,
+    pub asset_id: AssetId,
     /// The type of the Asset. Can be one of Asset, Badge, Gamepass
     pub asset_type: AssetType,
     /// The discord roles bounded to the asset

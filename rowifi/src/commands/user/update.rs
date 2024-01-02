@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use rowifi_framework::prelude::*;
-use rowifi_models::{id::UserId, user::RoUser};
+use rowifi_models::{id::UserId, user::RoUser, guild::BypassRoleKind};
 
 use crate::{commands::{CommandError, CommandErrorType}, utils::update_user::{UpdateUser, UpdateUserError}};
 
@@ -52,15 +52,16 @@ pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(
         )
         .await?;
 
-    // Check if the user has a bypass role
-    for bypass_role in &guild.bypass_roles {
-        if member.roles.contains(bypass_role) {
+    // Check if the user has a bypass role for both (roles & nickname)
+    for bypass_role in &guild.bypass_roles.0 {
+        if bypass_role.kind == BypassRoleKind::All && member.roles.contains(&bypass_role.role_id) {
             let message = format!(
                 r#"
 <:rowifi:733311296732266577> **Update Bypass Detected**
 
-You have a role (<@&{bypass_role}>) which has been marked as a bypass role.
-            "#
+You have a role (<@&{}>) which has been marked as a bypass role.
+            "#,
+                bypass_role.role_id
             );
             ctx.respond().content(&message).unwrap().exec().await?;
             return Ok(());
