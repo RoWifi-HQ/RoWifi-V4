@@ -43,6 +43,7 @@ pub struct CommandGroup {
 }
 
 impl Command {
+    #[must_use]
     pub fn kind(&self) -> CommandType {
         match self {
             Command::Group(_) => CommandType::Group,
@@ -50,6 +51,7 @@ impl Command {
         }
     }
 
+    #[must_use]
     pub fn name(&self) -> &str {
         match self {
             Command::Group(group) => &group.name,
@@ -57,6 +59,7 @@ impl Command {
         }
     }
 
+    #[must_use]
     pub fn builder() -> CommandBuilder {
         CommandBuilder {}
     }

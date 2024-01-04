@@ -29,6 +29,7 @@ pub enum AssetType {
 }
 
 impl Assetbind {
+    #[must_use]
     pub fn discord_roles(&self) -> &[RoleId] {
         &self.discord_roles
     }

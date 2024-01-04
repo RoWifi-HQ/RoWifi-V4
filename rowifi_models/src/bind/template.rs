@@ -14,6 +14,7 @@ lazy_static! {
 pub struct Template(String);
 
 impl Template {
+    #[must_use]
     pub fn nickname(
         &self,
         roblox_user: &PartialUser,

@@ -27,6 +27,7 @@ pub struct GamepassDetails {
     pub gamepass_id: String,
 }
 
+#[allow(clippy::struct_field_names)]
 #[derive(Deserialize)]
 struct InventoryItemIntermediary {
     #[serde(rename = "assetDetails", default)]
@@ -38,6 +39,7 @@ struct InventoryItemIntermediary {
 }
 
 impl InventoryItem {
+    #[must_use]
     pub const fn kind(&self) -> AssetType {
         match self {
             InventoryItem::Asset(_) => AssetType::Asset,

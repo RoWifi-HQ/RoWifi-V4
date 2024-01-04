@@ -56,10 +56,12 @@ pub mod cache {
     }
 
     impl CachedChannel {
+        #[must_use]
         pub fn key(id: ChannelId) -> String {
             format!("discord:channels:{id}")
         }
 
+        #[must_use]
         pub fn name(&self) -> &str {
             match self {
                 CachedChannel::Text(c) => &c.name,
@@ -68,10 +70,12 @@ pub mod cache {
     }
 
     impl CachedGuild {
+        #[must_use]
         pub fn key(id: GuildId) -> String {
             format!("discord:guilds:{id}")
         }
 
+        #[must_use]
         pub fn from_guild(guild: &Guild) -> Self {
             Self {
                 id: GuildId::new(guild.id.get()),
@@ -86,12 +90,14 @@ pub mod cache {
     }
 
     impl CachedMember {
+        #[must_use]
         pub fn key(guild_id: GuildId, user_id: UserId) -> String {
             format!("discord:m:{guild_id}:{user_id}")
         }
     }
 
     impl CachedRole {
+        #[must_use]
         pub fn key(id: RoleId) -> String {
             format!("discord:roles:{id}")
         }

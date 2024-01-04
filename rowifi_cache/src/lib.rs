@@ -1,4 +1,5 @@
-#![deny(clippy::all)]
+#![deny(clippy::all, clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
 
 mod event;
 mod process;
@@ -26,18 +27,34 @@ pub struct CacheInner {
 pub struct Cache(Arc<CacheInner>);
 
 impl Cache {
+    #[must_use]
     pub fn new(pool: RedisPool) -> Self {
         Self(Arc::new(CacheInner { pool }))
     }
 
+    /// Update data in the cache.
+    ///
+    /// # Errors
+    ///
+    /// Returns Err if the data could not be updated.
     pub async fn update<T: UpdateCache>(&self, value: &T) -> Result<(), CacheError> {
         value.update(self).await
     }
 
+    /// Returns a connection from the pool.
+    ///
+    /// # Errors
+    ///
+    /// Returns Err if there are no more connections left or the connection fails.
     pub async fn get(&self) -> Result<Connection, PoolError> {
         self.0.pool.get().await
     }
 
+    /// Returns the server from the cache.
+    ///
+    /// # Errors
+    ///
+    /// Returns Err if the connection to redis fails or the deserialization fails.
     pub async fn guild(&self, id: GuildId) -> Result<Option<CachedGuild>, CacheError> {
         let mut conn = self.get().await?;
         let res: Option<Vec<u8>> = conn.get(CachedGuild::key(id)).await?;
@@ -49,6 +66,11 @@ impl Cache {
         }
     }
 
+    /// Returns a member from the cache.
+    ///
+    /// # Errors
+    ///
+    /// Returns Err if the connection to redis fails or the deserialization fails.
     pub async fn guild_member(
         &self,
         guild_id: GuildId,
@@ -64,6 +86,11 @@ impl Cache {
         }
     }
 
+    /// Add a member to the cache. Replaces if the member already exists.
+    ///
+    /// # Errors
+    ///
+    /// Returns Err if the connection to redis fails or the serialization fails.
     pub async fn cache_member(
         &self,
         guild_id: GuildId,

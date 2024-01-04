@@ -30,6 +30,7 @@ pub enum UpdateUserError {
 }
 
 impl UpdateUser<'_> {
+    #[allow(clippy::too_many_lines)]
     pub async fn execute(self) -> Result<UpdateUserSuccess, UpdateUserError> {
         let mut roles_to_add = Vec::<RoleId>::new();
         let mut roles_to_remove = Vec::<RoleId>::new();

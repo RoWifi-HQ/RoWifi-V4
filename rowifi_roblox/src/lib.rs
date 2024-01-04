@@ -1,4 +1,5 @@
-#![deny(clippy::all)]
+#![deny(clippy::all, clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
 
 pub mod error;
 pub mod filter;
@@ -42,6 +43,7 @@ pub struct InventoryItems {
 }
 
 impl RobloxClient {
+    #[must_use]
     pub fn new(open_cloud_auth: &str) -> Self {
         let connector = hyper_rustls::HttpsConnectorBuilder::new()
             .with_webpki_roots()
@@ -56,6 +58,11 @@ impl RobloxClient {
         }
     }
 
+    /// Get the ranks of the user of all the groups they are part of.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
     pub async fn get_user_roles(&self, user_id: UserId) -> Result<Vec<GroupUserRole>, RobloxError> {
         let route = Route::GetUserGroupRoles { user_id: user_id.0 };
 
@@ -95,6 +102,11 @@ impl RobloxClient {
         Ok(json.data)
     }
 
+    /// Gets the user from the Roblox Open Cloud API.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
     pub async fn get_user(&self, user_id: UserId) -> Result<PartialUser, RobloxError> {
         let route = Route::GetUser { user_id: user_id.0 };
 
@@ -132,6 +144,11 @@ impl RobloxClient {
         Ok(json)
     }
 
+    /// Get the items in an user's inventory.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
     pub async fn get_inventory_items(
         &self,
         user_id: UserId,

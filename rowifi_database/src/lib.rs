@@ -1,4 +1,5 @@
-#![deny(clippy::all)]
+#![deny(clippy::all, clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
 
 use deadpool_postgres::{Manager, Object, Pool, Runtime};
 use std::{str::FromStr, time::Duration};
@@ -16,6 +17,9 @@ pub struct Database {
 
 impl Database {
     /// Create a connection pool to the database with the given connection string
+    ///
+    /// # Panics
+    /// May panic if the pool is built incorrectly.
     pub async fn new(connection_string: &str) -> Self {
         let postgres_config = TokioPostgresConfig::from_str(connection_string).unwrap();
         let manager = Manager::new(postgres_config, NoTls);
@@ -36,6 +40,9 @@ impl Database {
     }
 
     /// Get a connection from the pool
+    /// # Errors
+    ///
+    /// See [`PoolError`] for details.
     #[inline]
     pub async fn get(&self) -> Result<Object, DatabaseError> {
         let conn = self.pool.get().await?;
@@ -43,6 +50,10 @@ impl Database {
     }
 
     /// Get a list of items from a query. This functions converts the statement query into a prepared statement and caches it.
+    /// # Errors
+    ///
+    /// Return Err if there is a pool error or the query failed to acquire data from the database
+    /// or the returned data could not be deserialized.
     pub async fn query<T>(
         &self,
         statement: &str,
@@ -63,6 +74,10 @@ impl Database {
     }
 
     /// Get an item from a query. Returns [None] if the item does not exist.
+    /// # Errors
+    ///
+    /// Return Err if there is a pool error or the query failed to acquire data from the database
+    /// or the returned data could not be deserialized.
     pub async fn query_opt<T>(
         &self,
         statement: &str,
@@ -82,6 +97,10 @@ impl Database {
     }
 
     /// Execute the given query. Returns the number of rows modified.
+    /// # Errors
+    ///
+    /// Return Err if there is a pool error or the query failed to acquire data from the database
+    /// or the returned data could not be deserialized.
     pub async fn execute(
         &self,
         statement: &str,

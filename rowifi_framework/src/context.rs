@@ -68,6 +68,7 @@ pub enum DeferredResponse {
 }
 
 impl BotContext {
+    #[must_use]
     pub fn new(
         application_id: Id<ApplicationMarker>,
         http: Arc<TwilightClient>,
@@ -84,6 +85,12 @@ impl BotContext {
         }))
     }
 
+    /// Finds the member in the cache or requests it through the http module.
+    ///
+    /// # Errors
+    ///
+    /// Return Err if the request to the cache or http fails or if the member
+    /// doe not exist.
     pub async fn member(
         &self,
         guild_id: GuildId,
@@ -115,6 +122,12 @@ impl BotContext {
         }
     }
 
+    /// Gets the guild from the database. If it does not exist, it creates a row
+    /// in the database and returns it.
+    ///
+    /// # Errors
+    ///
+    /// See [`DatabaseError`](rowifi_database::DatabaseError) for details
     pub async fn get_guild(
         &self,
         statement: &str,
@@ -148,6 +161,11 @@ impl CommandContext {
         Responder::new(self)
     }
 
+    /// Sends an interaction response saying the response will be deferred.
+    ///
+    /// # Errors
+    ///
+    /// See [`TwilightError`](twilight_http::Error) for details.
     pub async fn defer_response(&self, defer: DeferredResponse) -> Result<(), FrameworkError> {
         let data = match defer {
             DeferredResponse::Ephemeral => InteractionResponseData {
@@ -194,6 +212,11 @@ impl<'a> Responder<'a> {
         }
     }
 
+    /// Sets the content of the response.
+    ///
+    /// # Errors
+    ///
+    /// See [`MessageValidationError`] for details.
     pub fn content(mut self, content: &'a str) -> Result<Self, MessageValidationError> {
         _content(content)?;
 
@@ -201,6 +224,11 @@ impl<'a> Responder<'a> {
         Ok(self)
     }
 
+    /// Sets the components of the response.
+    ///
+    /// # Errors
+    ///
+    /// See [`MessageValidationError`] for details.
     pub fn components(
         mut self,
         components: &'a [Component],
@@ -211,6 +239,11 @@ impl<'a> Responder<'a> {
         Ok(self)
     }
 
+    /// Sets the embeds of the response.
+    ///
+    /// # Errors
+    ///
+    /// See [`MessageValidationError`] for details.
     pub fn embeds(mut self, embeds: &'a [Embed]) -> Result<Self, MessageValidationError> {
         _embeds(embeds)?;
 
@@ -218,18 +251,29 @@ impl<'a> Responder<'a> {
         Ok(self)
     }
 
+    /// Sets the files sent in the response.
+    ///
+    /// # Errors
+    ///
+    /// See [`MessageValidationError`] for details.
     #[must_use]
     pub fn files(mut self, files: &'a [Attachment]) -> Self {
         self.files = Some(files);
         self
     }
 
+    /// Sets the response message flags.
+    ///
+    /// # Errors
+    ///
+    /// See [`MessageValidationError`] for details.
     #[must_use]
     pub fn flags(mut self, flags: MessageFlags) -> Self {
         self.flags = Some(flags);
         self
     }
 
+    #[allow(clippy::missing_panics_doc)]
     pub fn exec(self) -> ResponseFuture<Message> {
         if self.ctx.callback_invoked.load(Ordering::Relaxed) {
             let client = self.ctx.bot.http.interaction(self.ctx.bot.application_id);

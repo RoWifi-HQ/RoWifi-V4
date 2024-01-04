@@ -25,20 +25,24 @@ pub enum ErrorKind {
 }
 
 impl FrameworkError {
+    #[must_use]
     pub const fn kind(&self) -> &ErrorKind {
         &self.kind
     }
 
+    #[must_use]
     pub fn into_source(self) -> Option<Box<dyn StdError + Send + Sync>> {
         self.source
     }
 
+    #[must_use]
     pub fn into_parts(self) -> (ErrorKind, Option<Box<dyn StdError + Send + Sync>>) {
         (self.kind, self.source)
     }
 
+    #[must_use]
     pub fn from_parts(kind: ErrorKind, source: Option<Box<dyn StdError + Send + Sync>>) -> Self {
-        Self { kind, source }
+        Self { source, kind }
     }
 }
 

@@ -1,4 +1,5 @@
-#![deny(clippy::all)]
+#![deny(clippy::all, clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
 
 mod commands;
 mod utils;
@@ -26,12 +27,15 @@ use std::{
 use tokio::task::JoinError;
 use tokio_stream::StreamExt;
 use tower::Service;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 use twilight_gateway::{stream::ShardEventStream, Config as GatewayConfig, Event, Intents};
 use twilight_http::Client as TwilightClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer().with_filter(EnvFilter::from_default_env()))
+        .init();
 
     let application_id = std::env::var("APPLICATION_ID")
         .expect("expected the application id")

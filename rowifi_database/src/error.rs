@@ -18,14 +18,17 @@ pub enum ErrorKind {
 }
 
 impl DatabaseError {
+    #[must_use]
     pub const fn kind(&self) -> &ErrorKind {
         &self.kind
     }
 
+    #[must_use]
     pub fn into_source(self) -> Option<Box<dyn StdError + Send + Sync>> {
         self.source
     }
 
+    #[must_use]
     pub fn into_parts(self) -> (ErrorKind, Option<Box<dyn StdError + Send + Sync>>) {
         (self.kind, self.source)
     }

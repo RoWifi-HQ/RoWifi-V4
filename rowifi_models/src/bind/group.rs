@@ -17,6 +17,7 @@ pub struct Groupbind {
 }
 
 impl Groupbind {
+    #[must_use]
     pub fn discord_roles(&self) -> &[RoleId] {
         &self.discord_roles
     }

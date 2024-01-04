@@ -17,6 +17,7 @@ pub enum Bind {
 }
 
 impl Bind {
+    #[must_use]
     pub fn discord_roles(&self) -> &[RoleId] {
         match self {
             Self::Rank(r) => r.discord_roles(),
@@ -25,6 +26,7 @@ impl Bind {
         }
     }
 
+    #[must_use]
     pub fn priority(&self) -> i32 {
         match self {
             Self::Rank(r) => r.priority,

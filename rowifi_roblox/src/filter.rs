@@ -9,25 +9,30 @@ pub struct AssetFilterBuilder {
 }
 
 impl AssetFilterBuilder {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn asset(mut self, asset_id: AssetId) -> Self {
         self.asset_ids.push(asset_id);
         self
     }
 
+    #[must_use]
     pub fn badge(mut self, badge_id: AssetId) -> Self {
         self.badge_ids.push(badge_id);
         self
     }
 
+    #[must_use]
     pub fn gamepass(mut self, gamepass_id: AssetId) -> Self {
         self.gamepass_ids.push(gamepass_id);
         self
     }
 
+    #[must_use]
     pub fn build(self) -> String {
         let mut filters = Vec::new();
 

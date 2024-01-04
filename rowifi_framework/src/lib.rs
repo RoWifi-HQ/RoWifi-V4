@@ -1,4 +1,5 @@
-#![deny(clippy::all)]
+#![deny(clippy::all, clippy::pedantic)]
+#![allow(clippy::similar_names, clippy::module_name_repetitions)]
 
 pub mod arguments;
 pub mod command;
@@ -49,6 +50,7 @@ pub struct Framework {
 }
 
 impl Framework {
+    #[must_use]
     pub fn new(bot: BotContext) -> Self {
         Self {
             bot,
@@ -78,17 +80,17 @@ impl Service<&Event> for Framework {
         match req {
             Event::InteractionCreate(interaction) => {
                 if interaction.kind == InteractionType::ApplicationCommand {
-                    let member = match interaction.member.clone() {
-                        Some(m) => m,
-                        None => return Either::Left(ready(Ok(()))),
+                    let Some(member) = interaction.member.clone() else {
+                        return Either::Left(ready(Ok(())));
                     };
-                    let interaction_data = match &interaction.data {
-                        Some(InteractionData::ApplicationCommand(c)) => c,
-                        _ => return Either::Left(ready(Ok(()))),
+                    let Some(InteractionData::ApplicationCommand(interaction_data)) =
+                        &interaction.data
+                    else {
+                        return Either::Left(ready(Ok(())));
                     };
-                    let command = match self.commands.get_mut(interaction_data.name.as_str()) {
-                        Some(c) => c,
-                        None => return Either::Left(ready(Ok(()))),
+                    let Some(command) = self.commands.get_mut(interaction_data.name.as_str())
+                    else {
+                        return Either::Left(ready(Ok(())));
                     };
 
                     let ctx = CommandContext {

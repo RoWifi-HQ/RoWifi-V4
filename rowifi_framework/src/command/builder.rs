@@ -20,15 +20,19 @@ pub struct CommandNodeBuilder {
 }
 
 impl CommandBuilder {
+    #[allow(clippy::unused_self)]
     pub fn group(self) -> CommandGroupBuilder {
         CommandGroupBuilder {
-            name: "".into(),
+            name: String::new(),
             subcommands: HashMap::new(),
         }
     }
 
+    #[allow(clippy::unused_self)]
     pub fn node(self) -> CommandNodeBuilder {
-        CommandNodeBuilder { name: "".into() }
+        CommandNodeBuilder {
+            name: String::new(),
+        }
     }
 }
 

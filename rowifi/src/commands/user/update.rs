@@ -17,6 +17,7 @@ pub struct UpdateArguments {
     pub user_id: Option<UserId>,
 }
 
+#[tracing::instrument(skip(ctx))]
 pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(), FrameworkError> {
     tracing::debug!("update command invoked");
     ctx.defer_response(DeferredResponse::Normal).await?;
@@ -26,31 +27,31 @@ pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(
         Some(s) => s,
         None => ctx.author_id,
     };
+    tracing::trace!("running on {}", user_id);
 
-    let member = match ctx.bot.member(server.id, user_id).await? {
-        Some(m) => m,
-        None => {
-            // Should not ever happen since slash command guarantees that the user exists.
-            // But handling this nonetheless is useful.
-            let message = format!(
-                r#"
-            <:rowifi:733311296732266577> **Oh no!**
+    let Some(member) = ctx.bot.member(server.id, user_id).await? else {
+        tracing::trace!("could not find user");
+        // Should not ever happen since slash command guarantees that the user exists.
+        // But handling this nonetheless is useful.
+        let message = format!(
+            r#"
+        <:rowifi:733311296732266577> **Oh no!**
 
-            Looks like there is no member with the id {}. 
-            "#,
-                user_id
-            );
-            return Err(CommandError::from((CommandErrorType::UserNotFound, message)).into());
-        }
+        Looks like there is no member with the id {}. 
+        "#,
+            user_id
+        );
+        return Err(CommandError::from((CommandErrorType::UserNotFound, message)).into());
     };
 
-    // if server.owner_id == member.id {
-    //     let message = r#"
-    //     👋 Hey there Server Owner, Discord prevents bots from modifying a server owner's nickname. Hence, RoWifi does not allow running the `/update` command on server owners.
-    //     "#;
-    //     ctx.respond().content(&message).unwrap().exec().await?;
-    //     return Ok(());
-    // }
+    if server.owner_id == member.id {
+        tracing::debug!("update running on server owner. aborting...");
+        let message = r"
+        👋 Hey there Server Owner, Discord prevents bots from modifying a server owner's nickname. Hence, RoWifi does not allow running the `/update` command on server owners.
+        ";
+        ctx.respond().content(message).unwrap().exec().await?;
+        return Ok(());
+    }
 
     let guild = ctx
         .bot
@@ -59,10 +60,12 @@ pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(
             server.id,
         )
         .await?;
+    tracing::trace!(guild = ?guild);
 
     // Check if the user has a bypass role for both (roles & nickname)
     for bypass_role in &guild.bypass_roles.0 {
         if bypass_role.kind == BypassRoleKind::All && member.roles.contains(&bypass_role.role_id) {
+            tracing::debug!("detected bypass role({}). aborting...", bypass_role.role_id);
             let message = format!(
                 r#"
 <:rowifi:733311296732266577> **Update Bypass Detected**
@@ -76,7 +79,7 @@ You have a role (<@&{}>) which has been marked as a bypass role.
         }
     }
 
-    let user = match ctx
+    let Some(user) = ctx
         .bot
         .database
         .query_opt::<RoUser>(
@@ -84,27 +87,26 @@ You have a role (<@&{}>) which has been marked as a bypass role.
             &[&member.id],
         )
         .await?
-    {
-        Some(u) => u,
-        None => {
-            let message = if args.user_id.is_some() {
-                format!(
-                    r#"
+    else {
+        tracing::debug!("user is not in the database");
+        let message = if args.user_id.is_some() {
+            format!(
+                r#"
 Oops, I did not find <@{}> in my database. They are not verified with RoWifi.
-                "#,
-                    member.id
-                )
-            } else {
-                format!(
-                    r#"
+            "#,
+                member.id
+            )
+        } else {
+            format!(
+                r#"
 Hey there, it looks like you're not verified with us. Please run `/verify` to register with us.
-                "#
-                )
-            };
-            ctx.respond().content(&message).unwrap().exec().await?;
-            return Ok(());
-        }
+            "#
+            )
+        };
+        ctx.respond().content(&message).unwrap().exec().await?;
+        return Ok(());
     };
+    tracing::trace!(user = ?user);
 
     let all_roles = guild
         .rankbinds
@@ -126,6 +128,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         Ok(u) => u,
         Err(err) => match err {
             UpdateUserError::DenyList(deny_list) => {
+                tracing::debug!("user on a deny list. {:?}", deny_list);
                 let message = if args.user_id.is_some() {
                     format!(
                         r#"
@@ -146,6 +149,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                 match deny_list.action_type {
                     DenyListActionType::None => {}
                     DenyListActionType::Kick => {
+                        tracing::trace!("kicking them");
                         let _ = ctx
                             .bot
                             .http
@@ -153,6 +157,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                             .await;
                     }
                     DenyListActionType::Ban => {
+                        tracing::trace!("banning them");
                         let _ = ctx.bot.http.create_ban(ctx.guild_id.0, member.id.0).await;
                     }
                 }
@@ -160,6 +165,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                 return Ok(());
             }
             UpdateUserError::InvalidNickname(nickname) => {
+                tracing::debug!("nickname({nickname}) more than 32 characters");
                 let message = if args.user_id.is_some() {
                     format!(
                         r#"
@@ -200,6 +206,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
             }
         },
     };
+    tracing::trace!(added_roles = ?added_roles, removed_roles = ?removed_roles, nickname = ?nickname);
 
     let mut added_str = added_roles.iter().fold(String::new(), |mut s, a| {
         let _ = write!(s, "- <@&{}>\n", a.0);

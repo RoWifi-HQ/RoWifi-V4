@@ -15,7 +15,6 @@ use rowifi_models::{
     },
     id::{ChannelId, GuildId, RoleId, UserId},
 };
-use std::ops::Deref;
 
 use crate::{
     error::CacheError,
@@ -38,18 +37,18 @@ impl UpdateCache for Event {
         };
 
         match self {
-            ChannelCreate(v) => cache.update(v.deref()).await,
-            ChannelDelete(v) => cache.update(v.deref()).await,
-            ChannelUpdate(v) => cache.update(v.deref()).await,
-            GuildCreate(v) => cache.update(v.deref()).await,
+            ChannelCreate(v) => cache.update(&**v).await,
+            ChannelDelete(v) => cache.update(&**v).await,
+            ChannelUpdate(v) => cache.update(&**v).await,
+            GuildCreate(v) => cache.update(&**v).await,
             GuildDelete(v) => cache.update(v).await,
-            GuildUpdate(v) => cache.update(v.deref()).await,
-            InteractionCreate(v) => cache.update(v.deref()).await,
-            MemberAdd(v) => cache.update(v.deref()).await,
+            GuildUpdate(v) => cache.update(&**v).await,
+            InteractionCreate(v) => cache.update(&**v).await,
+            MemberAdd(v) => cache.update(&**v).await,
             MemberChunk(v) => cache.update(v).await,
             MemberRemove(v) => cache.update(v).await,
-            MemberUpdate(v) => cache.update(v.deref()).await,
-            MessageCreate(v) => cache.update(v.deref()).await,
+            MemberUpdate(v) => cache.update(&**v).await,
+            MessageCreate(v) => cache.update(&**v).await,
             RoleCreate(v) => cache.update(v).await,
             RoleUpdate(v) => cache.update(v).await,
             RoleDelete(v) => cache.update(v).await,
@@ -67,7 +66,7 @@ impl UpdateCache for ChannelCreate {
                 let mut pipeline = redis::pipe();
 
                 match cache_guild_channel(&mut pipeline, &self.0) {
-                    Ok(_) => {
+                    Ok(()) => {
                         guild.channels.insert(ChannelId(self.id));
                         pipeline.set(CachedGuild::key(guild_id), rmp_serde::to_vec(&guild)?);
                     }

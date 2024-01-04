@@ -100,6 +100,7 @@ impl ToSql for GuildId {
         ty: &Type,
         out: &mut BytesMut,
     ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        #[allow(clippy::cast_possible_wrap)]
         i64::to_sql(&(self.get() as i64), ty, out)
     }
 
@@ -116,6 +117,7 @@ impl ToSql for UserId {
         ty: &Type,
         out: &mut BytesMut,
     ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        #[allow(clippy::cast_possible_wrap)]
         i64::to_sql(&(self.get() as i64), ty, out)
     }
 
@@ -132,6 +134,7 @@ impl ToSql for RoleId {
         ty: &Type,
         out: &mut BytesMut,
     ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        #[allow(clippy::cast_possible_wrap)]
         i64::to_sql(&(self.get() as i64), ty, out)
     }
 
@@ -148,6 +151,7 @@ impl ToSql for ChannelId {
         ty: &Type,
         out: &mut BytesMut,
     ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        #[allow(clippy::cast_possible_wrap)]
         i64::to_sql(&(self.get() as i64), ty, out)
     }
 
@@ -161,6 +165,7 @@ impl ToSql for ChannelId {
 impl<'a> FromSql<'a> for GuildId {
     fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
         let id = i64::from_sql(ty, raw)?;
+        #[allow(clippy::cast_sign_loss)]
         Ok(Self::new(id as u64))
     }
 
@@ -172,6 +177,7 @@ impl<'a> FromSql<'a> for GuildId {
 impl<'a> FromSql<'a> for UserId {
     fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
         let id = i64::from_sql(ty, raw)?;
+        #[allow(clippy::cast_sign_loss)]
         Ok(Self::new(id as u64))
     }
 
@@ -183,6 +189,7 @@ impl<'a> FromSql<'a> for UserId {
 impl<'a> FromSql<'a> for RoleId {
     fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
         let id = i64::from_sql(ty, raw)?;
+        #[allow(clippy::cast_sign_loss)]
         Ok(Self::new(id as u64))
     }
 
@@ -194,6 +201,7 @@ impl<'a> FromSql<'a> for RoleId {
 impl<'a> FromSql<'a> for ChannelId {
     fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
         let id = i64::from_sql(ty, raw)?;
+        #[allow(clippy::cast_sign_loss)]
         Ok(Self::new(id as u64))
     }
 

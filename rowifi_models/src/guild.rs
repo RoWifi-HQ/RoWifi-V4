@@ -41,6 +41,7 @@ pub enum BypassRoleKind {
 }
 
 impl PartialRoGuild {
+    #[must_use]
     pub fn new(guild_id: GuildId) -> Self {
         Self {
             guild_id,

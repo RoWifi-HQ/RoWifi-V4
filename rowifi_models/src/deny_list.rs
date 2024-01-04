@@ -45,6 +45,7 @@ struct DenyListIntermediary {
 }
 
 impl DenyList {
+    #[must_use]
     pub const fn kind(&self) -> DenyListType {
         match self.data {
             DenyListData::User(_) => DenyListType::User,

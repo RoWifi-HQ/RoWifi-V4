@@ -16,12 +16,22 @@ pub enum ArgumentError {
 }
 
 pub trait Arguments {
+    /// Converts the interaction data into a struct implementing Arguments
+    ///
+    /// # Errors
+    ///
+    /// Return Err if any of the arguments cannot be parsed.
     fn from_interaction(options: &[CommandDataOption]) -> Result<Self, ArgumentError>
     where
         Self: Sized;
 }
 
 pub trait Argument {
+    /// Converts a single field of the interaction data into an Argument struct
+    ///
+    /// # Errors
+    ///
+    /// Return Err if the data cannot be parsed.
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError>
     where
         Self: Sized;
@@ -51,6 +61,7 @@ impl<T: Argument> Argument for Option<T> {
 impl Argument for UserId {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match &option.value {
+            #[allow(clippy::cast_sign_loss)]
             CommandOptionValue::Integer(value) => Ok(UserId::new(*value as u64)),
             CommandOptionValue::User(value) => Ok(UserId(*value)),
             _ => unreachable!("UserId unreached"),

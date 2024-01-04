@@ -33,6 +33,7 @@ impl ToSql for UserId {
         ty: &Type,
         out: &mut BytesMut,
     ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        #[allow(clippy::cast_possible_wrap)]
         i64::to_sql(&(self.0 as i64), ty, out)
     }
 
@@ -46,6 +47,7 @@ impl ToSql for UserId {
 impl<'a> FromSql<'a> for UserId {
     fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
         let id = i64::from_sql(ty, raw)?;
+        #[allow(clippy::cast_sign_loss)]
         Ok(Self(id as u64))
     }
 
@@ -68,6 +70,7 @@ impl<'de> Visitor<'de> for IdVisitor {
     }
 
     fn visit_i64<E: DeError>(self, v: i64) -> Result<Self::Value, E> {
+        #[allow(clippy::cast_sign_loss)]
         let val = v as u64;
         self.visit_u64(val)
     }
