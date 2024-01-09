@@ -2,126 +2,81 @@
 #![allow(clippy::similar_names, clippy::module_name_repetitions)]
 
 pub mod arguments;
-pub mod command;
 pub mod context;
 pub mod error;
-mod handler;
 pub mod prelude;
 
-use futures_util::{
-    future::{ready, Either, Ready},
-    Future,
+use std::sync::atomic::AtomicBool;
+
+use axum::{
+    async_trait,
+    body::Body,
+    extract::FromRequest,
+    http::{Request, StatusCode},
+    response::{IntoResponse, Response},
 };
 use rowifi_models::{
-    discord::{
-        application::interaction::{
-            application_command::CommandDataOption, InteractionData, InteractionType,
-        },
-        gateway::event::Event,
+    discord::application::interaction::{
+        application_command::{CommandDataOption, CommandOptionValue},
+        Interaction, InteractionData, InteractionType,
     },
     id::{ChannelId, GuildId, UserId},
 };
-use std::{
-    collections::HashMap,
-    pin::Pin,
-    sync::atomic::AtomicBool,
-    task::{Context, Poll},
-};
-use tower::Service;
 
-use crate::{
-    command::Command,
-    context::{BotContext, CommandContext},
-    error::FrameworkError,
-};
+use crate::{arguments::Arguments, context::CommandContext};
 
-pub struct Request {
-    pub context: CommandContext,
-    pub interaction: Interaction,
+pub struct Command<A> {
+    pub ctx: CommandContext,
+    pub args: A,
 }
 
-pub struct Interaction {
-    pub data: Vec<CommandDataOption>,
-}
+#[async_trait]
+impl<S, A> FromRequest<S, Body> for Command<A>
+where
+    S: Send + Sync,
+    A: Arguments,
+{
+    type Rejection = Response;
 
-pub struct Framework {
-    bot: BotContext,
-    commands: HashMap<String, Command>,
-}
+    async fn from_request(req: Request<Body>, _state: &S) -> Result<Self, Self::Rejection> {
+        let (_parts, body) = req.into_parts();
+        let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
 
-impl Framework {
-    #[must_use]
-    pub fn new(bot: BotContext) -> Self {
-        Self {
-            bot,
-            commands: HashMap::new(),
+        let interaction = serde_json::from_slice::<Interaction>(&bytes)
+            .map_err(|_err| StatusCode::BAD_REQUEST.into_response())?;
+        if interaction.kind == InteractionType::ApplicationCommand {
+            let data = match &interaction.data {
+                Some(InteractionData::ApplicationCommand(d)) => d,
+                _ => unreachable!(),
+            };
+            let ctx = CommandContext {
+                guild_id: GuildId(interaction.guild_id.unwrap()),
+                channel_id: ChannelId(interaction.channel.as_ref().unwrap().id),
+                author_id: UserId(interaction.author_id().unwrap()),
+                interaction_id: interaction.id,
+                interaction_token: interaction.token,
+                resolved: data.resolved.clone(),
+                callback_invoked: AtomicBool::new(false),
+            };
+            let data = recurse_skip_subcommands(&data.options);
+            let args = A::from_interaction(data).unwrap();
+            Ok(Command { ctx, args })
+        } else {
+            todo!()
         }
     }
-
-    pub fn add_command(&mut self, command: Command) {
-        self.commands.insert(command.name().to_string(), command);
-    }
 }
 
-impl Service<&Event> for Framework {
-    type Response = ();
-    type Error = FrameworkError;
-    type Future = Either<
-        Ready<Result<Self::Response, Self::Error>>,
-        Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>,
-    >;
-
-    fn poll_ready(&mut self, _: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
-        Poll::Ready(Ok(()))
-    }
-
-    fn call(&mut self, req: &Event) -> Self::Future {
-        #[allow(clippy::single_match)]
-        match req {
-            Event::InteractionCreate(interaction) => {
-                if interaction.kind == InteractionType::ApplicationCommand {
-                    let Some(member) = interaction.member.clone() else {
-                        return Either::Left(ready(Ok(())));
-                    };
-                    let Some(InteractionData::ApplicationCommand(interaction_data)) =
-                        &interaction.data
-                    else {
-                        return Either::Left(ready(Ok(())));
-                    };
-                    let Some(command) = self.commands.get_mut(interaction_data.name.as_str())
-                    else {
-                        return Either::Left(ready(Ok(())));
-                    };
-
-                    let ctx = CommandContext {
-                        bot: self.bot.clone(),
-                        guild_id: interaction.guild_id.map(GuildId).unwrap(),
-                        channel_id: interaction
-                            .channel
-                            .as_ref()
-                            .map(|c| c.id)
-                            .map(ChannelId)
-                            .unwrap(),
-                        author_id: UserId(member.user.map(|u| u.id).unwrap()),
-                        interaction_id: interaction.id,
-                        interaction_token: interaction.token.clone(),
-                        resolved: interaction_data.resolved.clone(),
-                        callback_invoked: AtomicBool::new(false),
-                    };
-                    let interaction = Interaction {
-                        data: interaction_data.options.clone(),
-                    };
-                    let req = Request {
-                        context: ctx,
-                        interaction,
-                    };
-
-                    return Either::Right(command.call(req));
-                }
+fn recurse_skip_subcommands(data: &[CommandDataOption]) -> &[CommandDataOption] {
+    if let Some(option) = data.get(0) {
+        match &option.value {
+            CommandOptionValue::SubCommand(options)
+            | CommandOptionValue::SubCommandGroup(options) => {
+                return &options;
             }
-            _ => {}
+            _ => return data,
         }
-        let fut = ready(Ok(()));
-        Either::Left(fut)
     }
+
+    data
 }

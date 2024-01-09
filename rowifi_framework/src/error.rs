@@ -1,3 +1,7 @@
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use rowifi_cache::error::CacheError;
 use rowifi_database::DatabaseError;
 use rowifi_roblox::error::RobloxError;
@@ -67,6 +71,13 @@ impl StdError for FrameworkError {
         self.source
             .as_ref()
             .map(|source| &**source as &(dyn StdError + 'static))
+    }
+}
+
+impl IntoResponse for FrameworkError {
+    fn into_response(self) -> Response {
+        tracing::error!("{self}");
+        StatusCode::OK.into_response()
     }
 }
 

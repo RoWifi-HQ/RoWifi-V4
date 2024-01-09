@@ -52,7 +52,6 @@ pub struct BotContextInner {
 pub struct BotContext(Arc<BotContextInner>);
 
 pub struct CommandContext {
-    pub bot: BotContext,
     pub guild_id: GuildId,
     pub channel_id: ChannelId,
     pub author_id: UserId,
@@ -157,8 +156,8 @@ impl Deref for BotContext {
 }
 
 impl CommandContext {
-    pub fn respond(&self) -> Responder<'_> {
-        Responder::new(self)
+    pub fn respond<'a>(&'a self, bot: &'a BotContext) -> Responder<'a> {
+        Responder::new(self, bot)
     }
 
     /// Sends an interaction response saying the response will be deferred.
@@ -166,7 +165,11 @@ impl CommandContext {
     /// # Errors
     ///
     /// See [`TwilightError`](twilight_http::Error) for details.
-    pub async fn defer_response(&self, defer: DeferredResponse) -> Result<(), FrameworkError> {
+    pub async fn defer_response(
+        &self,
+        bot: &BotContext,
+        defer: DeferredResponse,
+    ) -> Result<(), FrameworkError> {
         let data = match defer {
             DeferredResponse::Ephemeral => InteractionResponseData {
                 flags: Some(MessageFlags::EPHEMERAL),
@@ -175,9 +178,8 @@ impl CommandContext {
             DeferredResponse::Normal => InteractionResponseData::default(),
         };
 
-        self.bot
-            .http
-            .interaction(self.bot.application_id)
+        bot.http
+            .interaction(bot.application_id)
             .create_response(
                 self.interaction_id,
                 &self.interaction_token,
@@ -193,6 +195,7 @@ impl CommandContext {
 
 pub struct Responder<'a> {
     ctx: &'a CommandContext,
+    bot: &'a BotContext,
     content: Option<&'a str>,
     components: Option<&'a [Component]>,
     embeds: Option<&'a [Embed]>,
@@ -201,9 +204,10 @@ pub struct Responder<'a> {
 }
 
 impl<'a> Responder<'a> {
-    pub fn new(ctx: &'a CommandContext) -> Self {
+    pub fn new(ctx: &'a CommandContext, bot: &'a BotContext) -> Self {
         Self {
             ctx,
+            bot,
             content: None,
             components: None,
             embeds: None,
@@ -276,7 +280,7 @@ impl<'a> Responder<'a> {
     #[allow(clippy::missing_panics_doc)]
     pub fn exec(self) -> ResponseFuture<Message> {
         if self.ctx.callback_invoked.load(Ordering::Relaxed) {
-            let client = self.ctx.bot.http.interaction(self.ctx.bot.application_id);
+            let client = self.bot.http.interaction(self.bot.application_id);
             let mut req = client.create_followup(&self.ctx.interaction_token);
             if let Some(content) = self.content {
                 req = req.content(content).unwrap();
@@ -295,7 +299,7 @@ impl<'a> Responder<'a> {
             }
             req.into_future()
         } else {
-            let client = self.ctx.bot.http.interaction(self.ctx.bot.application_id);
+            let client = self.bot.http.interaction(self.bot.application_id);
             let req = client
                 .update_response(&self.ctx.interaction_token)
                 .content(self.content)

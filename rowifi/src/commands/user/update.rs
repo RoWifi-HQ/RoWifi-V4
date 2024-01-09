@@ -1,7 +1,14 @@
+use axum::{response::IntoResponse, Extension, Json};
 use itertools::Itertools;
-use rowifi_framework::prelude::*;
+use rowifi_framework::{context::BotContext, prelude::*, Command};
 use rowifi_models::{
-    deny_list::DenyListActionType, discord::util::Timestamp, guild::BypassRoleKind, id::UserId,
+    deny_list::DenyListActionType,
+    discord::{
+        http::interaction::{InteractionResponse, InteractionResponseType},
+        util::Timestamp,
+    },
+    guild::BypassRoleKind,
+    id::UserId,
     user::RoUser,
 };
 use std::{error::Error, fmt::Write};
@@ -17,11 +24,31 @@ pub struct UpdateArguments {
     pub user_id: Option<UserId>,
 }
 
-#[tracing::instrument(skip(ctx))]
-pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(), FrameworkError> {
+pub async fn update_route(
+    bot: Extension<BotContext>,
+    command: Command<UpdateArguments>,
+) -> impl IntoResponse {
+    tokio::spawn(async move {
+        if let Err(err) = update_func(bot, command).await {
+            tracing::error!(err = ?err);
+        }
+    });
+
+    Json(InteractionResponse {
+        kind: InteractionResponseType::DeferredChannelMessageWithSource,
+        data: None,
+    })
+}
+
+pub async fn update_func(
+    bot: Extension<BotContext>,
+    command: Command<UpdateArguments>,
+) -> Result<(), FrameworkError> {
+    let ctx = command.ctx;
+    let args = command.args;
+
     tracing::debug!("update command invoked");
-    ctx.defer_response(DeferredResponse::Normal).await?;
-    let server = ctx.bot.cache.guild(ctx.guild_id).await?.unwrap();
+    let server = bot.cache.guild(ctx.guild_id).await?.unwrap();
 
     let user_id = match args.user_id {
         Some(s) => s,
@@ -29,7 +56,7 @@ pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(
     };
     tracing::trace!("running on {}", user_id);
 
-    let Some(member) = ctx.bot.member(server.id, user_id).await? else {
+    let Some(member) = bot.member(server.id, user_id).await? else {
         tracing::trace!("could not find user");
         // Should not ever happen since slash command guarantees that the user exists.
         // But handling this nonetheless is useful.
@@ -49,12 +76,11 @@ pub async fn update_func(ctx: CommandContext, args: UpdateArguments) -> Result<(
         let message = r"
         👋 Hey there Server Owner, Discord prevents bots from modifying a server owner's nickname. Hence, RoWifi does not allow running the `/update` command on server owners.
         ";
-        ctx.respond().content(message).unwrap().exec().await?;
+        ctx.respond(&bot).content(message).unwrap().exec().await?;
         return Ok(());
     }
 
-    let guild = ctx
-        .bot
+    let guild = bot
         .get_guild(
             "SELECT guild_id, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, assetbinds, deny_lists, default_template FROM guilds WHERE guild_id = $1",
             server.id,
@@ -74,13 +100,12 @@ You have a role (<@&{}>) which has been marked as a bypass role.
             "#,
                 bypass_role.role_id
             );
-            ctx.respond().content(&message).unwrap().exec().await?;
+            ctx.respond(&bot).content(&message).unwrap().exec().await?;
             return Ok(());
         }
     }
 
-    let Some(user) = ctx
-        .bot
+    let Some(user) = bot
         .database
         .query_opt::<RoUser>(
             "SELECT * FROM roblox_users WHERE user_id = $1",
@@ -103,7 +128,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
             "#
             )
         };
-        ctx.respond().content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().exec().await?;
         return Ok(());
     };
     tracing::trace!(user = ?user);
@@ -117,7 +142,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         .collect::<Vec<_>>();
 
     let update_user = UpdateUser {
-        ctx: &ctx.bot,
+        ctx: &bot,
         member: &member,
         user: &user,
         server: &server,
@@ -144,21 +169,20 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                         deny_list.reason
                     )
                 };
-                ctx.respond().content(&message).unwrap().exec().await?;
+                ctx.respond(&bot).content(&message).unwrap().exec().await?;
 
                 match deny_list.action_type {
                     DenyListActionType::None => {}
                     DenyListActionType::Kick => {
                         tracing::trace!("kicking them");
-                        let _ = ctx
-                            .bot
+                        let _ = bot
                             .http
                             .remove_guild_member(ctx.guild_id.0, member.id.0)
                             .await;
                     }
                     DenyListActionType::Ban => {
                         tracing::trace!("banning them");
-                        let _ = ctx.bot.http.create_ban(ctx.guild_id.0, member.id.0).await;
+                        let _ = bot.http.create_ban(ctx.guild_id.0, member.id.0).await;
                     }
                 }
 
@@ -180,7 +204,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
                     "#,
                     )
                 };
-                ctx.respond().content(&message).unwrap().exec().await?;
+                ctx.respond(&bot).content(&message).unwrap().exec().await?;
 
                 return Ok(());
             }
@@ -197,7 +221,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
                     {
                         if *status == 403 {
                             let message = "There was an error in updating. Run `/debug update` to find potential issues";
-                            ctx.respond().content(message).unwrap().exec().await?;
+                            ctx.respond(&bot).content(message).unwrap().exec().await?;
                             return Ok(());
                         }
                     }
@@ -232,7 +256,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
         .field(EmbedFieldBuilder::new("Added Roles", added_str))
         .field(EmbedFieldBuilder::new("Removed Roles", removed_str))
         .build();
-    ctx.respond().embeds(&[embed]).unwrap().exec().await?;
+    ctx.respond(&bot).embeds(&[embed]).unwrap().exec().await?;
 
     Ok(())
 }

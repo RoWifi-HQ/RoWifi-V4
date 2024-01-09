@@ -4,32 +4,38 @@
 mod commands;
 mod utils;
 
-use commands::user::user_config;
+use axum::{
+    body::Body,
+    extract::Request,
+    http::{StatusCode, Uri},
+    middleware::map_request,
+    response::Response,
+    routing::post,
+    Extension, Json, Router, ServiceExt,
+};
 use deadpool_redis::{Manager as RedisManager, Pool as RedisPool, Runtime};
+use ed25519_dalek::{Verifier, VerifyingKey, PUBLIC_KEY_LENGTH};
+use hex::FromHex;
 use rowifi_cache::Cache;
 use rowifi_database::Database;
-use rowifi_framework::{context::BotContext, Framework};
+use rowifi_framework::context::BotContext;
 use rowifi_models::discord::{
-    gateway::{
-        payload::outgoing::update_presence::UpdatePresencePayload,
-        presence::{ActivityType, MinimalActivity, Status},
-    },
+    application::interaction::{Interaction, InteractionData, InteractionType},
+    http::interaction::{InteractionResponse, InteractionResponseType},
     id::{marker::ApplicationMarker, Id},
 };
 use rowifi_roblox::RobloxClient;
-use std::{
-    error::Error,
-    future::{ready, Ready},
-    sync::Arc,
-    task::{Context, Poll},
-    time::Duration,
+use std::{error::Error, future::Future, pin::Pin, sync::Arc, time::Duration};
+use tokio::net::TcpListener;
+use tower::Layer as _;
+use tower_http::{
+    auth::{AsyncAuthorizeRequest, AsyncRequireAuthorizationLayer},
+    trace::TraceLayer,
 };
-use tokio::task::JoinError;
-use tokio_stream::StreamExt;
-use tower::Service;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
-use twilight_gateway::{stream::ShardEventStream, Config as GatewayConfig, Event, Intents};
 use twilight_http::Client as TwilightClient;
+
+use crate::commands::user::update_route;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -44,13 +50,11 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let connection_string =
         std::env::var("DATABASE_CONN").expect("expected a database connection string.");
     let bot_token = std::env::var("BOT_TOKEN").expect("expected the bot token");
-    let shard_count = std::env::var("SHARDS_COUNT")
-        .expect("expected the shard count")
-        .parse()
-        .unwrap();
     let redis_url = std::env::var("REDIS_CONN").expect("Expected the redis connection url");
     let open_cloud_auth =
         std::env::var("OPEN_CLOUD_AUTH").expect("Expected the open cloud auth key");
+    let discord_public_key =
+        std::env::var("DISCORD_PUBLIC_KEY").expect("Expected the discord public key");
 
     let redis = RedisPool::builder(RedisManager::new(redis_url).unwrap())
         .max_size(16)
@@ -73,84 +77,106 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         roblox,
     );
 
-    let mut framework = Framework::new(bot_context.clone());
-    user_config(&mut framework);
-
-    let mut rowifi = RoWifi {
-        bot: bot_context,
-        framework,
-    };
-
-    let activity = MinimalActivity {
-        kind: ActivityType::Playing,
-        name: "rowifi.xyz".into(),
-        url: None,
-    }
-    .into();
-
-    let shards_config = GatewayConfig::builder(
-        bot_token,
-        Intents::GUILDS | Intents::GUILD_MESSAGES | Intents::GUILD_MEMBERS,
+    let verifying_key = VerifyingKey::from_bytes(
+        &<[u8; PUBLIC_KEY_LENGTH] as FromHex>::from_hex(discord_public_key).unwrap(),
     )
-    .presence(UpdatePresencePayload {
-        activities: vec![activity],
-        afk: false,
-        since: None,
-        status: Status::Online,
-    })
-    .build();
-    let mut shards = twilight_gateway::stream::create_range(
-        0..shard_count,
-        shard_count,
-        shards_config,
-        |_, builder| builder.build(),
-    )
-    .collect::<Vec<_>>();
+    .unwrap();
 
-    let mut stream = ShardEventStream::new(shards.iter_mut());
-    loop {
-        let (shard, event) = match stream.next().await {
-            Some((shard, Ok(event))) => (shard, event),
-            Some((_, Err(source))) => {
-                tracing::warn!("error receiving event {}", source);
-
-                if source.is_fatal() {
-                    break;
-                }
-
-                continue;
-            }
-            None => break,
-        };
-        if let Err(err) = rowifi.bot.cache.update(&event).await {
-            tracing::error!(err = ?err, "cache error: ");
-        }
-        let _ = rowifi.call((shard.id().number(), event)).await;
-    }
+    let middleware = map_request(rewrite_request_uri);
+    let app = Router::new()
+        .route("/", post(pong))
+        .route("/update", post(update_route))
+        .layer(AsyncRequireAuthorizationLayer::new(WebhookAuth))
+        .layer(Extension(Arc::new(verifying_key)))
+        .layer(Extension(bot_context))
+        .layer(TraceLayer::new_for_http());
+    let app_with_middleware = middleware.layer(app);
+    let listener = TcpListener::bind("0.0.0.0:8000").await?;
+    axum::serve(listener, app_with_middleware.into_make_service()).await?;
 
     Ok(())
 }
 
-pub struct RoWifi {
-    pub framework: Framework,
-    pub bot: BotContext,
+async fn pong() -> Json<InteractionResponse> {
+    Json(InteractionResponse {
+        kind: InteractionResponseType::Pong,
+        data: None,
+    })
 }
 
-impl Service<(u64, Event)> for RoWifi {
-    type Response = ();
-    type Error = JoinError;
-    type Future = Ready<Result<Self::Response, Self::Error>>;
+async fn rewrite_request_uri(req: Request) -> Request {
+    let (mut parts, body) = req.into_parts();
+    let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+    let interaction = serde_json::from_slice::<Interaction>(&bytes).unwrap();
 
-    fn poll_ready(&mut self, _: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
-        Poll::Ready(Ok(()))
+    if interaction.kind == InteractionType::ApplicationCommand {
+        let data = match interaction.data {
+            Some(InteractionData::ApplicationCommand(data)) => data,
+            _ => unreachable!(),
+        };
+        let command_name = data.name;
+        let mut uri_parts = parts.uri.into_parts();
+        uri_parts.path_and_query = Some(format!("/{command_name}").parse().unwrap());
+        let new_uri = Uri::from_parts(uri_parts).unwrap();
+        parts.uri = new_uri;
     }
 
-    fn call(&mut self, req: (u64, Event)) -> Self::Future {
-        let fut = self.framework.call(&req.1);
-        tokio::spawn(async move {
-            let _ = fut.await;
-        });
+    let body = Body::from(bytes);
+    let request = Request::from_parts(parts, body);
+    request
+}
 
-        ready(Ok(()))
+#[derive(Clone)]
+struct WebhookAuth;
+
+impl AsyncAuthorizeRequest<Body> for WebhookAuth {
+    type RequestBody = Body;
+    type ResponseBody = Body;
+    type Future =
+        Pin<Box<dyn Future<Output = Result<Request<Body>, Response<Self::ResponseBody>>> + Send>>;
+
+    fn authorize(&mut self, request: Request) -> Self::Future {
+        Box::pin(async move {
+            let verifying_key = request
+                .extensions()
+                .get::<Arc<VerifyingKey>>()
+                .unwrap()
+                .clone();
+
+            let (parts, body) = request.into_parts();
+            let Some(timestamp) = parts.headers.get("x-signature-timestamp") else {
+                return Err(Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(Body::empty())
+                    .unwrap());
+            };
+            let signature = match parts
+                .headers
+                .get("x-signature-ed25519")
+                .and_then(|v| v.to_str().ok())
+            {
+                Some(h) => h.parse().unwrap(),
+                None => {
+                    return Err(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::empty())
+                        .unwrap());
+                }
+            };
+
+            let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+            if verifying_key
+                .verify([timestamp.as_bytes(), &bytes].concat().as_ref(), &signature)
+                .is_err()
+            {
+                return Err(Response::builder()
+                    .status(StatusCode::UNAUTHORIZED)
+                    .body(Body::empty())
+                    .unwrap());
+            }
+
+            let body = Body::from(bytes);
+            Ok(Request::from_parts(parts, body))
+        })
     }
 }
