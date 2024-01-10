@@ -3,7 +3,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use tokio_postgres::types::Json;
 
 use crate::{
-    bind::{Assetbind, Groupbind, Rankbind, Template},
+    bind::{Assetbind, Custombind, Groupbind, Rankbind, Template},
     deny_list::DenyList,
     id::{GuildId, RoleId},
 };
@@ -22,6 +22,7 @@ pub struct PartialRoGuild {
     pub rankbinds: Json<Vec<Rankbind>>,
     pub groupbinds: Json<Vec<Groupbind>>,
     pub assetbinds: Json<Vec<Assetbind>>,
+    pub custombinds: Json<Vec<Custombind>>,
     pub deny_lists: Json<Vec<DenyList>>,
     pub default_template: Option<Template>,
 }
@@ -51,6 +52,7 @@ impl PartialRoGuild {
             rankbinds: Json(Vec::new()),
             groupbinds: Json(Vec::new()),
             assetbinds: Json(Vec::new()),
+            custombinds: Json(Vec::new()),
             deny_lists: Json(Vec::new()),
             default_template: None,
         }
@@ -68,6 +70,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
         let rankbinds = row.try_get("rankbinds")?;
         let groupbinds = row.try_get("groupbinds")?;
         let assetbinds = row.try_get("assetbinds")?;
+        let custombinds = row.try_get("custombinds")?;
         let deny_lists = row.try_get("deny_lists")?;
         let default_template = row.try_get("default_template").unwrap_or_default();
 
@@ -79,6 +82,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             rankbinds,
             groupbinds,
             assetbinds,
+            custombinds,
             deny_lists,
             default_template,
         })

@@ -1,6 +1,5 @@
-use axum::{response::IntoResponse, Extension, Json};
 use itertools::Itertools;
-use rowifi_framework::{context::BotContext, prelude::*, Command};
+use rowifi_framework::prelude::*;
 use rowifi_models::{
     deny_list::DenyListActionType,
     discord::{
@@ -29,7 +28,7 @@ pub async fn update_route(
     command: Command<UpdateArguments>,
 ) -> impl IntoResponse {
     tokio::spawn(async move {
-        if let Err(err) = update_func(bot, command).await {
+        if let Err(err) = update_func(bot, command.ctx, command.args).await {
             tracing::error!(err = ?err);
         }
     });
@@ -40,13 +39,12 @@ pub async fn update_route(
     })
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn update_func(
     bot: Extension<BotContext>,
-    command: Command<UpdateArguments>,
+    ctx: CommandContext,
+    args: UpdateArguments,
 ) -> Result<(), FrameworkError> {
-    let ctx = command.ctx;
-    let args = command.args;
-
     tracing::debug!("update command invoked");
     let server = bot.cache.guild(ctx.guild_id).await?.unwrap();
 
@@ -82,7 +80,7 @@ pub async fn update_func(
 
     let guild = bot
         .get_guild(
-            "SELECT guild_id, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, assetbinds, deny_lists, default_template FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, custombinds, assetbinds, deny_lists, default_template FROM guilds WHERE guild_id = $1",
             server.id,
         )
         .await?;

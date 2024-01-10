@@ -110,11 +110,10 @@ async fn rewrite_request_uri(req: Request) -> Request {
     let interaction = serde_json::from_slice::<Interaction>(&bytes).unwrap();
 
     if interaction.kind == InteractionType::ApplicationCommand {
-        let data = match interaction.data {
-            Some(InteractionData::ApplicationCommand(data)) => data,
-            _ => unreachable!(),
+        let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
+            unreachable!()
         };
-        let command_name = data.name;
+        let command_name = &data.name;
         let mut uri_parts = parts.uri.into_parts();
         uri_parts.path_and_query = Some(format!("/{command_name}").parse().unwrap());
         let new_uri = Uri::from_parts(uri_parts).unwrap();
@@ -122,8 +121,7 @@ async fn rewrite_request_uri(req: Request) -> Request {
     }
 
     let body = Body::from(bytes);
-    let request = Request::from_parts(parts, body);
-    request
+    Request::from_parts(parts, body)
 }
 
 #[derive(Clone)]

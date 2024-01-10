@@ -135,7 +135,16 @@ impl UpdateUser<'_> {
             }
         }
 
-        // TODO: Add custombinds
+        for custombind in &self.guild.custombinds.0 {
+            if custombind.evaluate() {
+                if let Some(ref highest) = nickname_bind {
+                    if highest.priority() < custombind.priority {
+                        nickname_bind = Some(Bind::Custom(custombind.clone()));
+                    }
+                    roles_to_add.extend(custombind.discord_roles.iter().copied());
+                }
+            }
+        }
 
         for assetbind in &self.guild.assetbinds.0 {
             if inventory_items.contains(&assetbind.asset_id.0.to_string()) {
@@ -207,6 +216,10 @@ impl UpdateUser<'_> {
                 }
                 Bind::Asset(a) => {
                     a.template
+                        .nickname(&roblox_user, self.user.user_id, &self.member.username)
+                }
+                Bind::Custom(c) => {
+                    c.template
                         .nickname(&roblox_user, self.user.user_id, &self.member.username)
                 }
             }

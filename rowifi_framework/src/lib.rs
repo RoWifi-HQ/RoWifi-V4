@@ -45,9 +45,8 @@ where
         let interaction = serde_json::from_slice::<Interaction>(&bytes)
             .map_err(|_err| StatusCode::BAD_REQUEST.into_response())?;
         if interaction.kind == InteractionType::ApplicationCommand {
-            let data = match &interaction.data {
-                Some(InteractionData::ApplicationCommand(d)) => d,
-                _ => unreachable!(),
+            let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
+                unreachable!()
             };
             let ctx = CommandContext {
                 guild_id: GuildId(interaction.guild_id.unwrap()),
@@ -68,11 +67,11 @@ where
 }
 
 fn recurse_skip_subcommands(data: &[CommandDataOption]) -> &[CommandDataOption] {
-    if let Some(option) = data.get(0) {
+    if let Some(option) = data.first() {
         match &option.value {
             CommandOptionValue::SubCommand(options)
             | CommandOptionValue::SubCommandGroup(options) => {
-                return &options;
+                return options;
             }
             _ => return data,
         }
