@@ -10,13 +10,10 @@ use rowifi_models::{
     id::UserId,
     user::RoUser,
 };
-use std::{error::Error, fmt::Write};
+use std::{fmt::Write, error::Error};
 use twilight_http::error::{Error as DiscordHttpError, ErrorType as DiscordErrorType};
 
-use crate::{
-    commands::{CommandError, CommandErrorType},
-    utils::update_user::{UpdateUser, UpdateUserError},
-};
+use crate::utils::update_user::{UpdateUser, UpdateUserError};
 
 #[derive(Arguments, Debug)]
 pub struct UpdateArguments {
@@ -44,7 +41,7 @@ pub async fn update_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
     args: UpdateArguments,
-) -> Result<(), FrameworkError> {
+) -> CommandResult {
     tracing::debug!("update command invoked");
     let server = bot.cache.guild(ctx.guild_id).await?.unwrap();
 
@@ -66,7 +63,8 @@ pub async fn update_func(
         "#,
             user_id
         );
-        return Err(CommandError::from((CommandErrorType::UserNotFound, message)).into());
+        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        return Ok(());
     };
 
     if server.owner_id == member.id {

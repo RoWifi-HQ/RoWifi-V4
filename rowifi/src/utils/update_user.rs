@@ -1,5 +1,6 @@
 use itertools::Itertools;
-use rowifi_framework::{context::BotContext, error::FrameworkError};
+use rowifi_core::error::RoError;
+use rowifi_framework::context::BotContext;
 use rowifi_models::{
     bind::{AssetType, Bind},
     deny_list::{DenyList, DenyListData},
@@ -26,7 +27,7 @@ type UpdateUserSuccess = (Vec<RoleId>, Vec<RoleId>, String);
 pub enum UpdateUserError {
     DenyList(DenyList),
     InvalidNickname(String),
-    Generic(FrameworkError),
+    Generic(RoError),
 }
 
 impl UpdateUser<'_> {

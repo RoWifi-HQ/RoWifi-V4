@@ -1,7 +1,3 @@
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
 use rowifi_cache::error::CacheError;
 use rowifi_database::DatabaseError;
 use rowifi_roblox::error::RobloxError;
@@ -11,10 +7,8 @@ use std::{
 };
 use twilight_http::{response::DeserializeBodyError, Error as DiscordHttpError};
 
-use crate::arguments::ArgumentError;
-
 #[derive(Debug)]
-pub struct FrameworkError {
+pub struct RoError {
     source: Option<Box<dyn StdError + Send + Sync>>,
     kind: ErrorKind,
 }
@@ -22,13 +16,12 @@ pub struct FrameworkError {
 #[derive(Debug)]
 pub enum ErrorKind {
     Cache,
-    Command,
     Database,
     Discord,
     Roblox,
 }
 
-impl FrameworkError {
+impl RoError {
     #[must_use]
     pub const fn kind(&self) -> &ErrorKind {
         &self.kind
@@ -50,11 +43,10 @@ impl FrameworkError {
     }
 }
 
-impl Display for FrameworkError {
+impl Display for RoError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self.kind {
             ErrorKind::Cache => f.write_str("cache error: ")?,
-            ErrorKind::Command => f.write_str("command error: ")?,
             ErrorKind::Database => f.write_str("database error: ")?,
             ErrorKind::Discord => f.write_str("discord error: ")?,
             ErrorKind::Roblox => f.write_str("roblox error: ")?,
@@ -66,7 +58,7 @@ impl Display for FrameworkError {
     }
 }
 
-impl StdError for FrameworkError {
+impl StdError for RoError {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         self.source
             .as_ref()
@@ -74,23 +66,7 @@ impl StdError for FrameworkError {
     }
 }
 
-impl IntoResponse for FrameworkError {
-    fn into_response(self) -> Response {
-        tracing::error!("{self}");
-        StatusCode::OK.into_response()
-    }
-}
-
-impl From<ArgumentError> for FrameworkError {
-    fn from(err: ArgumentError) -> Self {
-        Self {
-            source: Some(Box::new(err)),
-            kind: ErrorKind::Command,
-        }
-    }
-}
-
-impl From<CacheError> for FrameworkError {
+impl From<CacheError> for RoError {
     fn from(err: CacheError) -> Self {
         Self {
             source: Some(Box::new(err)),
@@ -99,7 +75,7 @@ impl From<CacheError> for FrameworkError {
     }
 }
 
-impl From<DiscordHttpError> for FrameworkError {
+impl From<DiscordHttpError> for RoError {
     fn from(err: DiscordHttpError) -> Self {
         Self {
             source: Some(Box::new(err)),
@@ -108,7 +84,7 @@ impl From<DiscordHttpError> for FrameworkError {
     }
 }
 
-impl From<DeserializeBodyError> for FrameworkError {
+impl From<DeserializeBodyError> for RoError {
     fn from(err: DeserializeBodyError) -> Self {
         Self {
             source: Some(Box::new(err)),
@@ -117,7 +93,7 @@ impl From<DeserializeBodyError> for FrameworkError {
     }
 }
 
-impl From<DatabaseError> for FrameworkError {
+impl From<DatabaseError> for RoError {
     fn from(err: DatabaseError) -> Self {
         Self {
             source: Some(Box::new(err)),
@@ -126,7 +102,7 @@ impl From<DatabaseError> for FrameworkError {
     }
 }
 
-impl From<RobloxError> for FrameworkError {
+impl From<RobloxError> for RoError {
     fn from(err: RobloxError) -> Self {
         Self {
             source: Some(Box::new(err)),

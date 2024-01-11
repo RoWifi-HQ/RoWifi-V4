@@ -49,6 +49,8 @@ pub struct InventoryItems {
 pub struct GroupRanks {
     #[serde(rename = "groupRoles")]
     pub ranks: Vec<GroupRole>,
+    #[serde(rename = "nextPageToken", default)]
+    pub next_page_token: Option<String>,
 }
 
 impl RobloxClient {
@@ -203,6 +205,11 @@ impl RobloxClient {
         Ok(json.inventory_items)
     }
 
+    /// Get the ranks of a Roblox Group. Follows the pagination if necessary.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
     pub async fn get_group_ranks(
         &self,
         group_id: GroupId,
@@ -210,43 +217,63 @@ impl RobloxClient {
         let route = Route::ListGroupRanks {
             group_id: group_id.0,
         };
+        let mut ranks = Vec::new();
+        let mut next_page_token = None;
 
-        let request = Request::builder()
-            .uri(route.to_string())
-            .method(Method::GET)
-            .header("x-api-key", &self.open_cloud_auth)
-            .body(Body::empty())
-            .map_err(|source| RobloxError {
-                source: Some(Box::new(source)),
-                kind: ErrorKind::BuildingRequest,
-            })?;
+        loop {
+            let mut route = route.to_string();
+            if let Some(next_page_token) = next_page_token {
+                route.push_str(&format!("&pageToken={next_page_token}"));
+            }
+            let request = Request::builder()
+                .uri(&route)
+                .method(Method::GET)
+                .header("x-api-key", &self.open_cloud_auth)
+                .body(Body::empty())
+                .map_err(|source| RobloxError {
+                    source: Some(Box::new(source)),
+                    kind: ErrorKind::BuildingRequest,
+                })?;
 
-        let (parts, bytes) = self.request(request).await?;
+            let (parts, bytes) = self.request(request).await?;
 
-        if parts.status == StatusCode::BAD_REQUEST {
-            return Ok(None);
+            if parts.status == StatusCode::BAD_REQUEST {
+                return Ok(None);
+            }
+
+            if !parts.status.is_success() {
+                return Err(RobloxError {
+                    source: None,
+                    kind: ErrorKind::Response {
+                        route,
+                        status: parts.status,
+                        bytes,
+                    },
+                });
+            }
+
+            let json =
+                serde_json::from_slice::<GroupRanks>(&bytes).map_err(|source| RobloxError {
+                    source: Some(Box::new(DeserializeBodyError {
+                        source: Some(Box::new(source)),
+                        bytes,
+                    })),
+                    kind: ErrorKind::Deserialize,
+                })?;
+            tracing::trace!(?json);
+            ranks.extend(json.ranks.into_iter());
+            if let Some(npt) = json.next_page_token {
+                if !npt.is_empty() {
+                    next_page_token = Some(npt);
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
         }
 
-        if !parts.status.is_success() {
-            return Err(RobloxError {
-                source: None,
-                kind: ErrorKind::Response {
-                    route: route.to_string(),
-                    status: parts.status,
-                    bytes,
-                },
-            });
-        }
-
-        let json = serde_json::from_slice::<GroupRanks>(&bytes).map_err(|source| RobloxError {
-            source: Some(Box::new(DeserializeBodyError {
-                source: Some(Box::new(source)),
-                bytes,
-            })),
-            kind: ErrorKind::Deserialize,
-        })?;
-
-        Ok(Some(json.ranks))
+        Ok(Some(ranks))
     }
 
     async fn request(&self, request: Request<Body>) -> Result<(Parts, Vec<u8>), RobloxError> {

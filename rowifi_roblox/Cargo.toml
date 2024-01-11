@@ -12,3 +12,4 @@ itertools = { version = "0.12" }
 rowifi_models = { path = "../rowifi_models" }
 serde = { version = "1.0" }
 serde_json = { version = "1.0" }
+tracing = { version = "0.1" }

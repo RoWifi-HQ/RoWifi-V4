@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 axum = { version = "0.7" }
 rowifi_cache = { path = "../rowifi_cache" }
+rowifi_core = { path = "../rowifi_core" }
 rowifi_database = { path = "../rowifi_database" }
 rowifi_derive = { path = "../rowifi_derive" }
 rowifi_models = { path = "../rowifi_models" }

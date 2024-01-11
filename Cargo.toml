@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "rowifi", 
-    "rowifi_cache",
+    "rowifi_cache", 
+    "rowifi_core",
     "rowifi_database", 
     "rowifi_derive", 
     "rowifi_framework", 

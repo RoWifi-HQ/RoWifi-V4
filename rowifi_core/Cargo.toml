@@ -1,0 +1,14 @@
+[package]
+name = "rowifi_core"
+version = "4.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rowifi_cache = { path = "../rowifi_cache" }
+rowifi_database = { path = "../rowifi_database" }
+rowifi_models = { path = "../rowifi_models" }
+rowifi_roblox = { path = "../rowifi_roblox" }
+time = { version = "0.3", default-features = false, features = ["std"] }
+twilight-http = { branch = "main", git = "https://github.com/twilight-rs/twilight", default-features = false, features = ["rustls-webpki-roots"] }

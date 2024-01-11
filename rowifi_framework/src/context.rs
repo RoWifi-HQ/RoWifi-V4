@@ -1,4 +1,5 @@
 use rowifi_cache::Cache;
+use rowifi_core::error::RoError;
 use rowifi_database::Database;
 use rowifi_models::{
     discord::{
@@ -35,8 +36,6 @@ use twilight_http::{
 use twilight_validate::message::{
     components as _components, content as _content, embeds as _embeds, MessageValidationError,
 };
-
-use crate::error::FrameworkError;
 
 pub struct BotContextInner {
     pub application_id: Id<ApplicationMarker>,
@@ -94,7 +93,7 @@ impl BotContext {
         &self,
         guild_id: GuildId,
         user_id: UserId,
-    ) -> Result<Option<CachedMember>, FrameworkError> {
+    ) -> Result<Option<CachedMember>, RoError> {
         if let Some(member) = self.cache.guild_member(guild_id, user_id).await? {
             return Ok(Some(member));
         }
@@ -131,7 +130,7 @@ impl BotContext {
         &self,
         statement: &str,
         guild_id: GuildId,
-    ) -> Result<PartialRoGuild, FrameworkError> {
+    ) -> Result<PartialRoGuild, RoError> {
         let res = self
             .database
             .query_opt::<PartialRoGuild>(statement, &[&guild_id])
@@ -146,7 +145,7 @@ impl BotContext {
         }
     }
 
-    pub async fn server(&self, guild_id: GuildId) -> Result<CachedGuild, FrameworkError> {
+    pub async fn server(&self, guild_id: GuildId) -> Result<CachedGuild, RoError> {
         if let Ok(guild) = self.cache.guild(guild_id).await {
             Ok(guild.unwrap())
         } else {
@@ -179,7 +178,7 @@ impl CommandContext {
         &self,
         bot: &BotContext,
         defer: DeferredResponse,
-    ) -> Result<(), FrameworkError> {
+    ) -> Result<(), RoError> {
         let data = match defer {
             DeferredResponse::Ephemeral => InteractionResponseData {
                 flags: Some(MessageFlags::EPHEMERAL),

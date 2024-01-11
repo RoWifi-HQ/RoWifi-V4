@@ -11,13 +11,13 @@ hex = { version = "0.4" }
 itertools = { version = "0.12" }
 redis = { version = "0.23", default-features = false, features = ["aio", "tokio-comp", "connection-manager"] }
 rowifi_cache = { path = "../rowifi_cache" }
+rowifi_core = { path = "../rowifi_core" }
 rowifi_database = { path = "../rowifi_database" }
 rowifi_framework = { path = "../rowifi_framework" }
 rowifi_models = { path = "../rowifi_models" }
 rowifi_roblox = { path = "../rowifi_roblox" }
 serde_json = { version = "1" }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-tokio-stream = { version = "0.1" }
 tower = { version = "0.4", default-features = false }
 tower-http = { version = "0.5", features = ["auth", "trace"] }
 tracing = "0.1"

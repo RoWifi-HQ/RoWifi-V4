@@ -3,7 +3,6 @@
 
 pub mod arguments;
 pub mod context;
-pub mod error;
 pub mod prelude;
 
 use std::sync::atomic::AtomicBool;
