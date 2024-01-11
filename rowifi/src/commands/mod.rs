@@ -5,6 +5,7 @@ use std::{
     fmt::{Display, Formatter, Result as FmtResult},
 };
 
+pub mod rankbinds;
 pub mod user;
 
 #[derive(Debug)]

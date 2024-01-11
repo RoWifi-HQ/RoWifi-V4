@@ -2,6 +2,7 @@ use bytes::BytesMut;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
 
 use crate::{id::UserId, roblox::user::PartialUser};
@@ -11,7 +12,7 @@ lazy_static! {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Template(String);
+pub struct Template(pub String);
 
 impl Template {
     #[must_use]
@@ -95,5 +96,11 @@ impl<'a> FromSql<'a> for Template {
 
     fn accepts(ty: &Type) -> bool {
         <String as FromSql>::accepts(ty)
+    }
+}
+
+impl Display for Template {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}", self.0)
     }
 }

@@ -10,11 +10,14 @@ use hyper::{
     body::{self, Buf},
     client::HttpConnector,
     http::response::Parts,
-    Body, Client as HyperClient, Method, Request,
+    Body, Client as HyperClient, Method, Request, StatusCode,
 };
 use hyper_rustls::HttpsConnector;
 use rowifi_models::roblox::{
-    group::GroupUserRole, id::UserId, inventory::InventoryItem, user::PartialUser,
+    group::{GroupRole, GroupUserRole},
+    id::{GroupId, UserId},
+    inventory::InventoryItem,
+    user::PartialUser,
 };
 use serde::{Deserialize, Serialize};
 
@@ -40,6 +43,12 @@ pub struct InventoryItems {
     pub inventory_items: Vec<InventoryItem>,
     #[serde(rename = "nextPageToken")]
     pub next_page_token: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GroupRanks {
+    #[serde(rename = "groupRoles")]
+    pub ranks: Vec<GroupRole>,
 }
 
 impl RobloxClient {
@@ -192,6 +201,52 @@ impl RobloxClient {
             })?;
 
         Ok(json.inventory_items)
+    }
+
+    pub async fn get_group_ranks(
+        &self,
+        group_id: GroupId,
+    ) -> Result<Option<Vec<GroupRole>>, RobloxError> {
+        let route = Route::ListGroupRanks {
+            group_id: group_id.0,
+        };
+
+        let request = Request::builder()
+            .uri(route.to_string())
+            .method(Method::GET)
+            .header("x-api-key", &self.open_cloud_auth)
+            .body(Body::empty())
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if parts.status == StatusCode::BAD_REQUEST {
+            return Ok(None);
+        }
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json = serde_json::from_slice::<GroupRanks>(&bytes).map_err(|source| RobloxError {
+            source: Some(Box::new(DeserializeBodyError {
+                source: Some(Box::new(source)),
+                bytes,
+            })),
+            kind: ErrorKind::Deserialize,
+        })?;
+
+        Ok(Some(json.ranks))
     }
 
     async fn request(&self, request: Request<Body>) -> Result<(Parts, Vec<u8>), RobloxError> {

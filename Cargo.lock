@@ -312,6 +312,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
 dependencies = [
  "powerfmt",
+ "serde",
 ]
 
 [[package]]
@@ -1036,6 +1037,7 @@ dependencies = [
  "postgres-protocol",
  "serde",
  "serde_json",
+ "time",
 ]
 
 [[package]]
@@ -1247,6 +1249,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "twilight-http",
+ "twilight-mention",
 ]
 
 [[package]]
@@ -1293,6 +1296,7 @@ dependencies = [
  "tower",
  "tracing",
  "twilight-http",
+ "twilight-mention",
  "twilight-util",
  "twilight-validate",
 ]
@@ -1306,6 +1310,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_repr",
+ "time",
  "tokio-postgres",
  "twilight-model",
 ]
@@ -1869,6 +1874,14 @@ dependencies = [
  "http 0.2.11",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "twilight-mention"
+version = "0.15.3"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#29d213393b863aff6e013822299baff91539e643"
+dependencies = [
+ "twilight-model",
 ]
 
 [[package]]

@@ -20,7 +20,10 @@ use rowifi_cache::Cache;
 use rowifi_database::Database;
 use rowifi_framework::context::BotContext;
 use rowifi_models::discord::{
-    application::interaction::{Interaction, InteractionData, InteractionType},
+    application::{
+        command::CommandOptionType,
+        interaction::{Interaction, InteractionData, InteractionType},
+    },
     http::interaction::{InteractionResponse, InteractionResponseType},
     id::{marker::ApplicationMarker, Id},
 };
@@ -35,7 +38,7 @@ use tower_http::{
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 use twilight_http::Client as TwilightClient;
 
-use crate::commands::user::update_route;
+use crate::commands::{rankbinds::new_rankbind, user::update_route};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -86,6 +89,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let app = Router::new()
         .route("/", post(pong))
         .route("/update", post(update_route))
+        .route("/rankbinds/new", post(new_rankbind))
         .layer(AsyncRequireAuthorizationLayer::new(WebhookAuth))
         .layer(Extension(Arc::new(verifying_key)))
         .layer(Extension(bot_context))
@@ -113,9 +117,24 @@ async fn rewrite_request_uri(req: Request) -> Request {
         let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
             unreachable!()
         };
-        let command_name = &data.name;
+        let subcommand_name = if let Some(option) = data.options.first() {
+            if option.value.kind() == CommandOptionType::SubCommand
+                || option.value.kind() == CommandOptionType::SubCommandGroup
+            {
+                Some(&option.name)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        let command_name = if let Some(subcommand_name) = subcommand_name {
+            format!("/{}/{subcommand_name}", data.name)
+        } else {
+            format!("/{}", data.name)
+        };
         let mut uri_parts = parts.uri.into_parts();
-        uri_parts.path_and_query = Some(format!("/{command_name}").parse().unwrap());
+        uri_parts.path_and_query = Some(command_name.parse().unwrap());
         let new_uri = Uri::from_parts(uri_parts).unwrap();
         parts.uri = new_uri;
     }

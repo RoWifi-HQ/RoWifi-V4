@@ -13,7 +13,7 @@ pub struct Rankbind {
     /// The ID (0-255) of the rank
     pub group_rank_id: u32,
     /// The global rank ID
-    pub roblox_rank_id: u64,
+    pub roblox_rank_id: String,
     /// The priority of the bind. Used for determining the nickname
     pub priority: i32,
     /// The format of the nickname

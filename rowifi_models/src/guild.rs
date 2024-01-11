@@ -64,14 +64,26 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
 
     fn try_from(row: tokio_postgres::Row) -> Result<Self, Self::Error> {
         let guild_id = row.try_get("guild_id")?;
-        let bypass_roles = row.try_get("bypass_roles")?;
+        let bypass_roles = row
+            .try_get("bypass_roles")
+            .unwrap_or_else(|_| Json(Vec::new()));
         let unverified_roles = row.try_get("unverified_roles").unwrap_or_default();
         let verified_roles = row.try_get("verified_roles").unwrap_or_default();
-        let rankbinds = row.try_get("rankbinds")?;
-        let groupbinds = row.try_get("groupbinds")?;
-        let assetbinds = row.try_get("assetbinds")?;
-        let custombinds = row.try_get("custombinds")?;
-        let deny_lists = row.try_get("deny_lists")?;
+        let rankbinds = row
+            .try_get("rankbinds")
+            .unwrap_or_else(|_| Json(Vec::new()));
+        let groupbinds = row
+            .try_get("groupbinds")
+            .unwrap_or_else(|_| Json(Vec::new()));
+        let assetbinds = row
+            .try_get("assetbinds")
+            .unwrap_or_else(|_| Json(Vec::new()));
+        let custombinds = row
+            .try_get("custombinds")
+            .unwrap_or_else(|_| Json(Vec::new()));
+        let deny_lists = row
+            .try_get("deny_lists")
+            .unwrap_or_else(|_| Json(Vec::new()));
         let default_template = row.try_get("default_template").unwrap_or_default();
 
         Ok(Self {

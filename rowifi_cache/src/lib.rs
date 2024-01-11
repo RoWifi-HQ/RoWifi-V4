@@ -6,11 +6,15 @@ mod process;
 
 pub mod error;
 
-use deadpool_redis::{redis::AsyncCommands, Connection, Pool as RedisPool, PoolError};
+use deadpool_redis::{
+    redis::{self, AsyncCommands},
+    Connection, Pool as RedisPool, PoolError,
+};
+use process::cache_guild;
 use rowifi_models::{
     discord::{
-        cache::{CachedGuild, CachedMember},
-        guild::Member,
+        cache::{CachedGuild, CachedMember, CachedRole},
+        guild::{Guild, Member},
     },
     id::{GuildId, RoleId, UserId},
 };
@@ -86,6 +90,26 @@ impl Cache {
         }
     }
 
+    pub async fn guild_roles(
+        &self,
+        role_ids: impl Iterator<Item = RoleId>,
+    ) -> Result<Vec<CachedRole>, CacheError> {
+        let mut conn = self.get().await?;
+        let keys = role_ids
+            .into_iter()
+            .map(|r| CachedRole::key(r))
+            .collect::<Vec<_>>();
+        let res: Vec<Vec<u8>> = conn.get(keys).await?;
+
+        let mut roles = Vec::new();
+        for r in res {
+            let role = rmp_serde::from_slice::<CachedRole>(&r)?;
+            roles.push(role);
+        }
+
+        Ok(roles)
+    }
+
     /// Add a member to the cache. Replaces if the member already exists.
     ///
     /// # Errors
@@ -110,6 +134,16 @@ impl Cache {
             rmp_serde::to_vec(&cached)?,
         )
         .await?;
+
+        Ok(cached)
+    }
+
+    pub async fn cache_guild(&self, guild: Guild) -> Result<CachedGuild, CacheError> {
+        let mut pipeline = redis::pipe();
+        let cached = cache_guild(&mut pipeline, &guild)?;
+
+        let mut conn = self.get().await?;
+        pipeline.query_async(&mut conn).await?;
 
         Ok(cached)
     }

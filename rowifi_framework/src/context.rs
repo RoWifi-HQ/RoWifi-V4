@@ -3,7 +3,7 @@ use rowifi_database::Database;
 use rowifi_models::{
     discord::{
         application::interaction::application_command::CommandInteractionDataResolved,
-        cache::CachedMember,
+        cache::{CachedGuild, CachedMember},
         channel::{
             message::{Component, Embed, MessageFlags},
             Message,
@@ -143,6 +143,16 @@ impl BotContext {
                 .execute("INSERT INTO guilds(guild_id) VALUES($1)", &[&guild_id])
                 .await?;
             Ok(PartialRoGuild::new(guild_id))
+        }
+    }
+
+    pub async fn server(&self, guild_id: GuildId) -> Result<CachedGuild, FrameworkError> {
+        if let Ok(guild) = self.cache.guild(guild_id).await {
+            Ok(guild.unwrap())
+        } else {
+            let guild = self.http.guild(guild_id.0).await?.model().await?;
+            let cached = self.cache.cache_guild(guild).await?;
+            Ok(cached)
         }
     }
 }

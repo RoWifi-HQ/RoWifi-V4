@@ -4,6 +4,8 @@ mod group;
 mod rank;
 mod template;
 
+use serde_repr::{Deserialize_repr, Serialize_repr};
+
 pub use asset::{AssetType, Assetbind};
 pub use custom::Custombind;
 pub use group::Groupbind;
@@ -17,6 +19,15 @@ pub enum Bind {
     Group(Groupbind),
     Asset(Assetbind),
     Custom(Custombind),
+}
+
+#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
+#[repr(u8)]
+pub enum BindType {
+    Rank = 0,
+    Group = 1,
+    Custom = 2,
+    Asset = 3,
 }
 
 impl Bind {

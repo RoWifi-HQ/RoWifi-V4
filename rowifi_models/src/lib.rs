@@ -1,6 +1,7 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
 
+pub mod audit_log;
 pub mod bind;
 pub mod deny_list;
 pub mod discord;

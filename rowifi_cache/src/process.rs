@@ -11,7 +11,10 @@ use rowifi_models::{
 
 use crate::error::CacheError;
 
-pub(crate) fn cache_guild(pipeline: &mut Pipeline, guild: &Guild) -> Result<(), CacheError> {
+pub(crate) fn cache_guild(
+    pipeline: &mut Pipeline,
+    guild: &Guild,
+) -> Result<CachedGuild, CacheError> {
     for channel in &guild.channels {
         cache_guild_channel(pipeline, channel)?;
     }
@@ -24,7 +27,7 @@ pub(crate) fn cache_guild(pipeline: &mut Pipeline, guild: &Guild) -> Result<(), 
 
     pipeline.set(CachedGuild::key(cached.id), rmp_serde::to_vec(&cached)?);
 
-    Ok(())
+    Ok(cached)
 }
 
 pub(crate) fn cache_guild_channel(

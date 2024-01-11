@@ -6,7 +6,10 @@ pub use crate::Command;
 pub use axum::{response::IntoResponse, Extension, Json};
 pub use rowifi_derive::Arguments;
 pub use time::OffsetDateTime;
-pub use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder};
+pub use twilight_util::builder::{
+    embed::{EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder},
+    InteractionResponseDataBuilder,
+};
 
 pub type CommandResult = Result<(), FrameworkError>;
 
