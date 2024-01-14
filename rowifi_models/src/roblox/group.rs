@@ -22,10 +22,9 @@ pub struct PartialRank {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Group {
-    #[serde(rename = "groupId")]
-    pub id: GroupId,
-    #[serde(default)]
-    pub roles: Vec<PartialRank>,
+    pub id: String,
+    #[serde(rename = "displayName")]
+    pub display_name: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

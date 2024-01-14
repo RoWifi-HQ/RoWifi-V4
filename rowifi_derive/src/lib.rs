@@ -49,7 +49,7 @@ fn from_interaction_derive(data: &Data) -> TokenStream {
                                 let #name = match options.get(#field_name).map(|s| <#ty>::from_interaction(s)) {
                                     Some(Ok(s)) => s,
                                     Some(Err(err)) => return Err(err),
-                                    None => unreachable!()
+                                    None => <#ty>::default()
                                 };
                             }
                         }

@@ -27,6 +27,12 @@ impl Display for AssetId {
     }
 }
 
+impl Display for GroupId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        Display::fmt(&self.0, f)
+    }
+}
+
 impl ToSql for UserId {
     fn to_sql(
         &self,

@@ -20,9 +20,10 @@ pub struct Assetbind {
     pub template: Template,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
+#[derive(Clone, Copy, Debug, Default, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
 #[repr(u8)]
 pub enum AssetType {
+    #[default]
     Asset = 0,
     Badge = 1,
     Gamepass = 2,

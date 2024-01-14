@@ -1,32 +1,31 @@
-use std::collections::HashMap;
-
-use rowifi_core::rankbinds::{add_rankbind, AddRankbindError, RankbindArguments};
+use rowifi_core::assetbinds::{add_assetbind, AddAssetbindError, AssetbindArguments};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
-    bind::Template,
+    bind::{AssetType, Template},
     discord::{
         http::interaction::{InteractionResponse, InteractionResponseType},
         util::Timestamp,
     },
     id::RoleId,
-    roblox::id::GroupId,
+    roblox::id::AssetId,
 };
+use std::collections::HashMap;
 use twilight_mention::Mention;
 
 #[derive(Arguments, Debug)]
-pub struct RankbindRouteArguments {
-    pub group_id: u64,
-    pub rank_id: u8,
+pub struct AssetbindRouteArguments {
+    pub option: AssetType,
+    pub asset_id: u64,
     pub template: String,
     pub priority: Option<i32>,
     pub discord_roles: Vec<RoleId>,
 }
 
-pub async fn new_rankbind(
+pub async fn new_assetbind(
     bot: Extension<BotContext>,
-    command: Command<RankbindRouteArguments>,
+    command: Command<AssetbindRouteArguments>,
 ) -> impl IntoResponse {
-    spawn_command(new_rankbind_func(bot, command.ctx, command.args));
+    spawn_command(new_assetbind_func(bot, command.ctx, command.args));
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -35,20 +34,19 @@ pub async fn new_rankbind(
 }
 
 #[tracing::instrument(skip(bot, ctx))]
-async fn new_rankbind_func(
+pub async fn new_assetbind_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
-    args: RankbindRouteArguments,
+    args: AssetbindRouteArguments,
 ) -> CommandResult {
-    tracing::debug!("rankbinds new invoked");
+    tracing::debug!("assetbinds new invoked");
     let guild = bot
         .get_guild(
-            "SELECT guild_id, rankbinds FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, assetbinds FROM guilds WHERE guild_id = $1",
             ctx.guild_id,
         )
         .await?;
     let server = bot.server(ctx.guild_id).await?;
-
     let server_roles = bot
         .cache
         .guild_roles(server.roles.iter().copied())
@@ -57,54 +55,34 @@ async fn new_rankbind_func(
         .map(|r| (r.id, r))
         .collect::<HashMap<_, _>>();
 
-    let res = match add_rankbind(
-        &bot.roblox,
+    let res = match add_assetbind(
         &bot.database,
         ctx.guild_id,
         ctx.author_id,
-        &guild.rankbinds.0,
+        &guild.assetbinds.0,
         &server_roles,
-        RankbindArguments {
-            group_id: GroupId(args.group_id),
-            rank_id: args.rank_id,
+        AssetbindArguments {
+            kind: args.option,
+            asset_id: AssetId(args.asset_id),
             template: Template(args.template),
-            priority: args.priority,
             discord_roles: args.discord_roles,
+            priority: args.priority,
         },
     )
     .await
     {
         Ok(res) => res,
-        Err(AddRankbindError::InvalidRank) => {
-            let message = format!(
-                r#"
-    Oh no! There does not seem to be a rank with ID {} in the group {}
-            "#,
-                args.rank_id, args.group_id
-            );
-            ctx.respond(&bot).content(&message).unwrap().exec().await?;
-            return Ok(());
-        }
-        Err(AddRankbindError::InvalidGroup) => {
-            let message = format!(
-                r#"
-    Oh no! There does not seem to be a group with ID {}
-            "#,
-                args.group_id
-            );
-            ctx.respond(&bot).content(&message).unwrap().exec().await?;
-            return Ok(());
-        }
-        Err(AddRankbindError::Generic(err)) => return Err(err),
+        Err(AddAssetbindError::Generic(err)) => return Err(err),
     };
 
-    let mut description = String::new();
+    let mut description: String = String::new();
     if res.modified {
         description.push_str(":warning: Bind already exists. Modified it to:\n\n")
     }
-    description.push_str(&format!("**Rank Id: {}**\n", res.bind.group_rank_id));
+    description.push_str(&format!("**Asset Id: {}**\n", res.bind.asset_id));
     description.push_str(&format!(
-        "Template: {}\nPriority: {}\n Roles: {}",
+        "Type: {}\nTemplate: {}\nPriority: {}\n Roles: {}",
+        res.bind.asset_type,
         res.bind.template,
         res.bind.priority,
         res.bind

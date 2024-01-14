@@ -38,7 +38,10 @@ use tower_http::{
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 use twilight_http::Client as TwilightClient;
 
-use crate::commands::{rankbinds::new_rankbind, user::update_route};
+use crate::commands::{
+    assetbinds::new_assetbind, groupbinds::new_groupbind, rankbinds::new_rankbind,
+    user::update_route,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -90,6 +93,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/", post(pong))
         .route("/update", post(update_route))
         .route("/rankbinds/new", post(new_rankbind))
+        .route("/groupbinds/new", post(new_groupbind))
+        .route("/assetbinds/new", post(new_assetbind))
         .layer(AsyncRequireAuthorizationLayer::new(WebhookAuth))
         .layer(Extension(Arc::new(verifying_key)))
         .layer(Extension(bot_context))

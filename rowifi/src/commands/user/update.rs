@@ -10,7 +10,7 @@ use rowifi_models::{
     id::UserId,
     user::RoUser,
 };
-use std::{fmt::Write, error::Error};
+use std::{error::Error, fmt::Write};
 use twilight_http::error::{Error as DiscordHttpError, ErrorType as DiscordErrorType};
 
 use crate::utils::update_user::{UpdateUser, UpdateUserError};
@@ -24,11 +24,7 @@ pub async fn update_route(
     bot: Extension<BotContext>,
     command: Command<UpdateArguments>,
 ) -> impl IntoResponse {
-    tokio::spawn(async move {
-        if let Err(err) = update_func(bot, command.ctx, command.args).await {
-            tracing::error!(err = ?err);
-        }
-    });
+    spawn_command(update_func(bot, command.ctx, command.args));
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,

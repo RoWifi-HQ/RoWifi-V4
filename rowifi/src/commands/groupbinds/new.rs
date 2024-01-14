@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use rowifi_core::rankbinds::{add_rankbind, AddRankbindError, RankbindArguments};
+use rowifi_core::groupbinds::{add_groupbind, AddGroupbindError, GroupbindArguments};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
     bind::Template,
@@ -11,22 +9,22 @@ use rowifi_models::{
     id::RoleId,
     roblox::id::GroupId,
 };
+use std::collections::HashMap;
 use twilight_mention::Mention;
 
 #[derive(Arguments, Debug)]
-pub struct RankbindRouteArguments {
+pub struct GroupbindRouteArguments {
     pub group_id: u64,
-    pub rank_id: u8,
     pub template: String,
     pub priority: Option<i32>,
     pub discord_roles: Vec<RoleId>,
 }
 
-pub async fn new_rankbind(
+pub async fn new_groupbind(
     bot: Extension<BotContext>,
-    command: Command<RankbindRouteArguments>,
+    command: Command<GroupbindRouteArguments>,
 ) -> impl IntoResponse {
-    spawn_command(new_rankbind_func(bot, command.ctx, command.args));
+    spawn_command(new_groupbind_func(bot, command.ctx, command.args));
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -35,20 +33,19 @@ pub async fn new_rankbind(
 }
 
 #[tracing::instrument(skip(bot, ctx))]
-async fn new_rankbind_func(
+pub async fn new_groupbind_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
-    args: RankbindRouteArguments,
+    args: GroupbindRouteArguments,
 ) -> CommandResult {
-    tracing::debug!("rankbinds new invoked");
+    tracing::debug!("groupbinds new invoked");
     let guild = bot
         .get_guild(
-            "SELECT guild_id, rankbinds FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, groupbinds FROM guilds WHERE guild_id = $1",
             ctx.guild_id,
         )
         .await?;
     let server = bot.server(ctx.guild_id).await?;
-
     let server_roles = bot
         .cache
         .guild_roles(server.roles.iter().copied())
@@ -57,35 +54,24 @@ async fn new_rankbind_func(
         .map(|r| (r.id, r))
         .collect::<HashMap<_, _>>();
 
-    let res = match add_rankbind(
+    let res = match add_groupbind(
         &bot.roblox,
         &bot.database,
         ctx.guild_id,
         ctx.author_id,
-        &guild.rankbinds.0,
+        &guild.groupbinds.0,
         &server_roles,
-        RankbindArguments {
+        GroupbindArguments {
             group_id: GroupId(args.group_id),
-            rank_id: args.rank_id,
             template: Template(args.template),
-            priority: args.priority,
             discord_roles: args.discord_roles,
+            priority: args.priority,
         },
     )
     .await
     {
         Ok(res) => res,
-        Err(AddRankbindError::InvalidRank) => {
-            let message = format!(
-                r#"
-    Oh no! There does not seem to be a rank with ID {} in the group {}
-            "#,
-                args.rank_id, args.group_id
-            );
-            ctx.respond(&bot).content(&message).unwrap().exec().await?;
-            return Ok(());
-        }
-        Err(AddRankbindError::InvalidGroup) => {
+        Err(AddGroupbindError::InvalidGroup) => {
             let message = format!(
                 r#"
     Oh no! There does not seem to be a group with ID {}
@@ -95,14 +81,14 @@ async fn new_rankbind_func(
             ctx.respond(&bot).content(&message).unwrap().exec().await?;
             return Ok(());
         }
-        Err(AddRankbindError::Generic(err)) => return Err(err),
+        Err(AddGroupbindError::Generic(err)) => return Err(err),
     };
 
     let mut description = String::new();
     if res.modified {
         description.push_str(":warning: Bind already exists. Modified it to:\n\n")
     }
-    description.push_str(&format!("**Rank Id: {}**\n", res.bind.group_rank_id));
+    description.push_str(&format!("**Group Id: {}**\n", res.bind.group_id));
     description.push_str(&format!(
         "Template: {}\nPriority: {}\n Roles: {}",
         res.bind.template,

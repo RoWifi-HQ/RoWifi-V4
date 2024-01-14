@@ -1,61 +1,45 @@
-use rowifi_database::{postgres::types::Json, Database};
+use std::collections::HashMap;
+use rowifi_database::{Database, postgres::types::Json};
 use rowifi_models::{
-    audit_log::{AuditLog, AuditLogData, AuditLogKind},
-    bind::{BindType, Rankbind, Template},
+    bind::{AssetType, Assetbind, Template, BindType},
     discord::cache::CachedRole,
     id::{GuildId, RoleId, UserId},
-    roblox::id::GroupId,
+    roblox::id::AssetId, audit_log::{AuditLog, AuditLogKind, AuditLogData},
 };
-use rowifi_roblox::RobloxClient;
-use std::collections::HashMap;
 use time::OffsetDateTime;
 
 use crate::error::RoError;
 
 #[derive(Debug)]
-pub struct AddRankbind {
-    pub bind: Rankbind,
+pub struct AddAssetbind {
+    pub bind: Assetbind,
     pub ignored_roles: Vec<RoleId>,
     pub modified: bool,
 }
 
 #[derive(Debug)]
-pub enum AddRankbindError {
-    InvalidGroup,
-    InvalidRank,
+pub enum AddAssetbindError {
     Generic(RoError),
 }
 
 #[derive(Debug)]
-pub struct RankbindArguments {
-    pub group_id: GroupId,
-    pub rank_id: u8,
+pub struct AssetbindArguments {
+    pub kind: AssetType,
+    pub asset_id: AssetId,
     pub template: Template,
     pub priority: Option<i32>,
     pub discord_roles: Vec<RoleId>,
 }
 
-pub async fn add_rankbind(
-    roblox: &RobloxClient,
+pub async fn add_assetbind(
     database: &Database,
     guild_id: GuildId,
     author_id: UserId,
-    existing_rankbinds: &[Rankbind],
+    existing_assetbinds: &[Assetbind],
     server_roles: &HashMap<RoleId, CachedRole>,
-    args: RankbindArguments,
-) -> Result<AddRankbind, AddRankbindError> {
-    let Some(ranks) = roblox
-        .get_group_ranks(args.group_id)
-        .await
-        .map_err(|err| RoError::from(err))?
-    else {
-        return Err(AddRankbindError::InvalidGroup);
-    };
-
-    let Some(rank) = ranks.iter().find(|r| r.rank == args.rank_id as u32) else {
-        return Err(AddRankbindError::InvalidRank);
-    };
-
+    args: AssetbindArguments,
+) -> Result<AddAssetbind, AddAssetbindError> {
+    // TODO: Check for a way to validate an asset
     let mut ignored_roles = Vec::new();
     let mut roles_to_add = Vec::new();
     // Check if the discord roles provided exist or if they are some integration's roles.
@@ -69,24 +53,23 @@ pub async fn add_rankbind(
         }
     }
 
-    let bind = Json(Rankbind {
-        group_id: args.group_id,
+    let bind = Json(Assetbind {
+        asset_type: args.kind,
+        asset_id: args.asset_id,
         discord_roles: roles_to_add,
-        group_rank_id: args.rank_id as u32,
-        roblox_rank_id: rank.id.clone(),
         priority: args.priority.unwrap_or_default(),
         template: args.template,
     });
 
-    let idx = existing_rankbinds
+    let idx = existing_assetbinds
         .iter()
-        .position(|r| r.roblox_rank_id == bind.0.roblox_rank_id);
+        .position(|r| r.asset_id == bind.0.asset_id);
 
     database
         .execute(
             &format!(
-                "UPDATE guilds SET rankbinds[{}] = $2 WHERE guild_id = $1",
-                idx.unwrap_or_else(|| existing_rankbinds.len())
+                "UPDATE guilds SET assetbinds[{}] = $2 WHERE guild_id = $1",
+                idx.unwrap_or_else(|| existing_assetbinds.len())
             ),
             &[&guild_id, &bind],
         )
@@ -100,14 +83,14 @@ pub async fn add_rankbind(
         timestamp: OffsetDateTime::now_utc(),
         metadata: AuditLogData::BindCreate {
             count: 1,
-            kind: BindType::Rank,
+            kind: BindType::Asset,
         },
     };
 
     database
         .execute(
             r#"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
-        VALUES($1, $2, $3, $4, $5)"#,
+    VALUES($1, $2, $3, $4, $5)"#,
             &[
                 &log.kind,
                 &log.guild_id,
@@ -119,15 +102,15 @@ pub async fn add_rankbind(
         .await
         .map_err(|err| RoError::from(err))?;
 
-    Ok(AddRankbind {
+    Ok(AddAssetbind {
         bind: bind.0,
         ignored_roles,
         modified: idx.is_some(),
     })
 }
 
-impl From<RoError> for AddRankbindError {
+impl From<RoError> for AddAssetbindError {
     fn from(err: RoError) -> Self {
-        AddRankbindError::Generic(err)
+        Self::Generic(err)
     }
 }

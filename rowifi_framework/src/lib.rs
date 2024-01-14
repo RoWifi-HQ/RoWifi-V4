@@ -5,7 +5,7 @@ pub mod arguments;
 pub mod context;
 pub mod prelude;
 
-use std::sync::atomic::AtomicBool;
+use std::{future::Future, sync::atomic::AtomicBool};
 
 use axum::{
     async_trait,
@@ -14,6 +14,7 @@ use axum::{
     http::{Request, StatusCode},
     response::{IntoResponse, Response},
 };
+use rowifi_core::error::RoError;
 use rowifi_models::{
     discord::application::interaction::{
         application_command::{CommandDataOption, CommandOptionValue},
@@ -77,4 +78,15 @@ fn recurse_skip_subcommands(data: &[CommandDataOption]) -> &[CommandDataOption] 
     }
 
     data
+}
+
+pub fn spawn_command<F>(future: F)
+where
+    F: Future<Output = Result<(), RoError>> + Send + 'static,
+{
+    tokio::spawn(async move {
+        if let Err(err) = future.await {
+            tracing::error!(?err);
+        }
+    });
 }

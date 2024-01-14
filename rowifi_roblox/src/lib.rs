@@ -14,7 +14,7 @@ use hyper::{
 };
 use hyper_rustls::HttpsConnector;
 use rowifi_models::roblox::{
-    group::{GroupRole, GroupUserRole},
+    group::{Group, GroupRole, GroupUserRole},
     id::{GroupId, UserId},
     inventory::InventoryItem,
     user::PartialUser,
@@ -274,6 +274,54 @@ impl RobloxClient {
         }
 
         Ok(Some(ranks))
+    }
+
+    /// Get a Roblox Group
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn get_group(&self, group_id: GroupId) -> Result<Option<Group>, RobloxError> {
+        let route = Route::GetGroup {
+            group_id: group_id.0,
+        };
+
+        let request = Request::builder()
+            .uri(route.to_string())
+            .method(Method::GET)
+            .header("x-api-key", &self.open_cloud_auth)
+            .body(Body::empty())
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if parts.status == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json = serde_json::from_slice::<Group>(&bytes).map_err(|source| RobloxError {
+            source: Some(Box::new(DeserializeBodyError {
+                source: Some(Box::new(source)),
+                bytes,
+            })),
+            kind: ErrorKind::Deserialize,
+        })?;
+
+        Ok(Some(json))
     }
 
     async fn request(&self, request: Request<Body>) -> Result<(Parts, Vec<u8>), RobloxError> {

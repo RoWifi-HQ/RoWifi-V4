@@ -1,7 +1,7 @@
 use rowifi_database::{postgres::types::Json, Database};
 use rowifi_models::{
     audit_log::{AuditLog, AuditLogData, AuditLogKind},
-    bind::{BindType, Rankbind, Template},
+    bind::{BindType, Groupbind, Template},
     discord::cache::CachedRole,
     id::{GuildId, RoleId, UserId},
     roblox::id::GroupId,
@@ -13,47 +13,42 @@ use time::OffsetDateTime;
 use crate::error::RoError;
 
 #[derive(Debug)]
-pub struct AddRankbind {
-    pub bind: Rankbind,
+pub struct AddGroupbind {
+    pub bind: Groupbind,
     pub ignored_roles: Vec<RoleId>,
     pub modified: bool,
 }
 
 #[derive(Debug)]
-pub enum AddRankbindError {
+pub enum AddGroupbindError {
     InvalidGroup,
-    InvalidRank,
     Generic(RoError),
 }
 
 #[derive(Debug)]
-pub struct RankbindArguments {
+pub struct GroupbindArguments {
     pub group_id: GroupId,
-    pub rank_id: u8,
     pub template: Template,
     pub priority: Option<i32>,
     pub discord_roles: Vec<RoleId>,
 }
 
-pub async fn add_rankbind(
+pub async fn add_groupbind(
     roblox: &RobloxClient,
     database: &Database,
     guild_id: GuildId,
     author_id: UserId,
-    existing_rankbinds: &[Rankbind],
+    existing_groupbinds: &[Groupbind],
     server_roles: &HashMap<RoleId, CachedRole>,
-    args: RankbindArguments,
-) -> Result<AddRankbind, AddRankbindError> {
-    let Some(ranks) = roblox
-        .get_group_ranks(args.group_id)
+    args: GroupbindArguments,
+) -> Result<AddGroupbind, AddGroupbindError> {
+    if roblox
+        .get_group(args.group_id)
         .await
         .map_err(|err| RoError::from(err))?
-    else {
-        return Err(AddRankbindError::InvalidGroup);
-    };
-
-    let Some(rank) = ranks.iter().find(|r| r.rank == args.rank_id as u32) else {
-        return Err(AddRankbindError::InvalidRank);
+        .is_none()
+    {
+        return Err(AddGroupbindError::InvalidGroup);
     };
 
     let mut ignored_roles = Vec::new();
@@ -69,24 +64,22 @@ pub async fn add_rankbind(
         }
     }
 
-    let bind = Json(Rankbind {
+    let bind = Json(Groupbind {
         group_id: args.group_id,
         discord_roles: roles_to_add,
-        group_rank_id: args.rank_id as u32,
-        roblox_rank_id: rank.id.clone(),
         priority: args.priority.unwrap_or_default(),
         template: args.template,
     });
 
-    let idx = existing_rankbinds
+    let idx = existing_groupbinds
         .iter()
-        .position(|r| r.roblox_rank_id == bind.0.roblox_rank_id);
+        .position(|r| r.group_id == bind.0.group_id);
 
     database
         .execute(
             &format!(
-                "UPDATE guilds SET rankbinds[{}] = $2 WHERE guild_id = $1",
-                idx.unwrap_or_else(|| existing_rankbinds.len())
+                "UPDATE guilds SET groupbinds[{}] = $2 WHERE guild_id = $1",
+                idx.unwrap_or_else(|| existing_groupbinds.len())
             ),
             &[&guild_id, &bind],
         )
@@ -100,7 +93,7 @@ pub async fn add_rankbind(
         timestamp: OffsetDateTime::now_utc(),
         metadata: AuditLogData::BindCreate {
             count: 1,
-            kind: BindType::Rank,
+            kind: BindType::Group,
         },
     };
 
@@ -119,15 +112,15 @@ pub async fn add_rankbind(
         .await
         .map_err(|err| RoError::from(err))?;
 
-    Ok(AddRankbind {
+    Ok(AddGroupbind {
         bind: bind.0,
         ignored_roles,
         modified: idx.is_some(),
     })
 }
 
-impl From<RoError> for AddRankbindError {
+impl From<RoError> for AddGroupbindError {
     fn from(err: RoError) -> Self {
-        AddRankbindError::Generic(err)
+        Self::Generic(err)
     }
 }

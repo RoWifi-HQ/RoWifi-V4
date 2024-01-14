@@ -3,7 +3,7 @@ use rowifi_models::{
         application::interaction::application_command::{CommandDataOption, CommandOptionValue},
         id::{marker::RoleMarker, Id},
     },
-    id::{RoleId, UserId},
+    id::{RoleId, UserId}, bind::AssetType,
 };
 use std::{
     error::Error as StdError,
@@ -117,6 +117,20 @@ impl Argument for Vec<RoleId> {
         };
 
         Ok(roles)
+    }
+}
+
+impl Argument for AssetType {
+    fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
+        match &option.value {
+            CommandOptionValue::Integer(value) => match value {
+                0 => Ok(AssetType::Asset),
+                1 => Ok(AssetType::Badge),
+                2 => Ok(AssetType::Gamepass),
+                _ => unreachable!()
+            },
+            _ => unreachable!()
+        }
     }
 }
 
