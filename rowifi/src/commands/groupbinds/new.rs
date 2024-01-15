@@ -1,4 +1,4 @@
-use rowifi_core::groupbinds::{add_groupbind, AddGroupbindError, GroupbindArguments};
+use rowifi_core::groupbinds::add::{add_groupbind, AddGroupbindError, GroupbindArguments};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
     bind::Template,

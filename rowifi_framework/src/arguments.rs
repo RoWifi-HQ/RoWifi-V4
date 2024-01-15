@@ -1,9 +1,10 @@
 use rowifi_models::{
+    bind::AssetType,
     discord::{
         application::interaction::application_command::{CommandDataOption, CommandOptionValue},
         id::{marker::RoleMarker, Id},
     },
-    id::{RoleId, UserId}, bind::AssetType,
+    id::{RoleId, UserId},
 };
 use std::{
     error::Error as StdError,
@@ -127,9 +128,9 @@ impl Argument for AssetType {
                 0 => Ok(AssetType::Asset),
                 1 => Ok(AssetType::Badge),
                 2 => Ok(AssetType::Gamepass),
-                _ => unreachable!()
+                _ => unreachable!(),
             },
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }

@@ -1,4 +1,4 @@
-use rowifi_core::assetbinds::{add_assetbind, AddAssetbindError, AssetbindArguments};
+use rowifi_core::assetbinds::add::{add_assetbind, AddAssetbindError, AssetbindArguments};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
     bind::{AssetType, Template},

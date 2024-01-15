@@ -39,7 +39,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 use twilight_http::Client as TwilightClient;
 
 use crate::commands::{
-    assetbinds::new_assetbind, groupbinds::new_groupbind, rankbinds::new_rankbind,
+    assetbinds::{delete_assetbind, new_assetbind},
+    groupbinds::{delete_groupbind, new_groupbind},
+    rankbinds::{delete_rankbind, new_rankbind},
     user::update_route,
 };
 
@@ -93,8 +95,11 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/", post(pong))
         .route("/update", post(update_route))
         .route("/rankbinds/new", post(new_rankbind))
+        .route("/rankbinds/delete", post(delete_rankbind))
         .route("/groupbinds/new", post(new_groupbind))
+        .route("/groupbinds/delete", post(delete_groupbind))
         .route("/assetbinds/new", post(new_assetbind))
+        .route("/assetbinds/delete", post(delete_assetbind))
         .layer(AsyncRequireAuthorizationLayer::new(WebhookAuth))
         .layer(Extension(Arc::new(verifying_key)))
         .layer(Extension(bot_context))
