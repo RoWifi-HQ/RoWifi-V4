@@ -6,6 +6,7 @@ use std::{
     fmt::{Display, Formatter, Result as FmtResult},
 };
 use twilight_http::{response::DeserializeBodyError, Error as DiscordHttpError};
+use twilight_validate::message::MessageValidationError;
 
 #[derive(Debug)]
 pub struct RoError {
@@ -18,6 +19,7 @@ pub enum ErrorKind {
     Cache,
     Database,
     Discord,
+    Function,
     Roblox,
 }
 
@@ -49,6 +51,7 @@ impl Display for RoError {
             ErrorKind::Cache => f.write_str("cache error: ")?,
             ErrorKind::Database => f.write_str("database error: ")?,
             ErrorKind::Discord => f.write_str("discord error: ")?,
+            ErrorKind::Function => f.write_str("function error: ")?,
             ErrorKind::Roblox => f.write_str("roblox error: ")?,
         }
         match &self.source {
@@ -107,6 +110,15 @@ impl From<RobloxError> for RoError {
         Self {
             source: Some(Box::new(err)),
             kind: ErrorKind::Roblox,
+        }
+    }
+}
+
+impl From<MessageValidationError> for RoError {
+    fn from(err: MessageValidationError) -> Self {
+        Self {
+            source: Some(Box::new(err)),
+            kind: ErrorKind::Function,
         }
     }
 }

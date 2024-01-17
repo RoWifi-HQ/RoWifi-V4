@@ -16,3 +16,4 @@ pub type CommandResult = Result<(), RoError>;
 
 pub const RED: u32 = 0x00E7_4C3C;
 pub const DARK_GREEN: u32 = 0x001F_8B4C;
+pub const BLUE: u32 = 0x0034_98DB;

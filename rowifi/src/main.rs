@@ -25,9 +25,10 @@ use rowifi_models::discord::{
         interaction::{Interaction, InteractionData, InteractionType},
     },
     http::interaction::{InteractionResponse, InteractionResponseType},
-    id::{marker::ApplicationMarker, Id},
+    id::{marker::ApplicationMarker, Id}, gateway::{event::Event, payload::incoming::InteractionCreate},
 };
 use rowifi_roblox::RobloxClient;
+use twilight_standby::Standby;
 use std::{error::Error, future::Future, pin::Pin, sync::Arc, time::Duration};
 use tokio::net::TcpListener;
 use tower::Layer as _;
@@ -41,7 +42,7 @@ use twilight_http::Client as TwilightClient;
 use crate::commands::{
     assetbinds::{delete_assetbind, new_assetbind},
     groupbinds::{delete_groupbind, new_groupbind},
-    rankbinds::{delete_rankbind, new_rankbind},
+    rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
     user::update_route,
 };
 
@@ -89,6 +90,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         &<[u8; PUBLIC_KEY_LENGTH] as FromHex>::from_hex(discord_public_key).unwrap(),
     )
     .unwrap();
+    let standby = Standby::new();
 
     let middleware = map_request(rewrite_request_uri);
     let app = Router::new()
@@ -96,10 +98,13 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/update", post(update_route))
         .route("/rankbinds/new", post(new_rankbind))
         .route("/rankbinds/delete", post(delete_rankbind))
+        .route("/rankbinds/view", post(view_rankbinds))
         .route("/groupbinds/new", post(new_groupbind))
         .route("/groupbinds/delete", post(delete_groupbind))
         .route("/assetbinds/new", post(new_assetbind))
         .route("/assetbinds/delete", post(delete_assetbind))
+        .route("/standby", post(standby_route))
+        .layer(Extension(Arc::new(standby)))
         .layer(AsyncRequireAuthorizationLayer::new(WebhookAuth))
         .layer(Extension(Arc::new(verifying_key)))
         .layer(Extension(bot_context))
@@ -118,35 +123,53 @@ async fn pong() -> Json<InteractionResponse> {
     })
 }
 
+async fn standby_route(bot_standby: Extension<Arc<Standby>>, interaction: Json<Interaction>) -> Json<InteractionResponse> {
+    let _ = bot_standby.process(&Event::InteractionCreate(Box::new(InteractionCreate(interaction.0))));
+
+    Json(InteractionResponse {
+        kind: InteractionResponseType::DeferredUpdateMessage,
+        data: None
+    })
+}
+
 async fn rewrite_request_uri(req: Request) -> Request {
     let (mut parts, body) = req.into_parts();
     let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
     let interaction = serde_json::from_slice::<Interaction>(&bytes).unwrap();
 
-    if interaction.kind == InteractionType::ApplicationCommand {
-        let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
-            unreachable!()
-        };
-        let subcommand_name = if let Some(option) = data.options.first() {
-            if option.value.kind() == CommandOptionType::SubCommand
-                || option.value.kind() == CommandOptionType::SubCommandGroup
-            {
-                Some(&option.name)
+    match interaction.kind {
+        InteractionType::ApplicationCommand => {
+            let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
+                unreachable!()
+            };
+            let subcommand_name = if let Some(option) = data.options.first() {
+                if option.value.kind() == CommandOptionType::SubCommand
+                    || option.value.kind() == CommandOptionType::SubCommandGroup
+                {
+                    Some(&option.name)
+                } else {
+                    None
+                }
             } else {
                 None
-            }
-        } else {
-            None
-        };
-        let command_name = if let Some(subcommand_name) = subcommand_name {
-            format!("/{}/{subcommand_name}", data.name)
-        } else {
-            format!("/{}", data.name)
-        };
-        let mut uri_parts = parts.uri.into_parts();
-        uri_parts.path_and_query = Some(command_name.parse().unwrap());
-        let new_uri = Uri::from_parts(uri_parts).unwrap();
-        parts.uri = new_uri;
+            };
+            let command_name = if let Some(subcommand_name) = subcommand_name {
+                format!("/{}/{subcommand_name}", data.name)
+            } else {
+                format!("/{}", data.name)
+            };
+            let mut uri_parts = parts.uri.into_parts();
+            uri_parts.path_and_query = Some(command_name.parse().unwrap());
+            let new_uri = Uri::from_parts(uri_parts).unwrap();
+            parts.uri = new_uri;
+        },
+        InteractionType::MessageComponent => {
+            let mut uri_parts = parts.uri.into_parts();
+            uri_parts.path_and_query = Some("/standby".parse().unwrap());
+            let new_uri = Uri::from_parts(uri_parts).unwrap();
+            parts.uri = new_uri;
+        }
+        _ => {}
     }
 
     let body = Body::from(bytes);

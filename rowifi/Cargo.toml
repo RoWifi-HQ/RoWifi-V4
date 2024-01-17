@@ -24,3 +24,4 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 twilight-http = { branch = "main", git = "https://github.com/twilight-rs/twilight", default-features = false, features = ["rustls-webpki-roots"] }
 twilight-mention = { branch = "main", git = "https://github.com/twilight-rs/twilight" }
+twilight-standby = { branch = "main", git = "https://github.com/twilight-rs/twilight" }
