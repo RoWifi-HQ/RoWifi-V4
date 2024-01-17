@@ -6,13 +6,13 @@ pub mod filter;
 mod route;
 
 use error::DeserializeBodyError;
-use hyper::{
-    body::{self, Buf},
-    client::HttpConnector,
-    http::response::Parts,
-    Body, Client as HyperClient, Method, Request, StatusCode,
-};
+use http_body_util::{BodyExt, Full};
+use hyper::{body::Bytes, http::response::Parts, Method, Request, StatusCode};
 use hyper_rustls::HttpsConnector;
+use hyper_util::{
+    client::legacy::{connect::HttpConnector, Client as HyperClient},
+    rt::TokioExecutor,
+};
 use rowifi_models::roblox::{
     group::{Group, GroupRole, GroupUserRole},
     id::{GroupId, UserId},
@@ -28,7 +28,7 @@ use crate::{
 
 #[derive(Clone)]
 pub struct RobloxClient {
-    client: HyperClient<HttpsConnector<HttpConnector>>,
+    client: HyperClient<HttpsConnector<HttpConnector>, Full<Bytes>>,
     open_cloud_auth: String,
 }
 
@@ -62,7 +62,7 @@ impl RobloxClient {
             .enable_http1()
             .enable_http2()
             .build();
-        let client = HyperClient::builder().build(connector);
+        let client = HyperClient::builder(TokioExecutor::new()).build(connector);
         Self {
             client,
             open_cloud_auth: open_cloud_auth.to_string(),
@@ -80,7 +80,7 @@ impl RobloxClient {
         let request = Request::builder()
             .uri(route.to_string())
             .method(Method::GET)
-            .body(Body::empty())
+            .body(Full::default())
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -125,7 +125,7 @@ impl RobloxClient {
             .uri(route.to_string())
             .method(Method::GET)
             .header("x-api-key", &self.open_cloud_auth)
-            .body(Body::empty())
+            .body(Full::default())
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -174,7 +174,7 @@ impl RobloxClient {
             .uri(route.to_string())
             .method(Method::GET)
             .header("x-api-key", &self.open_cloud_auth)
-            .body(Body::empty())
+            .body(Full::default())
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -229,7 +229,7 @@ impl RobloxClient {
                 .uri(&route)
                 .method(Method::GET)
                 .header("x-api-key", &self.open_cloud_auth)
-                .body(Body::empty())
+                .body(Full::default())
                 .map_err(|source| RobloxError {
                     source: Some(Box::new(source)),
                     kind: ErrorKind::BuildingRequest,
@@ -290,7 +290,7 @@ impl RobloxClient {
             .uri(route.to_string())
             .method(Method::GET)
             .header("x-api-key", &self.open_cloud_auth)
-            .body(Body::empty())
+            .body(Full::default())
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -324,7 +324,7 @@ impl RobloxClient {
         Ok(Some(json))
     }
 
-    async fn request(&self, request: Request<Body>) -> Result<(Parts, Vec<u8>), RobloxError> {
+    async fn request(&self, request: Request<Full<Bytes>>) -> Result<(Parts, Vec<u8>), RobloxError> {
         let res = self
             .client
             .request(request)
@@ -335,13 +335,15 @@ impl RobloxClient {
             })?;
 
         let (parts, body) = res.into_parts();
-        let mut buf = body::aggregate(body).await.map_err(|source| RobloxError {
-            source: Some(Box::new(source)),
-            kind: ErrorKind::ChunkingResponse,
-        })?;
-        let mut bytes = vec![0; buf.remaining()];
-        buf.copy_to_slice(&mut bytes);
+        let bytes = body
+            .collect()
+            .await
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::ChunkingResponse,
+            })?
+            .to_bytes();
 
-        Ok((parts, bytes))
+        Ok((parts, bytes.into()))
     }
 }

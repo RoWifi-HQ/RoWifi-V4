@@ -10,6 +10,6 @@ rowifi_cache = { path = "../rowifi_cache" }
 rowifi_database = { path = "../rowifi_database" }
 rowifi_models = { path = "../rowifi_models" }
 rowifi_roblox = { path = "../rowifi_roblox" }
-time = { version = "0.3", default-features = false, features = ["std"] }
-twilight-http = { branch = "main", git = "https://github.com/twilight-rs/twilight", default-features = false, features = ["rustls-webpki-roots"] }
-twilight-validate = { branch = "main", git = "https://github.com/twilight-rs/twilight" }
+time = { workspace = true }
+twilight-http = { workspace = true }
+twilight-validate = { workspace = true }

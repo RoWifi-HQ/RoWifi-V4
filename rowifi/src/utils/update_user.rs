@@ -237,7 +237,7 @@ impl UpdateUser<'_> {
                 return Err(UpdateUserError::InvalidNickname(new_nickname));
             }
 
-            update = update.nick(Some(&new_nickname)).unwrap();
+            update = update.nick(Some(&new_nickname));
         }
 
         let _res = update.await?;

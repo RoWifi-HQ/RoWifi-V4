@@ -10,3 +10,17 @@ members = [
     "rowifi_roblox"
 ]
 resolver = "2"
+
+[workspace.dependencies]
+axum = { version = "0.7" }
+serde_json = { version = "1" }
+time = { version = "0.3", default-features = false, features = ["std"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tower = { version = "0.4", default-features = false }
+tracing = "0.1"
+twilight-http = { branch = "next", git = "https://github.com/twilight-rs/twilight", default-features = false, features = ["rustls-webpki-roots"] }
+twilight-mention = { branch = "next", git = "https://github.com/twilight-rs/twilight" }
+twilight-model = { branch = "next", git = "https://github.com/twilight-rs/twilight" }
+twilight-standby = { branch = "next", git = "https://github.com/twilight-rs/twilight" }
+twilight-validate = { branch = "next", git = "https://github.com/twilight-rs/twilight" }
+twilight-util = { branch = "next", git = "https://github.com/twilight-rs/twilight", default-features = false, features = ["builder"] }

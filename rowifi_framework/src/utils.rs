@@ -114,7 +114,6 @@ pub async fn paginate_embeds(
                     .interaction(bot.application_id)
                     .update_response(&interaction.token)
                     .embeds(Some(&[pages[page_pointer].clone()]))
-                    .unwrap()
                     .await;
                 if let Err(err) = res {
                     tracing::error!(err = ?err);
@@ -126,7 +125,6 @@ pub async fn paginate_embeds(
                     .create_followup(&interaction.token)
                     .flags(MessageFlags::EPHEMERAL)
                     .content("This view menu is only navigable by the original command invoker")
-                    .unwrap()
                     .await;
             }
         }

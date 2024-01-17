@@ -3,7 +3,7 @@ use rowifi_core::error::RoError;
 use rowifi_database::Database;
 use rowifi_models::{
     discord::{
-        application::interaction::application_command::CommandInteractionDataResolved,
+        application::interaction::InteractionDataResolved,
         cache::{CachedGuild, CachedMember},
         channel::{
             message::{Component, Embed, MessageFlags},
@@ -56,7 +56,7 @@ pub struct CommandContext {
     pub author_id: UserId,
     pub interaction_id: Id<InteractionMarker>,
     pub interaction_token: String,
-    pub resolved: Option<CommandInteractionDataResolved>,
+    pub resolved: Option<InteractionDataResolved>,
     pub callback_invoked: AtomicBool,
 }
 
@@ -292,16 +292,16 @@ impl<'a> Responder<'a> {
             let client = self.bot.http.interaction(self.bot.application_id);
             let mut req = client.create_followup(&self.ctx.interaction_token);
             if let Some(content) = self.content {
-                req = req.content(content).unwrap();
+                req = req.content(content);
             }
             if let Some(components) = self.components {
-                req = req.components(components).unwrap();
+                req = req.components(components);
             }
             if let Some(embeds) = self.embeds {
-                req = req.embeds(embeds).unwrap();
+                req = req.embeds(embeds);
             }
             if let Some(files) = self.files {
-                req = req.attachments(files).unwrap();
+                req = req.attachments(files);
             }
             if let Some(flags) = self.flags {
                 req = req.flags(flags);
@@ -312,13 +312,9 @@ impl<'a> Responder<'a> {
             let req = client
                 .update_response(&self.ctx.interaction_token)
                 .content(self.content)
-                .unwrap()
                 .components(self.components)
-                .unwrap()
                 .embeds(self.embeds)
-                .unwrap()
-                .attachments(self.files.unwrap_or_default())
-                .unwrap();
+                .attachments(self.files.unwrap_or_default());
             self.ctx.callback_invoked.store(true, Ordering::Relaxed);
             req.into_future()
         }
