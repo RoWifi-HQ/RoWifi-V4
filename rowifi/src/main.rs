@@ -24,11 +24,11 @@ use rowifi_models::discord::{
         command::CommandOptionType,
         interaction::{Interaction, InteractionData, InteractionType},
     },
+    gateway::{event::Event, payload::incoming::InteractionCreate},
     http::interaction::{InteractionResponse, InteractionResponseType},
-    id::{marker::ApplicationMarker, Id}, gateway::{event::Event, payload::incoming::InteractionCreate},
+    id::{marker::ApplicationMarker, Id},
 };
 use rowifi_roblox::RobloxClient;
-use twilight_standby::Standby;
 use std::{error::Error, future::Future, pin::Pin, sync::Arc, time::Duration};
 use tokio::net::TcpListener;
 use tower::Layer as _;
@@ -38,12 +38,15 @@ use tower_http::{
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 use twilight_http::Client as TwilightClient;
+use twilight_standby::Standby;
 
 use crate::commands::{
     assetbinds::{delete_assetbind, new_assetbind},
     groupbinds::{delete_groupbind, new_groupbind},
     rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
-    user::update_route,
+    user::{
+        account_default, account_delete, account_switch, account_view, update_route, verify_route,
+    },
 };
 
 #[tokio::main]
@@ -103,6 +106,11 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/groupbinds/delete", post(delete_groupbind))
         .route("/assetbinds/new", post(new_assetbind))
         .route("/assetbinds/delete", post(delete_assetbind))
+        .route("/account/view", post(account_view))
+        .route("/account/default", post(account_default))
+        .route("/account/switch", post(account_switch))
+        .route("/account/delete", post(account_delete))
+        .route("/verify", post(verify_route))
         .route("/standby", post(standby_route))
         .layer(Extension(Arc::new(standby)))
         .layer(AsyncRequireAuthorizationLayer::new(WebhookAuth))
@@ -123,12 +131,17 @@ async fn pong() -> Json<InteractionResponse> {
     })
 }
 
-async fn standby_route(bot_standby: Extension<Arc<Standby>>, interaction: Json<Interaction>) -> Json<InteractionResponse> {
-    let _ = bot_standby.process(&Event::InteractionCreate(Box::new(InteractionCreate(interaction.0))));
+async fn standby_route(
+    bot_standby: Extension<Arc<Standby>>,
+    interaction: Json<Interaction>,
+) -> Json<InteractionResponse> {
+    let _ = bot_standby.process(&Event::InteractionCreate(Box::new(InteractionCreate(
+        interaction.0,
+    ))));
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredUpdateMessage,
-        data: None
+        data: None,
     })
 }
 
@@ -162,7 +175,7 @@ async fn rewrite_request_uri(req: Request) -> Request {
             uri_parts.path_and_query = Some(command_name.parse().unwrap());
             let new_uri = Uri::from_parts(uri_parts).unwrap();
             parts.uri = new_uri;
-        },
+        }
         InteractionType::MessageComponent => {
             let mut uri_parts = parts.uri.into_parts();
             uri_parts.path_and_query = Some("/standby".parse().unwrap());

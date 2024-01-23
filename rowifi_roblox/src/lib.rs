@@ -7,7 +7,12 @@ mod route;
 
 use error::DeserializeBodyError;
 use http_body_util::{BodyExt, Full};
-use hyper::{body::Bytes, http::response::Parts, Method, Request, StatusCode};
+use hyper::{
+    body::Bytes,
+    header::{HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
+    http::response::Parts,
+    Method, Request, StatusCode,
+};
 use hyper_rustls::HttpsConnector;
 use hyper_util::{
     client::legacy::{connect::HttpConnector, Client as HyperClient},
@@ -60,7 +65,6 @@ impl RobloxClient {
             .with_webpki_roots()
             .https_or_http()
             .enable_http1()
-            .enable_http2()
             .build();
         let client = HyperClient::builder(TokioExecutor::new()).build(connector);
         Self {
@@ -153,6 +157,60 @@ impl RobloxClient {
         })?;
 
         Ok(json)
+    }
+
+    /// Get a user from their username.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn get_user_from_username(
+        &self,
+        username: &str,
+    ) -> Result<Option<PartialUser>, RobloxError> {
+        let route = Route::GetUserByUsernames;
+
+        let usernames = vec![username];
+        let json = serde_json::json!({"usernames": usernames});
+        let body = serde_json::to_vec(&json).map_err(|source| RobloxError {
+            source: Some(Box::new(source)),
+            kind: ErrorKind::BuildingRequest,
+        })?;
+
+        let request = Request::builder()
+            .uri(route.to_string())
+            .method(Method::POST)
+            .header(CONTENT_TYPE, HeaderValue::from_static("application/json"))
+            .header(CONTENT_LENGTH, body.len())
+            .body(Full::new(Bytes::from(body)))
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json = serde_json::from_slice::<VecWrapper<PartialUser>>(&bytes).map_err(|source| {
+            RobloxError {
+                source: Some(Box::new(DeserializeBodyError {
+                    source: Some(Box::new(source)),
+                    bytes,
+                })),
+                kind: ErrorKind::Deserialize,
+            }
+        })?;
+        Ok(json.data.into_iter().next())
     }
 
     /// Get the items in an user's inventory.
@@ -324,7 +382,10 @@ impl RobloxClient {
         Ok(Some(json))
     }
 
-    async fn request(&self, request: Request<Full<Bytes>>) -> Result<(Parts, Vec<u8>), RobloxError> {
+    async fn request(
+        &self,
+        request: Request<Full<Bytes>>,
+    ) -> Result<(Parts, Vec<u8>), RobloxError> {
         let res = self
             .client
             .request(request)

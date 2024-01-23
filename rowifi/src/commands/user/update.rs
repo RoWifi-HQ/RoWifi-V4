@@ -116,7 +116,7 @@ Oops, I did not find <@{}> in my database. They are not verified with RoWifi.
         } else {
             format!(
                 r#"
-Hey there, it looks like you're not verified with us. Please run `/verify` to register with us.
+Hey there, it looks like you're not verified with us. Please run `/verify` to register with RoWifi.
             "#
             )
         };

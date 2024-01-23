@@ -10,6 +10,7 @@ pub struct RoUser {
     pub user_id: UserId,
     pub default_account_id: RobloxUserId,
     pub linked_accounts: HashMap<GuildId, RobloxUserId>,
+    pub other_accounts: Vec<RobloxUserId>,
 }
 
 impl TryFrom<tokio_postgres::Row> for RoUser {
@@ -20,6 +21,7 @@ impl TryFrom<tokio_postgres::Row> for RoUser {
         let default_account_id = row.try_get("default_account_id")?;
         let linked_accounts_sql: HashMap<String, Option<String>> =
             row.try_get("linked_accounts")?;
+        let other_accounts_sql: Vec<i64> = row.try_get("other_accounts")?;
 
         let linked_accounts = linked_accounts_sql
             .into_iter()
@@ -30,10 +32,16 @@ impl TryFrom<tokio_postgres::Row> for RoUser {
             })
             .collect::<HashMap<_, _>>();
 
+        let other_accounts = other_accounts_sql
+            .into_iter()
+            .map(|a| RobloxUserId(a as u64))
+            .collect::<Vec<_>>();
+
         Ok(Self {
             user_id,
             default_account_id,
             linked_accounts,
+            other_accounts,
         })
     }
 }
