@@ -41,8 +41,9 @@ use twilight_http::Client as TwilightClient;
 use twilight_standby::Standby;
 
 use crate::commands::{
-    assetbinds::{delete_assetbind, new_assetbind},
-    groupbinds::{delete_groupbind, new_groupbind},
+    assetbinds::{delete_assetbind, new_assetbind, view_assetbinds},
+    denylists::{add_group_denylist, add_user_denylist, view_denylists},
+    groupbinds::{delete_groupbind, new_groupbind, view_groupbinds},
     rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
     user::{
         account_default, account_delete, account_switch, account_view, update_route, verify_route,
@@ -104,8 +105,13 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/rankbinds/view", post(view_rankbinds))
         .route("/groupbinds/new", post(new_groupbind))
         .route("/groupbinds/delete", post(delete_groupbind))
+        .route("/groupbinds/view", post(view_groupbinds))
         .route("/assetbinds/new", post(new_assetbind))
         .route("/assetbinds/delete", post(delete_assetbind))
+        .route("/assetbinds/view", post(view_assetbinds))
+        .route("/denylists/user", post(add_user_denylist))
+        .route("/denylists/group", post(add_group_denylist))
+        .route("/denylists/view", post(view_denylists))
         .route("/account/view", post(account_view))
         .route("/account/default", post(account_default))
         .route("/account/switch", post(account_switch))

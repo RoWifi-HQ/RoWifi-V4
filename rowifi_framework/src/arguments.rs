@@ -1,5 +1,6 @@
 use rowifi_models::{
     bind::AssetType,
+    deny_list::DenyListActionType,
     discord::{
         application::interaction::application_command::{CommandDataOption, CommandOptionValue},
         id::{marker::RoleMarker, Id},
@@ -128,6 +129,20 @@ impl Argument for AssetType {
                 0 => Ok(AssetType::Asset),
                 1 => Ok(AssetType::Badge),
                 2 => Ok(AssetType::Gamepass),
+                _ => unreachable!(),
+            },
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl Argument for DenyListActionType {
+    fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
+        match &option.value {
+            CommandOptionValue::Integer(value) => match value {
+                0 => Ok(DenyListActionType::None),
+                1 => Ok(DenyListActionType::Kick),
+                2 => Ok(DenyListActionType::Ban),
                 _ => unreachable!(),
             },
             _ => unreachable!(),

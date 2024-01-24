@@ -1,25 +1,27 @@
-mod delete;
-mod new;
+mod group;
+mod user;
 
 use itertools::Itertools;
 use rowifi_framework::{prelude::*, utils::paginate_embeds};
-use rowifi_models::discord::{
-    http::interaction::{InteractionResponse, InteractionResponseType},
-    util::Timestamp,
+use rowifi_models::{
+    deny_list::DenyListData,
+    discord::{
+        http::interaction::{InteractionResponse, InteractionResponseType},
+        util::Timestamp,
+    },
 };
 use std::sync::Arc;
-use twilight_mention::Mention;
 use twilight_standby::Standby;
 
-pub use delete::delete_assetbind;
-pub use new::new_assetbind;
+pub use group::add_group_denylist;
+pub use user::add_user_denylist;
 
-pub async fn view_assetbinds(
+pub async fn view_denylists(
     bot: Extension<BotContext>,
     standby: Extension<Arc<Standby>>,
     command: Command<()>,
 ) -> impl IntoResponse {
-    spawn_command(view_assetbinds_func(bot, standby, command.ctx));
+    spawn_command(view_denylists_func(bot, standby, command.ctx));
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -27,47 +29,42 @@ pub async fn view_assetbinds(
     })
 }
 
-pub async fn view_assetbinds_func(
+pub async fn view_denylists_func(
     bot: Extension<BotContext>,
     standby: Extension<Arc<Standby>>,
     ctx: CommandContext,
 ) -> CommandResult {
     let guild = bot
         .get_guild(
-            "SELECT guild_id, assetbinds FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, deny_lists FROM guilds WHERE guild_id = $1",
             ctx.guild_id,
         )
         .await?;
 
-    if guild.assetbinds.0.is_empty() {
+    if guild.deny_lists.0.is_empty() {
         let message = r"
-This server has no assetbinds configured. Looking to add one? Use the command `/assetbinds new`.
+This server has no denylists configured. Looking to add one? Use the command `/denylists new`.
         ";
         ctx.respond(&bot).content(message).unwrap().exec().await?;
     }
 
     let mut pages = Vec::new();
     let mut page_count = 0usize;
-    let assetbinds = guild.assetbinds.0;
-    for abs in &assetbinds.into_iter().chunks(12) {
+    let denylists = guild.deny_lists.0;
+    for denylist_chunk in &denylists.into_iter().chunks(12) {
         let mut embed = EmbedBuilder::new()
             .color(DARK_GREEN)
             .footer(EmbedFooterBuilder::new("RoWifi").build())
             .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
-            .title("Assetbinds")
+            .title("Denylists")
             .description(format!("Page {}", page_count + 1));
-        for ab in abs {
-            let name = format!("ID: {}", ab.asset_id);
-            let desc = format!(
-                "Type: `{}`\nTemplate: `{}`\nPriority: {}\n Roles: {}",
-                ab.asset_type,
-                ab.template,
-                ab.priority,
-                ab.discord_roles
-                    .iter()
-                    .map(|r| r.0.mention().to_string())
-                    .collect::<String>()
-            );
+        for denylist in denylist_chunk {
+            let name = format!("ID: {}", denylist.id);
+            let mut desc = format!("Type: `{}`\nReason: {}\n", denylist.kind(), denylist.reason,);
+            match denylist.data {
+                DenyListData::User(user_id) => desc.push_str(&format!("User ID: {user_id}")),
+                DenyListData::Group(group_id) => desc.push_str(&format!("Group ID: {group_id}")),
+            }
             embed = embed.field(EmbedFieldBuilder::new(name, desc).inline().build());
         }
         pages.push(embed.build());

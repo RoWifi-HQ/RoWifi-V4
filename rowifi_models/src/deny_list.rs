@@ -1,5 +1,6 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::fmt::{Display, Formatter, Result as FmtResult};
 
 use crate::roblox::id::{GroupId, UserId};
 
@@ -11,7 +12,7 @@ pub struct DenyList {
     pub data: DenyListData,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DenyListData {
     User(UserId),
     Group(GroupId),
@@ -26,9 +27,12 @@ pub enum DenyListType {
     Custom = 2,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Ord, PartialEq, PartialOrd, Serialize_repr)]
+#[derive(
+    Clone, Copy, Debug, Default, Deserialize_repr, Eq, Ord, PartialEq, PartialOrd, Serialize_repr,
+)]
 #[repr(u8)]
 pub enum DenyListActionType {
+    #[default]
     None = 0,
     Kick = 1,
     Ban = 2,
@@ -86,5 +90,15 @@ impl Serialize for DenyList {
             group_id,
         };
         intermediary.serialize(serializer)
+    }
+}
+
+impl Display for DenyListType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            Self::User => f.write_str("User"),
+            Self::Group => f.write_str("Group"),
+            Self::Custom => f.write_str("Custom"),
+        }
     }
 }

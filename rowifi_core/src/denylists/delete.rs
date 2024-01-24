@@ -1,9 +1,8 @@
 use rowifi_database::{postgres::types::Json, Database};
 use rowifi_models::{
     audit_log::{AuditLog, AuditLogData, AuditLogKind},
-    bind::{Assetbind, BindType},
+    deny_list::DenyList,
     id::{GuildId, UserId},
-    roblox::id::AssetId,
 };
 use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;
@@ -11,49 +10,49 @@ use time::OffsetDateTime;
 use crate::error::RoError;
 
 #[derive(Debug)]
-pub struct DeleteAssetbind {
+pub struct DeleteDenylist {
     pub deleted: u32,
-    pub invalid: Vec<AssetId>,
+    pub invalid: Vec<u32>,
 }
 
-pub async fn delete_assetbinds(
+pub async fn delete_denylist(
     database: &Database,
-    assetbinds: &[Assetbind],
+    denylists: &[DenyList],
     guild_id: GuildId,
     author_id: UserId,
-    args: Vec<AssetId>,
-) -> Result<DeleteAssetbind, RoError> {
+    args: Vec<u32>,
+) -> Result<DeleteDenylist, RoError> {
     let mut map = HashMap::new();
-    for (idx, assetbind) in assetbinds.iter().enumerate() {
-        map.insert(assetbind.asset_id, idx);
+    for (idx, denylist) in denylists.iter().enumerate() {
+        map.insert(denylist.id, idx);
     }
 
-    let mut binds_to_delete = HashSet::new();
+    let mut denylists_to_delete = HashSet::new();
     let mut invalid = Vec::new();
     for arg in args {
         if map.contains_key(&arg) {
-            binds_to_delete.insert(arg);
+            denylists_to_delete.insert(arg);
         } else {
             invalid.push(arg);
         }
     }
 
-    if binds_to_delete.is_empty() {
-        return Ok(DeleteAssetbind {
+    if denylists_to_delete.is_empty() {
+        return Ok(DeleteDenylist {
             deleted: 0,
             invalid,
         });
     }
 
-    let new_assetbinds = assetbinds
+    let new_denylists = denylists
         .iter()
-        .filter(|r| binds_to_delete.contains(&r.asset_id))
+        .filter(|d| denylists_to_delete.contains(&d.id))
         .cloned()
         .collect::<Vec<_>>();
     database
         .execute(
-            "UPDATE guilds SET assetbinds = $2 WHERE guild_id = $1",
-            &[&guild_id, &Json(new_assetbinds)],
+            "UPDATE guilds SET denylists = $2 WHERE guild_id = $1",
+            &[&guild_id, &Json(new_denylists)],
         )
         .await?;
 
@@ -62,16 +61,15 @@ pub async fn delete_assetbinds(
         guild_id: Some(guild_id),
         user_id: Some(author_id),
         timestamp: OffsetDateTime::now_utc(),
-        metadata: AuditLogData::BindDelete {
-            count: binds_to_delete.len() as i32,
-            kind: BindType::Asset,
+        metadata: AuditLogData::DenylistDelete {
+            count: denylists_to_delete.len() as i32,
         },
     };
 
     database
         .execute(
             r#"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
-        VALUES($1, $2, $3, $4, $5)"#,
+            VALUES($1, $2, $3, $4, $5)"#,
             &[
                 &log.kind,
                 &log.guild_id,
@@ -82,8 +80,8 @@ pub async fn delete_assetbinds(
         )
         .await?;
 
-    Ok(DeleteAssetbind {
-        deleted: binds_to_delete.len() as u32,
+    Ok(DeleteDenylist {
+        deleted: denylists_to_delete.len() as u32,
         invalid,
     })
 }

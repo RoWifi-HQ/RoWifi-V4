@@ -56,7 +56,7 @@ pub async fn delete_rankbinds(
         .filter(|r| binds_to_delete.contains(&(r.group_id, r.group_rank_id)))
         .cloned()
         .collect::<Vec<_>>();
-    let rows = database
+    database
         .execute(
             "UPDATE guilds SET rankbinds = $2 WHERE guild_id = $1",
             &[&guild_id, &Json(new_rankbinds)],
@@ -69,7 +69,7 @@ pub async fn delete_rankbinds(
         user_id: Some(author_id),
         timestamp: OffsetDateTime::now_utc(),
         metadata: AuditLogData::BindDelete {
-            count: rows as i32,
+            count: binds_to_delete.len() as i32,
             kind: BindType::Rank,
         },
     };
@@ -89,7 +89,7 @@ pub async fn delete_rankbinds(
         .await?;
 
     Ok(DeleteRankbind {
-        deleted: rows as u32,
+        deleted: binds_to_delete.len() as u32,
         invalid,
     })
 }

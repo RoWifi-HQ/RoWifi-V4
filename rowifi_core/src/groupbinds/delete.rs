@@ -50,7 +50,7 @@ pub async fn delete_groupbinds(
         .filter(|r| binds_to_delete.contains(&r.group_id))
         .cloned()
         .collect::<Vec<_>>();
-    let rows = database
+    database
         .execute(
             "UPDATE guilds SET groupbinds = $2 WHERE guild_id = $1",
             &[&guild_id, &Json(new_groupbinds)],
@@ -63,7 +63,7 @@ pub async fn delete_groupbinds(
         user_id: Some(author_id),
         timestamp: OffsetDateTime::now_utc(),
         metadata: AuditLogData::BindDelete {
-            count: rows as i32,
+            count: binds_to_delete.len() as i32,
             kind: BindType::Group,
         },
     };
@@ -83,7 +83,7 @@ pub async fn delete_groupbinds(
         .await?;
 
     Ok(DeleteGroupbind {
-        deleted: rows as u32,
+        deleted: binds_to_delete.len() as u32,
         invalid,
     })
 }

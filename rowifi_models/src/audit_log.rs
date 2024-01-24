@@ -6,6 +6,7 @@ use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, Json, ToSql, Type};
 
 use crate::{
     bind::BindType,
+    deny_list::DenyListType,
     id::{GuildId, UserId},
 };
 
@@ -28,6 +29,8 @@ pub enum AuditLogKind {
     XPRemove = 5,
     SetRank = 6,
     XPSet = 7,
+    DenylistCreate = 8,
+    DenylistDelete = 9,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -61,6 +64,12 @@ pub enum AuditLogData {
     XPSet {
         xp: i32,
         target_roblox_user: i64,
+    },
+    DenylistCreate {
+        kind: DenyListType,
+    },
+    DenylistDelete {
+        count: i32,
     },
 }
 

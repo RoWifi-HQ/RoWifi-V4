@@ -33,6 +33,18 @@ impl Display for GroupId {
     }
 }
 
+impl Display for RoleId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        Display::fmt(&self.0, f)
+    }
+}
+
+impl Display for UserId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        Display::fmt(&self.0, f)
+    }
+}
+
 impl ToSql for UserId {
     fn to_sql(
         &self,
