@@ -23,7 +23,7 @@ pub async fn add_denylist(
     existing_denylists: &[DenyList],
     args: DenylistArguments,
 ) -> Result<DenyList, RoError> {
-    let denylist_id = existing_denylists.iter().map(|d| d.id).max().unwrap_or(0);
+    let denylist_id = existing_denylists.iter().map(|d| d.id).max().unwrap_or(0) + 1;
     let denylist = Json(DenyList {
         id: denylist_id,
         reason: args.reason,
@@ -38,7 +38,7 @@ pub async fn add_denylist(
     database
         .execute(
             &format!(
-                "UPDATE guilds SET denylists[{}] = $2 WHERE guild_id = $1",
+                "UPDATE guilds SET deny_lists[{}] = $2 WHERE guild_id = $1",
                 idx.unwrap_or_else(|| existing_denylists.len())
             ),
             &[&guild_id, &denylist],

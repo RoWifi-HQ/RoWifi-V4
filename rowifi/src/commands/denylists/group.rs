@@ -80,7 +80,7 @@ Oh no! A group with the ID {} does not exist. Ensure you have entered the ID cor
         .color(DARK_GREEN)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
         .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
-        .title("Blacklist Addition Successful")
+        .title("Denylist Addition Successful")
         .field(EmbedFieldBuilder::new(name.clone(), desc.clone()))
         .build();
     ctx.respond(&bot).embeds(&[embed])?.exec().await?;

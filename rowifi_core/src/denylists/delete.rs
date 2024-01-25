@@ -15,7 +15,7 @@ pub struct DeleteDenylist {
     pub invalid: Vec<u32>,
 }
 
-pub async fn delete_denylist(
+pub async fn delete_denylists(
     database: &Database,
     denylists: &[DenyList],
     guild_id: GuildId,
@@ -46,18 +46,18 @@ pub async fn delete_denylist(
 
     let new_denylists = denylists
         .iter()
-        .filter(|d| denylists_to_delete.contains(&d.id))
+        .filter(|d| !denylists_to_delete.contains(&d.id))
         .cloned()
         .collect::<Vec<_>>();
     database
         .execute(
-            "UPDATE guilds SET denylists = $2 WHERE guild_id = $1",
+            "UPDATE guilds SET deny_lists = $2 WHERE guild_id = $1",
             &[&guild_id, &Json(new_denylists)],
         )
         .await?;
 
     let log = AuditLog {
-        kind: AuditLogKind::BindDelete,
+        kind: AuditLogKind::DenylistDelete,
         guild_id: Some(guild_id),
         user_id: Some(author_id),
         timestamp: OffsetDateTime::now_utc(),

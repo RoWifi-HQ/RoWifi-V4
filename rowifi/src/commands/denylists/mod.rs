@@ -1,3 +1,4 @@
+mod delete;
 mod group;
 mod user;
 
@@ -13,6 +14,7 @@ use rowifi_models::{
 use std::sync::Arc;
 use twilight_standby::Standby;
 
+pub use delete::delete_denylist;
 pub use group::add_group_denylist;
 pub use user::add_user_denylist;
 
@@ -46,6 +48,7 @@ pub async fn view_denylists_func(
 This server has no denylists configured. Looking to add one? Use the command `/denylists new`.
         ";
         ctx.respond(&bot).content(message).unwrap().exec().await?;
+        return Ok(());
     }
 
     let mut pages = Vec::new();

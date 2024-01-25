@@ -82,6 +82,15 @@ impl Argument for u8 {
     }
 }
 
+impl Argument for u32 {
+    fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
+        match &option.value {
+            CommandOptionValue::Integer(value) => Ok(*value as Self),
+            _ => unreachable!("u32 reached"),
+        }
+    }
+}
+
 impl Argument for u64 {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match &option.value {

@@ -42,7 +42,7 @@ use twilight_standby::Standby;
 
 use crate::commands::{
     assetbinds::{delete_assetbind, new_assetbind, view_assetbinds},
-    denylists::{add_group_denylist, add_user_denylist, view_denylists},
+    denylists::{add_group_denylist, add_user_denylist, delete_denylist, view_denylists},
     groupbinds::{delete_groupbind, new_groupbind, view_groupbinds},
     rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
     user::{
@@ -111,6 +111,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/assetbinds/view", post(view_assetbinds))
         .route("/denylists/user", post(add_user_denylist))
         .route("/denylists/group", post(add_group_denylist))
+        .route("/denylists/delete", post(delete_denylist))
         .route("/denylists/view", post(view_denylists))
         .route("/account/view", post(account_view))
         .route("/account/default", post(account_default))
