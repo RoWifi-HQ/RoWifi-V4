@@ -24,6 +24,7 @@ pub async fn account_view(bot: Extension<BotContext>, command: Command<()>) -> i
     })
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn account_view_func(bot: Extension<BotContext>, ctx: CommandContext) -> CommandResult {
     let Some(user) = bot
         .database
@@ -34,10 +35,10 @@ pub async fn account_view_func(bot: Extension<BotContext>, ctx: CommandContext) 
         .await?
     else {
         tracing::debug!("user is not in the database");
-        let message = r#"
+        let message = r"
 Hey there, it looks like you're not verified with us. Please run `/verify` to register with RoWifi.
-        "#;
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ";
+        ctx.respond(&bot).content(message).unwrap().await?;
         return Ok(());
     };
 
@@ -50,7 +51,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
     let mut acc_string = String::new();
 
     let main_user = bot.roblox.get_user(user.default_account_id).await?;
-    acc_string.push_str(&main_user.display_name.unwrap_or_else(|| main_user.name));
+    acc_string.push_str(&main_user.display_name.unwrap_or(main_user.name));
     acc_string.push_str(" - `Default`");
 
     // Check if there is an linked account for this server
@@ -77,7 +78,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
     }
 
     let embed = embed.description(acc_string).build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().exec().await?;
+    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
 
     Ok(())
 }

@@ -27,6 +27,7 @@ pub async fn view_groupbinds(
     })
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn view_groupbinds_func(
     bot: Extension<BotContext>,
     standby: Extension<Arc<Standby>>,
@@ -43,7 +44,7 @@ pub async fn view_groupbinds_func(
         let message = r"
 This server has no groupbinds configured. Looking to add one? Use the command `/groupbinds new`.
         ";
-        ctx.respond(&bot).content(message).unwrap().exec().await?;
+        ctx.respond(&bot).content(message).unwrap().await?;
     }
 
     let mut pages = Vec::new();

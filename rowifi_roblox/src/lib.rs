@@ -321,11 +321,10 @@ impl RobloxClient {
             tracing::trace!(?json);
             ranks.extend(json.ranks.into_iter());
             if let Some(npt) = json.next_page_token {
-                if !npt.is_empty() {
-                    next_page_token = Some(npt);
-                } else {
+                if npt.is_empty() {
                     break;
                 }
+                next_page_token = Some(npt);
             } else {
                 break;
             }

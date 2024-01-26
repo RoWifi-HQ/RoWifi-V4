@@ -33,7 +33,7 @@ pub async fn new_assetbind(
     })
 }
 
-#[tracing::instrument(skip(bot, ctx))]
+#[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn new_assetbind_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
@@ -77,7 +77,7 @@ pub async fn new_assetbind_func(
 
     let mut description: String = String::new();
     if res.modified {
-        description.push_str(":warning: Bind already exists. Modified it to:\n\n")
+        description.push_str(":warning: Bind already exists. Modified it to:\n\n");
     }
     description.push_str(&format!("**Asset Id: {}**\n", res.bind.asset_id));
     description.push_str(&format!(
@@ -108,7 +108,7 @@ pub async fn new_assetbind_func(
         .title("Bind Addition Successful")
         .description(description)
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().exec().await?;
+    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
 
     Ok(())
 }

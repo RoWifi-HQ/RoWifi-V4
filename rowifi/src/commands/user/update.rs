@@ -33,13 +33,14 @@ pub async fn update_route(
 }
 
 #[allow(clippy::too_many_lines)]
+#[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn update_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
     args: UpdateArguments,
 ) -> CommandResult {
     tracing::debug!("update command invoked");
-    let server = bot.cache.guild(ctx.guild_id).await?.unwrap();
+    let server = bot.server(ctx.guild_id).await?;
 
     let user_id = match args.user_id {
         Some(s) => s,
@@ -59,7 +60,7 @@ pub async fn update_func(
         "#,
             user_id
         );
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -68,7 +69,7 @@ pub async fn update_func(
         let message = r"
         👋 Hey there Server Owner, Discord prevents bots from modifying a server owner's nickname. Hence, RoWifi does not allow running the `/update` command on server owners.
         ";
-        ctx.respond(&bot).content(message).unwrap().exec().await?;
+        ctx.respond(&bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -92,7 +93,7 @@ You have a role (<@&{}>) which has been marked as a bypass role.
             "#,
                 bypass_role.role_id
             );
-            ctx.respond(&bot).content(&message).unwrap().exec().await?;
+            ctx.respond(&bot).content(&message).unwrap().await?;
             return Ok(());
         }
     }
@@ -120,7 +121,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
             "#
             )
         };
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().await?;
         return Ok(());
     };
     tracing::trace!(user = ?user);
@@ -161,7 +162,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                         deny_list.reason
                     )
                 };
-                ctx.respond(&bot).content(&message).unwrap().exec().await?;
+                ctx.respond(&bot).content(&message).unwrap().await?;
 
                 match deny_list.action_type {
                     DenyListActionType::None => {}
@@ -196,7 +197,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
                     "#,
                     )
                 };
-                ctx.respond(&bot).content(&message).unwrap().exec().await?;
+                ctx.respond(&bot).content(&message).unwrap().await?;
 
                 return Ok(());
             }
@@ -213,7 +214,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
                     {
                         if *status == 403 {
                             let message = "There was an error in updating. Run `/debug update` to find potential issues";
-                            ctx.respond(&bot).content(message).unwrap().exec().await?;
+                            ctx.respond(&bot).content(message).unwrap().await?;
                             return Ok(());
                         }
                     }
@@ -248,7 +249,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
         .field(EmbedFieldBuilder::new("Added Roles", added_str))
         .field(EmbedFieldBuilder::new("Removed Roles", removed_str))
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().exec().await?;
+    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
 
     Ok(())
 }

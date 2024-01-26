@@ -21,6 +21,7 @@ pub async fn account_default(
     })
 }
 
+#[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn account_default_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
@@ -35,32 +36,32 @@ pub async fn account_default_func(
         .await?
     else {
         tracing::debug!("user is not in the database");
-        let message = r#"
+        let message = r"
 Hey there, it looks like you're not verified with us. Please run `/verify` to register with RoWifi.
-        "#;
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ";
+        ctx.respond(&bot).content(message).unwrap().await?;
         return Ok(());
     };
 
     let Some(roblox_user) = bot.roblox.get_user_from_username(&args.username).await? else {
         let message = format!(
-            r#"
+            r"
 Oh no! An account with the name `{}` does not seem to exist. Ensure you have spelled the username correctly and try again.
-        "#,
+        ",
             args.username
         );
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
     if !user.other_accounts.contains(&roblox_user.id) && user.default_account_id != roblox_user.id {
         let message = format!(
-            r#"
+            r"
 `{}` is not linked to your discord account. Link it using `/verify`. 
-        "#,
+        ",
             roblox_user.name
         );
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
@@ -75,12 +76,12 @@ Oh no! An account with the name `{}` does not seem to exist. Ensure you have spe
         .await?;
 
     let message = format!(
-        r#"
+        r"
 Your default account was successfully set to **{}**.
-    "#,
+    ",
         roblox_user.name
     );
-    ctx.respond(&bot).content(&message).unwrap().exec().await?;
+    ctx.respond(&bot).content(&message).unwrap().await?;
 
     Ok(())
 }

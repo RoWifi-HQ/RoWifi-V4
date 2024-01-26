@@ -16,6 +16,11 @@ pub struct DenylistArguments {
     pub data: DenyListData,
 }
 
+/// Adds a denylist to the server. Modifies it if the denylist already exists.
+///
+/// # Errors
+///
+/// See [`AddAssetbindError`] for details.
 pub async fn add_denylist(
     database: &Database,
     guild_id: GuildId,
@@ -39,12 +44,12 @@ pub async fn add_denylist(
         .execute(
             &format!(
                 "UPDATE guilds SET deny_lists[{}] = $2 WHERE guild_id = $1",
-                idx.unwrap_or_else(|| existing_denylists.len())
+                idx.unwrap_or(existing_denylists.len())
             ),
             &[&guild_id, &denylist],
         )
         .await
-        .map_err(|err| RoError::from(err))?;
+        .map_err(RoError::from)?;
 
     let log = AuditLog {
         kind: AuditLogKind::DenylistCreate,
@@ -56,8 +61,8 @@ pub async fn add_denylist(
 
     database
         .execute(
-            r#"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
-        VALUES($1, $2, $3, $4, $5)"#,
+            r"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
+        VALUES($1, $2, $3, $4, $5)",
             &[
                 &log.kind,
                 &log.guild_id,
@@ -67,7 +72,7 @@ pub async fn add_denylist(
             ],
         )
         .await
-        .map_err(|err| RoError::from(err))?;
+        .map_err(RoError::from)?;
 
     Ok(denylist.0)
 }

@@ -27,6 +27,7 @@ pub async fn add_user_denylist(
     })
 }
 
+#[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn add_user_denylist_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
@@ -46,7 +47,7 @@ Oh no! A user with the name `{}` does not exist.
         "#,
             args.username
         );
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -76,7 +77,7 @@ Oh no! A user with the name `{}` does not exist.
         .title("Denylist Addition Successful")
         .field(EmbedFieldBuilder::new(name.clone(), desc.clone()))
         .build();
-    ctx.respond(&bot).embeds(&[embed])?.exec().await?;
+    ctx.respond(&bot).embeds(&[embed])?.await?;
 
     Ok(())
 }

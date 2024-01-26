@@ -34,7 +34,7 @@ pub async fn new_rankbind(
     })
 }
 
-#[tracing::instrument(skip(bot, ctx))]
+#[tracing::instrument(skip_all, fields(args = ?args))]
 async fn new_rankbind_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
@@ -82,7 +82,7 @@ async fn new_rankbind_func(
             "#,
                 args.rank_id, args.group_id
             );
-            ctx.respond(&bot).content(&message).unwrap().exec().await?;
+            ctx.respond(&bot).content(&message).unwrap().await?;
             return Ok(());
         }
         Err(AddRankbindError::InvalidGroup) => {
@@ -92,7 +92,7 @@ async fn new_rankbind_func(
             "#,
                 args.group_id
             );
-            ctx.respond(&bot).content(&message).unwrap().exec().await?;
+            ctx.respond(&bot).content(&message).unwrap().await?;
             return Ok(());
         }
         Err(AddRankbindError::Generic(err)) => return Err(err),
@@ -100,7 +100,7 @@ async fn new_rankbind_func(
 
     let mut description = String::new();
     if res.modified {
-        description.push_str(":warning: Bind already exists. Modified it to:\n\n")
+        description.push_str(":warning: Bind already exists. Modified it to:\n\n");
     }
     description.push_str(&format!("**Rank Id: {}**\n", res.bind.group_rank_id));
     description.push_str(&format!(
@@ -130,7 +130,7 @@ async fn new_rankbind_func(
         .title("Bind Addition Successful")
         .description(description)
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().exec().await?;
+    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
 
     Ok(())
 }

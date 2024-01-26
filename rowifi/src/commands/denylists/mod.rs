@@ -31,6 +31,7 @@ pub async fn view_denylists(
     })
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn view_denylists_func(
     bot: Extension<BotContext>,
     standby: Extension<Arc<Standby>>,
@@ -47,7 +48,7 @@ pub async fn view_denylists_func(
         let message = r"
 This server has no denylists configured. Looking to add one? Use the command `/denylists new`.
         ";
-        ctx.respond(&bot).content(message).unwrap().exec().await?;
+        ctx.respond(&bot).content(message).unwrap().await?;
         return Ok(());
     }
 

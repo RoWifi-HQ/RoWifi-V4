@@ -28,6 +28,7 @@ pub async fn add_group_denylist(
     })
 }
 
+#[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn add_group_denylist_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
@@ -44,7 +45,7 @@ pub async fn add_group_denylist_func(
         .roblox
         .get_group(GroupId(args.group_id))
         .await
-        .map_err(|err| RoError::from(err))?
+        .map_err(RoError::from)?
         .is_none()
     {
         let message = format!(
@@ -53,7 +54,7 @@ Oh no! A group with the ID {} does not exist. Ensure you have entered the ID cor
             "#,
             args.group_id
         );
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
@@ -83,7 +84,7 @@ Oh no! A group with the ID {} does not exist. Ensure you have entered the ID cor
         .title("Denylist Addition Successful")
         .field(EmbedFieldBuilder::new(name.clone(), desc.clone()))
         .build();
-    ctx.respond(&bot).embeds(&[embed])?.exec().await?;
+    ctx.respond(&bot).embeds(&[embed])?.await?;
 
     Ok(())
 }

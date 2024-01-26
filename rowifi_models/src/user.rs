@@ -32,6 +32,7 @@ impl TryFrom<tokio_postgres::Row> for RoUser {
             })
             .collect::<HashMap<_, _>>();
 
+        #[allow(clippy::cast_sign_loss)]
         let other_accounts = other_accounts_sql
             .into_iter()
             .map(|a| RobloxUserId(a as u64))

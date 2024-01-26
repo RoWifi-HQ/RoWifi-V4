@@ -33,6 +33,12 @@ pub struct GroupbindArguments {
     pub discord_roles: Vec<RoleId>,
 }
 
+/// Adds a groupbind to the server. Modifies it if the groupbind already exists.
+/// Validates the discord roles if they exist and are not managed.
+///
+/// # Errors
+///
+/// See [`AddGroupbindError`] for details.
 pub async fn add_groupbind(
     roblox: &RobloxClient,
     database: &Database,
@@ -45,7 +51,7 @@ pub async fn add_groupbind(
     if roblox
         .get_group(args.group_id)
         .await
-        .map_err(|err| RoError::from(err))?
+        .map_err(RoError::from)?
         .is_none()
     {
         return Err(AddGroupbindError::InvalidGroup);
@@ -79,12 +85,12 @@ pub async fn add_groupbind(
         .execute(
             &format!(
                 "UPDATE guilds SET groupbinds[{}] = $2 WHERE guild_id = $1",
-                idx.unwrap_or_else(|| existing_groupbinds.len())
+                idx.unwrap_or(existing_groupbinds.len())
             ),
             &[&guild_id, &bind],
         )
         .await
-        .map_err(|err| RoError::from(err))?;
+        .map_err(RoError::from)?;
 
     let log = AuditLog {
         kind: AuditLogKind::BindCreate,
@@ -99,8 +105,8 @@ pub async fn add_groupbind(
 
     database
         .execute(
-            r#"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
-        VALUES($1, $2, $3, $4, $5)"#,
+            r"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
+        VALUES($1, $2, $3, $4, $5)",
             &[
                 &log.kind,
                 &log.guild_id,
@@ -110,7 +116,7 @@ pub async fn add_groupbind(
             ],
         )
         .await
-        .map_err(|err| RoError::from(err))?;
+        .map_err(RoError::from)?;
 
     Ok(AddGroupbind {
         bind: bind.0,

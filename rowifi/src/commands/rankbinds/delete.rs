@@ -26,6 +26,7 @@ pub async fn delete_rankbind(
     })
 }
 
+#[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn delete_rankbind_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
@@ -45,7 +46,7 @@ pub async fn delete_rankbind_func(
         ctx.author_id,
         vec![RankbindArguments {
             group_id: GroupId(args.group_id),
-            rank_id: args.rank_id as u32,
+            rank_id: u32::from(args.rank_id),
         }],
     )
     .await?;
@@ -61,7 +62,7 @@ pub async fn delete_rankbind_func(
                 args.group_id, args.rank_id
             ))
             .build();
-        ctx.respond(&bot).embeds(&[embed]).unwrap().exec().await?;
+        ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
     } else {
         let embed = EmbedBuilder::new()
             .color(DARK_GREEN)
@@ -69,7 +70,7 @@ pub async fn delete_rankbind_func(
             .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
             .title("Deletion Successful")
             .build();
-        ctx.respond(&bot).embeds(&[embed]).unwrap().exec().await?;
+        ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
     }
 
     Ok(())

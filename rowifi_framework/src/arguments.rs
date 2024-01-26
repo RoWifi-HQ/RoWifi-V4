@@ -76,6 +76,7 @@ impl Argument for UserId {
 impl Argument for u8 {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match &option.value {
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
             CommandOptionValue::Integer(value) => Ok(*value as Self),
             _ => unreachable!("u8 reached"),
         }
@@ -85,6 +86,7 @@ impl Argument for u8 {
 impl Argument for u32 {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match &option.value {
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
             CommandOptionValue::Integer(value) => Ok(*value as Self),
             _ => unreachable!("u32 reached"),
         }
@@ -94,6 +96,7 @@ impl Argument for u32 {
 impl Argument for u64 {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match &option.value {
+            #[allow(clippy::cast_sign_loss)]
             CommandOptionValue::Integer(value) => Ok(*value as Self),
             _ => unreachable!("u64 reached"),
         }
@@ -103,6 +106,7 @@ impl Argument for u64 {
 impl Argument for i32 {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match &option.value {
+            #[allow(clippy::cast_possible_truncation)]
             CommandOptionValue::Integer(value) => Ok(*value as Self),
             _ => unreachable!("i32 reached"),
         }
@@ -121,7 +125,7 @@ impl Argument for String {
 impl Argument for Vec<RoleId> {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         let roles = match &option.value {
-            CommandOptionValue::String(value) => Id::<RoleMarker>::iter(&value)
+            CommandOptionValue::String(value) => Id::<RoleMarker>::iter(value)
                 .map(|v| RoleId(v.0))
                 .collect::<Vec<_>>(),
             _ => unreachable!("Vec reached"),

@@ -16,6 +16,11 @@ pub struct DeleteGroupbind {
     pub invalid: Vec<GroupId>,
 }
 
+/// Deletes a list of groupbinds from the server.
+///
+/// # Errors
+///
+/// See [`RoError`] for details.
 pub async fn delete_groupbinds(
     database: &Database,
     groupbinds: &[Groupbind],
@@ -57,6 +62,7 @@ pub async fn delete_groupbinds(
         )
         .await?;
 
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     let log = AuditLog {
         kind: AuditLogKind::BindDelete,
         guild_id: Some(guild_id),
@@ -70,8 +76,8 @@ pub async fn delete_groupbinds(
 
     database
         .execute(
-            r#"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
-        VALUES($1, $2, $3, $4, $5)"#,
+            r"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
+        VALUES($1, $2, $3, $4, $5)",
             &[
                 &log.kind,
                 &log.guild_id,
@@ -82,6 +88,7 @@ pub async fn delete_groupbinds(
         )
         .await?;
 
+    #[allow(clippy::cast_possible_truncation)]
     Ok(DeleteGroupbind {
         deleted: binds_to_delete.len() as u32,
         invalid,

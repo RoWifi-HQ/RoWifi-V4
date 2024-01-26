@@ -22,6 +22,11 @@ pub struct RankbindArguments {
     pub rank_id: u32,
 }
 
+/// Deletes a list of rankbinds from the server.
+///
+/// # Errors
+///
+/// See [`RoError`] for details.
 pub async fn delete_rankbinds(
     database: &Database,
     rankbinds: &[Rankbind],
@@ -63,6 +68,7 @@ pub async fn delete_rankbinds(
         )
         .await?;
 
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     let log = AuditLog {
         kind: AuditLogKind::BindDelete,
         guild_id: Some(guild_id),
@@ -76,8 +82,8 @@ pub async fn delete_rankbinds(
 
     database
         .execute(
-            r#"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
-        VALUES($1, $2, $3, $4, $5)"#,
+            r"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
+        VALUES($1, $2, $3, $4, $5)",
             &[
                 &log.kind,
                 &log.guild_id,
@@ -88,6 +94,7 @@ pub async fn delete_rankbinds(
         )
         .await?;
 
+    #[allow(clippy::cast_possible_truncation)]
     Ok(DeleteRankbind {
         deleted: binds_to_delete.len() as u32,
         invalid,

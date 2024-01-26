@@ -25,6 +25,7 @@ pub async fn delete_groupbind(
     })
 }
 
+#[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn delete_groupbind_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
@@ -57,7 +58,7 @@ pub async fn delete_groupbind_func(
                 args.group_id
             ))
             .build();
-        ctx.respond(&bot).embeds(&[embed]).unwrap().exec().await?;
+        ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
     } else {
         let embed = EmbedBuilder::new()
             .color(DARK_GREEN)
@@ -65,7 +66,7 @@ pub async fn delete_groupbind_func(
             .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
             .title("Deletion Successful")
             .build();
-        ctx.respond(&bot).embeds(&[embed]).unwrap().exec().await?;
+        ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
     }
 
     Ok(())

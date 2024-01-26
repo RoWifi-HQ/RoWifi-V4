@@ -40,7 +40,7 @@ impl Cache {
     ///
     /// # Errors
     ///
-    /// Returns Err if the data could not be updated.
+    /// See [`CacheError`] for details.
     pub async fn update<T: UpdateCache>(&self, value: &T) -> Result<(), CacheError> {
         value.update(self).await
     }
@@ -49,7 +49,7 @@ impl Cache {
     ///
     /// # Errors
     ///
-    /// Returns Err if there are no more connections left or the connection fails.
+    /// See [`CacheError`] for details.
     pub async fn get(&self) -> Result<Connection, PoolError> {
         self.0.pool.get().await
     }
@@ -58,7 +58,7 @@ impl Cache {
     ///
     /// # Errors
     ///
-    /// Returns Err if the connection to redis fails or the deserialization fails.
+    /// See [`CacheError`] for details.
     pub async fn guild(&self, id: GuildId) -> Result<Option<CachedGuild>, CacheError> {
         let mut conn = self.get().await?;
         let res: Option<Vec<u8>> = conn.get(CachedGuild::key(id)).await?;
@@ -74,7 +74,7 @@ impl Cache {
     ///
     /// # Errors
     ///
-    /// Returns Err if the connection to redis fails or the deserialization fails.
+    /// See [`CacheError`] for details.
     pub async fn guild_member(
         &self,
         guild_id: GuildId,
@@ -90,6 +90,11 @@ impl Cache {
         }
     }
 
+    /// Returns the roles of the server.
+    ///
+    /// # Errors
+    ///
+    /// See [`CacheError`] for details.
     pub async fn guild_roles(
         &self,
         role_ids: impl Iterator<Item = RoleId>,
@@ -97,7 +102,7 @@ impl Cache {
         let mut conn = self.get().await?;
         let keys = role_ids
             .into_iter()
-            .map(|r| CachedRole::key(r))
+            .map(CachedRole::key)
             .collect::<Vec<_>>();
         let res: Vec<Vec<u8>> = conn.get(keys).await?;
 
@@ -114,7 +119,7 @@ impl Cache {
     ///
     /// # Errors
     ///
-    /// Returns Err if the connection to redis fails or the serialization fails.
+    /// See [`CacheError`] for details.
     pub async fn cache_member(
         &self,
         guild_id: GuildId,
@@ -138,6 +143,11 @@ impl Cache {
         Ok(cached)
     }
 
+    /// Add a guild to the cache. Replaces if the guild already exists.
+    ///
+    /// # Errors
+    ///
+    /// See [`CacheError`] for details.
     pub async fn cache_guild(&self, guild: Guild) -> Result<CachedGuild, CacheError> {
         let mut pipeline = redis::pipe();
         let cached = cache_guild(&mut pipeline, &guild)?;

@@ -35,6 +35,12 @@ pub struct RankbindArguments {
     pub discord_roles: Vec<RoleId>,
 }
 
+/// Adds a rankbind to the server. Modifies it if the rankbind already exists.
+/// Validates the discord roles if they exist and are not managed.
+///
+/// # Errors
+///
+/// See [`AddRankbindError`] for details.
 pub async fn add_rankbind(
     roblox: &RobloxClient,
     database: &Database,
@@ -47,12 +53,12 @@ pub async fn add_rankbind(
     let Some(ranks) = roblox
         .get_group_ranks(args.group_id)
         .await
-        .map_err(|err| RoError::from(err))?
+        .map_err(RoError::from)?
     else {
         return Err(AddRankbindError::InvalidGroup);
     };
 
-    let Some(rank) = ranks.iter().find(|r| r.rank == args.rank_id as u32) else {
+    let Some(rank) = ranks.iter().find(|r| r.rank == u32::from(args.rank_id)) else {
         return Err(AddRankbindError::InvalidRank);
     };
 
@@ -72,7 +78,7 @@ pub async fn add_rankbind(
     let bind = Json(Rankbind {
         group_id: args.group_id,
         discord_roles: roles_to_add,
-        group_rank_id: args.rank_id as u32,
+        group_rank_id: u32::from(args.rank_id),
         roblox_rank_id: rank.id.clone(),
         priority: args.priority.unwrap_or_default(),
         template: args.template,
@@ -86,12 +92,12 @@ pub async fn add_rankbind(
         .execute(
             &format!(
                 "UPDATE guilds SET rankbinds[{}] = $2 WHERE guild_id = $1",
-                idx.unwrap_or_else(|| existing_rankbinds.len())
+                idx.unwrap_or(existing_rankbinds.len())
             ),
             &[&guild_id, &bind],
         )
         .await
-        .map_err(|err| RoError::from(err))?;
+        .map_err(RoError::from)?;
 
     let log = AuditLog {
         kind: AuditLogKind::BindCreate,
@@ -106,8 +112,8 @@ pub async fn add_rankbind(
 
     database
         .execute(
-            r#"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
-        VALUES($1, $2, $3, $4, $5)"#,
+            r"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
+        VALUES($1, $2, $3, $4, $5)",
             &[
                 &log.kind,
                 &log.guild_id,
@@ -117,7 +123,7 @@ pub async fn add_rankbind(
             ],
         )
         .await
-        .map_err(|err| RoError::from(err))?;
+        .map_err(RoError::from)?;
 
     Ok(AddRankbind {
         bind: bind.0,

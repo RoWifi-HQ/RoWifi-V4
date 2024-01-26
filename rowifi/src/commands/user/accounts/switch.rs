@@ -22,6 +22,7 @@ pub async fn account_switch(
     })
 }
 
+#[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn account_switch_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
@@ -36,10 +37,10 @@ pub async fn account_switch_func(
         .await?
     else {
         tracing::debug!("user is not in the database");
-        let message = r#"
+        let message = r"
 Hey there, it looks like you're not verified with us. Please run `/verify` to register with RoWifi.
-        "#;
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ";
+        ctx.respond(&bot).content(message).unwrap().await?;
         return Ok(());
     };
 
@@ -50,7 +51,7 @@ Oh no! An account with the name `{}` does not seem to exist. Ensure you have spe
         "#,
             args.username
         );
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -61,11 +62,11 @@ Oh no! An account with the name `{}` does not seem to exist. Ensure you have spe
         "#,
             roblox_user.name
         );
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
-    let guild = bot.cache.guild(ctx.guild_id).await?.unwrap();
+    let guild = bot.server(ctx.guild_id).await?;
 
     let mut map = HashMap::new();
     map.insert(ctx.guild_id.to_string(), Some(roblox_user.id.0.to_string()));
@@ -82,7 +83,7 @@ Your account for **{}** was successfully set to **{}**.
     "#,
         guild.name, roblox_user.name
     );
-    ctx.respond(&bot).content(&message).unwrap().exec().await?;
+    ctx.respond(&bot).content(&message).unwrap().await?;
 
     Ok(())
 }

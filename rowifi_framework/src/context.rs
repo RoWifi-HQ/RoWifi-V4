@@ -145,9 +145,14 @@ impl BotContext {
         }
     }
 
+    /// Get the server from the cache. If it is not present in the cache, get it from the Discord API.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error on a cache or discord error. See [`RoError`] for details.
     pub async fn server(&self, guild_id: GuildId) -> Result<CachedGuild, RoError> {
-        if let Ok(guild) = self.cache.guild(guild_id).await {
-            Ok(guild.unwrap())
+        if let Ok(Some(guild)) = self.cache.guild(guild_id).await {
+            Ok(guild)
         } else {
             let guild = self.http.guild(guild_id.0).await?.model().await?;
             let cached = self.cache.cache_guild(guild).await?;
@@ -285,9 +290,13 @@ impl<'a> Responder<'a> {
         self.flags = Some(flags);
         self
     }
+}
 
-    #[allow(clippy::missing_panics_doc)]
-    pub fn exec(self) -> ResponseFuture<Message> {
+impl IntoFuture for Responder<'_> {
+    type IntoFuture = ResponseFuture<Message>;
+    type Output = Result<twilight_http::Response<Message>, twilight_http::Error>;
+
+    fn into_future(self) -> Self::IntoFuture {
         if self.ctx.callback_invoked.load(Ordering::Relaxed) {
             let client = self.bot.http.interaction(self.bot.application_id);
             let mut req = client.create_followup(&self.ctx.interaction_token);

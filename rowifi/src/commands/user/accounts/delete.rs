@@ -23,6 +23,7 @@ pub async fn account_delete(
     })
 }
 
+#[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn account_delete_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
@@ -37,10 +38,10 @@ pub async fn account_delete_func(
         .await?
     else {
         tracing::debug!("user is not in the database");
-        let message = r#"
+        let message = r"
 Hey there, it looks like you're not verified with us. Please run `/verify` to register with RoWifi.
-        "#;
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ";
+        ctx.respond(&bot).content(message).unwrap().await?;
         return Ok(());
     };
 
@@ -51,7 +52,7 @@ Oh no! An account with the name `{}` does not seem to exist. Ensure you have spe
         "#,
             args.username
         );
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -62,15 +63,15 @@ Oh no! An account with the name `{}` does not seem to exist. Ensure you have spe
         "#,
             roblox_user.name
         );
-        ctx.respond(&bot).content(&message).unwrap().exec().await?;
+        ctx.respond(&bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
     if user.default_account_id == roblox_user.id {
-        let message = r#"
+        let message = r"
 You cannot delete your default linked account.
-        "#;
-        ctx.respond(&bot).content(message).unwrap().exec().await?;
+        ";
+        ctx.respond(&bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -95,7 +96,7 @@ You cannot delete your default linked account.
     "#,
         roblox_user.name
     );
-    ctx.respond(&bot).content(&message).unwrap().exec().await?;
+    ctx.respond(&bot).content(&message).unwrap().await?;
 
     Ok(())
 }

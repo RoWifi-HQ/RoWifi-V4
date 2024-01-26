@@ -32,6 +32,12 @@ pub struct AssetbindArguments {
     pub discord_roles: Vec<RoleId>,
 }
 
+/// Adds a assetbind to the server. Modifies it if the assetbind already exists.
+/// Validates the discord roles if they exist and are not managed.
+///
+/// # Errors
+///
+/// See [`AddAssetbindError`] for details.
 pub async fn add_assetbind(
     database: &Database,
     guild_id: GuildId,
@@ -70,12 +76,12 @@ pub async fn add_assetbind(
         .execute(
             &format!(
                 "UPDATE guilds SET assetbinds[{}] = $2 WHERE guild_id = $1",
-                idx.unwrap_or_else(|| existing_assetbinds.len())
+                idx.unwrap_or(existing_assetbinds.len())
             ),
             &[&guild_id, &bind],
         )
         .await
-        .map_err(|err| RoError::from(err))?;
+        .map_err(RoError::from)?;
 
     let log = AuditLog {
         kind: AuditLogKind::BindCreate,
@@ -90,8 +96,8 @@ pub async fn add_assetbind(
 
     database
         .execute(
-            r#"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
-    VALUES($1, $2, $3, $4, $5)"#,
+            r"INSERT INTO audit_logs(kind, guild_id, user_id, timestamp, metadata) 
+    VALUES($1, $2, $3, $4, $5)",
             &[
                 &log.kind,
                 &log.guild_id,
@@ -101,7 +107,7 @@ pub async fn add_assetbind(
             ],
         )
         .await
-        .map_err(|err| RoError::from(err))?;
+        .map_err(RoError::from)?;
 
     Ok(AddAssetbind {
         bind: bind.0,

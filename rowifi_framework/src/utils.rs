@@ -12,6 +12,12 @@ use twilight_standby::Standby;
 
 use crate::context::{BotContext, CommandContext};
 
+/// Utility method to paginate a list of embed using button components in a message.
+///
+/// # Errors
+///
+/// Returns a Discord error wrapped in a [`RoError`].
+#[allow(clippy::missing_panics_doc, clippy::too_many_lines)]
 pub async fn paginate_embeds(
     ctx: &CommandContext,
     bot: &BotContext,
@@ -23,7 +29,6 @@ pub async fn paginate_embeds(
         ctx.respond(bot)
             .embeds(&[pages[0].clone()])
             .unwrap()
-            .exec()
             .await?;
     } else {
         let message = ctx
@@ -73,7 +78,6 @@ pub async fn paginate_embeds(
                     }),
                 ],
             })])?
-            .exec()
             .await?
             .model()
             .await?;
@@ -88,9 +92,8 @@ pub async fn paginate_embeds(
         let mut page_pointer: usize = 0;
         while let Some(Ok(interaction)) = component_interaction.next().await {
             // There's a guarantee that it is a message component
-            let data = match &interaction.data {
-                Some(InteractionData::MessageComponent(data)) => data,
-                _ => unreachable!(),
+            let Some(InteractionData::MessageComponent(data)) = &interaction.data else {
+                unreachable!()
             };
             if interaction.author_id().unwrap() == ctx.author_id.0 {
                 match data.custom_id.as_str() {

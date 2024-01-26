@@ -27,6 +27,7 @@ pub async fn view_rankbinds(
     })
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn view_rankbinds_func(
     bot: Extension<BotContext>,
     standby: Extension<Arc<Standby>>,
@@ -43,14 +44,14 @@ pub async fn view_rankbinds_func(
         let message = r"
 This server has no rankbinds configured. Looking to add one? Use the command `/rankbinds new`.
         ";
-        ctx.respond(&bot).content(message).unwrap().exec().await?;
+        ctx.respond(&bot).content(message).unwrap().await?;
     }
 
     let mut pages = Vec::new();
     let mut page_count = 0usize;
     let rankbinds = guild.rankbinds.0;
     for group in &rankbinds.into_iter().group_by(|r| r.group_id) {
-        for rbs in &group.1.into_iter().chunks(12) {
+        for rbs in &group.1.chunks(12) {
             let mut embed = EmbedBuilder::new()
                 .color(DARK_GREEN)
                 .footer(EmbedFooterBuilder::new("RoWifi").build())

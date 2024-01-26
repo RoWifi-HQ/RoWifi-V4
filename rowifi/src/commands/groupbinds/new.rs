@@ -32,7 +32,7 @@ pub async fn new_groupbind(
     })
 }
 
-#[tracing::instrument(skip(bot, ctx))]
+#[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn new_groupbind_func(
     bot: Extension<BotContext>,
     ctx: CommandContext,
@@ -78,7 +78,7 @@ pub async fn new_groupbind_func(
             "#,
                 args.group_id
             );
-            ctx.respond(&bot).content(&message).unwrap().exec().await?;
+            ctx.respond(&bot).content(&message).unwrap().await?;
             return Ok(());
         }
         Err(AddGroupbindError::Generic(err)) => return Err(err),
@@ -86,7 +86,7 @@ pub async fn new_groupbind_func(
 
     let mut description = String::new();
     if res.modified {
-        description.push_str(":warning: Bind already exists. Modified it to:\n\n")
+        description.push_str(":warning: Bind already exists. Modified it to:\n\n");
     }
     description.push_str(&format!("**Group Id: {}**\n", res.bind.group_id));
     description.push_str(&format!(
@@ -116,7 +116,7 @@ pub async fn new_groupbind_func(
         .title("Bind Addition Successful")
         .description(description)
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().exec().await?;
+    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
 
     Ok(())
 }
