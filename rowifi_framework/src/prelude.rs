@@ -8,7 +8,7 @@ pub use rowifi_core::error::RoError;
 pub use rowifi_derive::Arguments;
 pub use time::OffsetDateTime;
 pub use twilight_util::builder::{
-    embed::{EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder},
+    embed::{EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder, ImageSource},
     InteractionResponseDataBuilder,
 };
 

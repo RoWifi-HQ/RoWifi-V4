@@ -46,7 +46,8 @@ use crate::commands::{
     groupbinds::{delete_groupbind, new_groupbind, view_groupbinds},
     rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
     user::{
-        account_default, account_delete, account_switch, account_view, update_route, verify_route,
+        account_default, account_delete, account_switch, account_view, update_route, userinfo,
+        verify_route,
     },
 };
 
@@ -118,6 +119,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/account/switch", post(account_switch))
         .route("/account/delete", post(account_delete))
         .route("/verify", post(verify_route))
+        .route("/userinfo", post(userinfo))
         .route("/standby", post(standby_route))
         .layer(Extension(Arc::new(standby)))
         .layer(AsyncRequireAuthorizationLayer::new(WebhookAuth))

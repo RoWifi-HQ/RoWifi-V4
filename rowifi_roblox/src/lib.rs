@@ -23,6 +23,7 @@ use rowifi_models::roblox::{
     id::{GroupId, UserId},
     inventory::InventoryItem,
     user::PartialUser,
+    Operation,
 };
 use serde::{Deserialize, Serialize};
 
@@ -56,6 +57,12 @@ pub struct GroupRanks {
     pub ranks: Vec<GroupRole>,
     #[serde(rename = "nextPageToken", default)]
     pub next_page_token: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ThumbnailResponse {
+    #[serde(rename = "imageUri")]
+    pub image_uri: String,
 }
 
 impl RobloxClient {
@@ -379,6 +386,51 @@ impl RobloxClient {
         })?;
 
         Ok(Some(json))
+    }
+
+    /// Get a user's thumbnail.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn get_user_thumbnail(&self, user_id: UserId) -> Result<String, RobloxError> {
+        let route = Route::GetUserThumbail { user_id: user_id.0 };
+
+        let request = Request::builder()
+            .uri(route.to_string())
+            .method(Method::GET)
+            .header("x-api-key", &self.open_cloud_auth)
+            .body(Full::default())
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json =
+            serde_json::from_slice::<Operation<ThumbnailResponse>>(&bytes).map_err(|source| {
+                RobloxError {
+                    source: Some(Box::new(DeserializeBodyError {
+                        source: Some(Box::new(source)),
+                        bytes,
+                    })),
+                    kind: ErrorKind::Deserialize,
+                }
+            })?;
+
+        Ok(json.response.image_uri)
     }
 
     async fn request(
