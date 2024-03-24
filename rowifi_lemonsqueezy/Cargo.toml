@@ -1,0 +1,13 @@
+[package]
+name = "rowifi_lemonsqueezy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hyper = { version = "1.0", default-features = false, features = ["client", "http2"] }
+hyper-rustls = { version = "0.26", default-features = false, features = ["webpki-tokio", "http1", "http2"] }
+hyper-util = { version = "0", features = ["client"] }
+http-body-util = "0.1"
+serde = { version = "1.0" }
+serde_json = { workspace = true }
+serde_urlencoded = { version = "0.7" }
