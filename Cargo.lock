@@ -1272,7 +1272,7 @@ dependencies = [
 
 [[package]]
 name = "rowifi_lemonsqueezy"
-version = "0.1.0"
+version = "4.0.0"
 dependencies = [
  "http-body-util",
  "hyper",

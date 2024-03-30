@@ -1,6 +1,7 @@
+use bytes::BytesMut;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use tokio_postgres::types::Json;
+use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, Json, ToSql, Type};
 
 use crate::{
     bind::{Assetbind, Custombind, Groupbind, Rankbind, Template},
@@ -16,6 +17,7 @@ pub struct RoGuild {
 #[derive(Debug)]
 pub struct PartialRoGuild {
     pub guild_id: GuildId,
+    pub kind: GuildType,
     pub bypass_roles: Json<Vec<BypassRole>>,
     pub unverified_roles: Vec<RoleId>,
     pub verified_roles: Vec<RoleId>,
@@ -25,6 +27,15 @@ pub struct PartialRoGuild {
     pub custombinds: Json<Vec<Custombind>>,
     pub deny_lists: Json<Vec<DenyList>>,
     pub default_template: Option<Template>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
+#[repr(u32)]
+pub enum GuildType {
+    Free = 0,
+    Alpha = 1,
+    Beta = 2,
+    Gamma = 3,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -46,6 +57,7 @@ impl PartialRoGuild {
     pub fn new(guild_id: GuildId) -> Self {
         Self {
             guild_id,
+            kind: GuildType::Free,
             bypass_roles: Json(Vec::new()),
             unverified_roles: Vec::new(),
             verified_roles: Vec::new(),
@@ -64,6 +76,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
 
     fn try_from(row: tokio_postgres::Row) -> Result<Self, Self::Error> {
         let guild_id = row.try_get("guild_id")?;
+        let kind = row.try_get("kind")?;
         let bypass_roles = row
             .try_get("bypass_roles")
             .unwrap_or_else(|_| Json(Vec::new()));
@@ -88,6 +101,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
 
         Ok(Self {
             guild_id,
+            kind,
             bypass_roles,
             unverified_roles,
             verified_roles,
@@ -98,5 +112,40 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             deny_lists,
             default_template,
         })
+    }
+}
+
+impl ToSql for GuildType {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> Result<IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        u32::to_sql(&(*self as u32), ty, out)
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <u32 as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+impl<'a> FromSql<'a> for GuildType {
+    fn from_sql(
+        ty: &Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        match u32::from_sql(ty, raw)? {
+            0 => Ok(GuildType::Free),
+            1 => Ok(GuildType::Alpha),
+            2 => Ok(GuildType::Beta),
+            3 => Ok(GuildType::Gamma),
+            _ => unreachable!(),
+        }
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <String as FromSql>::accepts(ty)
     }
 }
