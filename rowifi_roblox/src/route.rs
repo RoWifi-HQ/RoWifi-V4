@@ -8,6 +8,7 @@ pub enum Route {
     GetUserThumbail { user_id: u64 },
     ListInventoryItems { user_id: u64, filter: String },
     ListGroupRanks { group_id: u64 },
+    OAuthUserInfo,
 }
 
 impl Display for Route {
@@ -22,7 +23,8 @@ impl Display for Route {
             Route::GetUserByUsernames => write!(f, "https://users.roblox.com/v1/usernames/users"),
             Route::GetUserThumbail { user_id } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}:generateThumbnail?size=420&format=PNG"),
             Route::ListInventoryItems { user_id, filter } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}/inventory-items?maxPageSize=100&{filter}"),
-            Route::ListGroupRanks { group_id } => write!(f, "https://apis.roblox.com/cloud/v2/groups/{group_id}/roles?maxPageSize=20")
+            Route::ListGroupRanks { group_id } => write!(f, "https://apis.roblox.com/cloud/v2/groups/{group_id}/roles?maxPageSize=20"),
+            Route::OAuthUserInfo => write!(f, "https://apis.roblox.com/oauth/v1/userinfo"),
         }
     }
 }

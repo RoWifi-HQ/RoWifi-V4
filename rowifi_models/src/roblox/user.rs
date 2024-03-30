@@ -12,3 +12,9 @@ pub struct PartialUser {
     #[serde(rename = "displayName")]
     pub display_name: Option<String>,
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct OAuthUser {
+    pub sub: String,
+    pub name: String,
+}

@@ -9,7 +9,7 @@ use error::DeserializeBodyError;
 use http_body_util::{BodyExt, Full};
 use hyper::{
     body::Bytes,
-    header::{HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
+    header::{HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     http::response::Parts,
     Method, Request, StatusCode,
 };
@@ -22,7 +22,7 @@ use rowifi_models::roblox::{
     group::{Group, GroupRole, GroupUserRole},
     id::{GroupId, UserId},
     inventory::InventoryItem,
-    user::PartialUser,
+    user::{OAuthUser, PartialUser},
     Operation,
 };
 use serde::{Deserialize, Serialize};
@@ -431,6 +431,47 @@ impl RobloxClient {
             })?;
 
         Ok(json.response.image_uri)
+    }
+
+    /// Get an user from the Open Cloud API using the OAuth workflow.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn get_oauth_userinfo(&self, authorization: &str) -> Result<OAuthUser, RobloxError> {
+        let route = Route::OAuthUserInfo;
+        let request = Request::builder()
+            .uri(route.to_string())
+            .method(Method::GET)
+            .header(AUTHORIZATION, authorization)
+            .body(Full::default())
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json = serde_json::from_slice::<OAuthUser>(&bytes).map_err(|source| RobloxError {
+            source: Some(Box::new(DeserializeBodyError {
+                source: Some(Box::new(source)),
+                bytes,
+            })),
+            kind: ErrorKind::Deserialize,
+        })?;
+
+        Ok(json)
     }
 
     async fn request(
