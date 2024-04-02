@@ -1,7 +1,7 @@
-use rowifi_core::denylists::add::{add_denylist, DenylistArguments};
+use rowifi_core::denylists::add::{add_denylist, AddDenylistError, DenylistArguments};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
-    deny_list::{DenyListActionType, DenyListData, DenyListType},
+    deny_list::{DenyListActionType, DenyListType},
     discord::{
         http::interaction::{InteractionResponse, InteractionResponseType},
         util::Timestamp,
@@ -60,7 +60,7 @@ Oh no! A group with the ID {} does not exist. Ensure you have entered the ID cor
 
     let reason = args.reason.unwrap_or_else(|| "N/A".into());
 
-    let denylist = add_denylist(
+    let denylist = match add_denylist(
         &bot.database,
         ctx.guild_id,
         ctx.author_id,
@@ -69,10 +69,19 @@ Oh no! A group with the ID {} does not exist. Ensure you have entered the ID cor
             kind: DenyListType::Group,
             action: args.action,
             reason,
-            data: DenyListData::Group(GroupId(args.group_id)),
+            user_id: None,
+            group_id: Some(GroupId(args.group_id)),
         },
     )
-    .await?;
+    .await
+    {
+        Ok(res) => res,
+        Err(AddDenylistError::MissingUser) | Err(AddDenylistError::MissingGroup) => {
+            // Ignore this case since this won't occur in slash commands
+            return Ok(());
+        }
+        Err(AddDenylistError::Generic(err)) => return Err(err),
+    };
 
     let name = format!("Type: {}", denylist.kind());
     let desc = format!("Group Id: {}\nReason: {}", args.group_id, denylist.reason);

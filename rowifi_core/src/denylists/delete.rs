@@ -4,12 +4,13 @@ use rowifi_models::{
     deny_list::DenyList,
     id::{GuildId, UserId},
 };
+use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;
 
 use crate::error::RoError;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct DeleteDenylist {
     pub deleted: u32,
     pub invalid: Vec<u32>,

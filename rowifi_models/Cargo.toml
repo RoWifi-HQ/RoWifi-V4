@@ -12,5 +12,5 @@ time = { workspace = true, features = ["serde", "parsing", "formatting"] }
 tokio-postgres = { version = "0.7", features = ["with-serde_json-1", "with-time-0_3"] }
 twilight-model = { workspace = true }
 regex = { version = "1.10" }
-serde = { version = "1.0" }
+serde = { workspace = true }
 serde_repr = { version = "0.1" }

@@ -14,6 +14,7 @@ resolver = "2"
 
 [workspace.dependencies]
 axum = { version = "0.7" }
+serde = { version = "1.0" }
 serde_json = { version = "1" }
 time = { version = "0.3", default-features = false, features = ["std"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

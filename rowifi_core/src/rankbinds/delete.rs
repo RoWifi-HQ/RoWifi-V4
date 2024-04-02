@@ -5,18 +5,19 @@ use rowifi_models::{
     id::{GuildId, UserId},
     roblox::id::GroupId,
 };
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;
 
 use crate::error::RoError;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct DeleteRankbind {
     pub deleted: u32,
     pub invalid: Vec<RankbindArguments>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct RankbindArguments {
     pub group_id: GroupId,
     pub rank_id: u32,

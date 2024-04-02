@@ -6,12 +6,13 @@ use rowifi_models::{
     id::{GuildId, RoleId, UserId},
     roblox::id::AssetId,
 };
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use time::OffsetDateTime;
 
 use crate::error::RoError;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct AddAssetbind {
     pub bind: Assetbind,
     pub ignored_roles: Vec<RoleId>,
@@ -23,7 +24,7 @@ pub enum AddAssetbindError {
     Generic(RoError),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct AssetbindArguments {
     pub kind: AssetType,
     pub asset_id: AssetId,

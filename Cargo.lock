@@ -1223,6 +1223,7 @@ dependencies = [
  "rowifi_database",
  "rowifi_models",
  "rowifi_roblox",
+ "serde",
  "time",
  "twilight-http",
  "twilight-validate",

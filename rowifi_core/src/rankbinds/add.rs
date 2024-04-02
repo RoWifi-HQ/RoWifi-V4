@@ -7,12 +7,13 @@ use rowifi_models::{
     roblox::id::GroupId,
 };
 use rowifi_roblox::RobloxClient;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use time::OffsetDateTime;
 
 use crate::error::RoError;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct AddRankbind {
     pub bind: Rankbind,
     pub ignored_roles: Vec<RoleId>,
@@ -26,7 +27,7 @@ pub enum AddRankbindError {
     Generic(RoError),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct RankbindArguments {
     pub group_id: GroupId,
     pub rank_id: u8,
