@@ -7,8 +7,8 @@ use rowifi_models::discord::{
     http::interaction::{InteractionResponse, InteractionResponseType},
     util::Timestamp,
 };
-use std::sync::Arc;
 use twilight_mention::Mention;
+use std::sync::Arc;
 use twilight_standby::Standby;
 
 pub use delete::delete_groupbind;
@@ -40,7 +40,7 @@ pub async fn view_groupbinds_func(
         )
         .await?;
 
-    if guild.groupbinds.0.is_empty() {
+    if guild.groupbinds.is_empty() {
         let message = r"
 This server has no groupbinds configured. Looking to add one? Use the command `/groupbinds new`.
         ";
@@ -49,7 +49,7 @@ This server has no groupbinds configured. Looking to add one? Use the command `/
 
     let mut pages = Vec::new();
     let mut page_count = 0usize;
-    let groupbinds = guild.groupbinds.0;
+    let groupbinds = guild.groupbinds;
     for gbs in &groupbinds.into_iter().chunks(12) {
         let mut embed = EmbedBuilder::new()
             .color(DARK_GREEN)

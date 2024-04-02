@@ -40,7 +40,7 @@ pub async fn view_assetbinds_func(
         )
         .await?;
 
-    if guild.assetbinds.0.is_empty() {
+    if guild.assetbinds.is_empty() {
         let message = r"
 This server has no assetbinds configured. Looking to add one? Use the command `/assetbinds new`.
         ";
@@ -49,7 +49,7 @@ This server has no assetbinds configured. Looking to add one? Use the command `/
 
     let mut pages = Vec::new();
     let mut page_count = 0usize;
-    let assetbinds = guild.assetbinds.0;
+    let assetbinds = guild.assetbinds;
     for abs in &assetbinds.into_iter().chunks(12) {
         let mut embed = EmbedBuilder::new()
             .color(DARK_GREEN)

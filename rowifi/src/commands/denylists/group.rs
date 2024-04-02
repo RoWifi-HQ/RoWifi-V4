@@ -64,7 +64,7 @@ Oh no! A group with the ID {} does not exist. Ensure you have entered the ID cor
         &bot.database,
         ctx.guild_id,
         ctx.author_id,
-        &guild.deny_lists.0,
+        &guild.deny_lists,
         DenylistArguments {
             kind: DenyListType::Group,
             action: args.action,

@@ -40,7 +40,7 @@ pub async fn delete_assetbind_func(
 
     let res = delete_assetbinds(
         &bot.database,
-        &guild.assetbinds.0,
+        &guild.assetbinds,
         ctx.guild_id,
         ctx.author_id,
         vec![AssetId(args.asset_id)],

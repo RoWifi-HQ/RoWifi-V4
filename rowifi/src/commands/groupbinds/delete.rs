@@ -40,7 +40,7 @@ pub async fn delete_groupbind_func(
 
     let res = delete_groupbinds(
         &bot.database,
-        &guild.groupbinds.0,
+        &guild.groupbinds,
         ctx.guild_id,
         ctx.author_id,
         vec![GroupId(args.group_id)],

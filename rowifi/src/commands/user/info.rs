@@ -88,8 +88,8 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
     let thumbnail = bot.roblox.get_user_thumbnail(*roblox_id).await?;
 
     let mut group_ids = HashSet::new();
-    group_ids.extend(guild.rankbinds.0.iter().map(|r| r.group_id));
-    group_ids.extend(guild.groupbinds.0.iter().map(|g| g.group_id));
+    group_ids.extend(guild.rankbinds.iter().map(|r| r.group_id));
+    group_ids.extend(guild.groupbinds.iter().map(|g| g.group_id));
     let mut ranks_info = String::new();
     for rank in ranks {
         if group_ids.contains(&rank.group.id) {

@@ -41,7 +41,7 @@ pub async fn delete_rankbind_func(
 
     let res = delete_rankbinds(
         &bot.database,
-        &guild.rankbinds.0,
+        &guild.rankbinds,
         ctx.guild_id,
         ctx.author_id,
         vec![RankbindArguments {

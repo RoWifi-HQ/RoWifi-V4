@@ -59,7 +59,7 @@ pub async fn new_groupbind_func(
         &bot.database,
         ctx.guild_id,
         ctx.author_id,
-        &guild.groupbinds.0,
+        &guild.groupbinds,
         &server_roles,
         GroupbindArguments {
             group_id: GroupId(args.group_id),

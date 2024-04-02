@@ -59,7 +59,7 @@ pub async fn new_assetbind_func(
         &bot.database,
         ctx.guild_id,
         ctx.author_id,
-        &guild.assetbinds.0,
+        &guild.assetbinds,
         &server_roles,
         AssetbindArguments {
             kind: args.option,

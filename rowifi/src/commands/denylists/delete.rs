@@ -37,7 +37,7 @@ pub async fn delete_denylist_func(
 
     let res = delete_denylists(
         &bot.database,
-        &guild.deny_lists.0,
+        &guild.deny_lists,
         guild.guild_id,
         ctx.author_id,
         vec![args.id],

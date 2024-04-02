@@ -69,7 +69,7 @@ impl UpdateUser<'_> {
         let roblox_user = self.ctx.roblox.get_user(*user_id).await?;
 
         let mut asset_filter = AssetFilterBuilder::new();
-        for assetbind in &self.guild.assetbinds.0 {
+        for assetbind in &self.guild.assetbinds {
             match assetbind.asset_type {
                 AssetType::Asset => asset_filter = asset_filter.asset(assetbind.asset_id),
                 AssetType::Badge => asset_filter = asset_filter.badge(assetbind.asset_id),
@@ -93,7 +93,6 @@ impl UpdateUser<'_> {
         let active_deny_lists = self
             .guild
             .deny_lists
-            .0
             .iter()
             .filter(|d| match d.data {
                 DenyListData::User(u) => u == roblox_user.id,
@@ -107,7 +106,7 @@ impl UpdateUser<'_> {
 
         let mut nickname_bind: Option<Bind> = None;
 
-        for rankbind in &self.guild.rankbinds.0 {
+        for rankbind in &self.guild.rankbinds {
             // Check if the user's rank in the group is the same as the rankbind
             // or check if the bind is for the Guest role and the user is not in
             // the group
@@ -125,7 +124,7 @@ impl UpdateUser<'_> {
             }
         }
 
-        for groupbind in &self.guild.groupbinds.0 {
+        for groupbind in &self.guild.groupbinds {
             if user_ranks.contains_key(&groupbind.group_id) {
                 if let Some(ref highest) = nickname_bind {
                     if highest.priority() < groupbind.priority {
@@ -136,7 +135,7 @@ impl UpdateUser<'_> {
             }
         }
 
-        for custombind in &self.guild.custombinds.0 {
+        for custombind in &self.guild.custombinds {
             if custombind.evaluate() {
                 if let Some(ref highest) = nickname_bind {
                     if highest.priority() < custombind.priority {
@@ -147,7 +146,7 @@ impl UpdateUser<'_> {
             }
         }
 
-        for assetbind in &self.guild.assetbinds.0 {
+        for assetbind in &self.guild.assetbinds {
             if inventory_items.contains(&assetbind.asset_id.0.to_string()) {
                 if let Some(ref highest) = nickname_bind {
                     if highest.priority() < assetbind.priority {
@@ -180,7 +179,6 @@ impl UpdateUser<'_> {
         let has_role_bypass = self
             .guild
             .bypass_roles
-            .0
             .iter()
             .any(|b| b.kind == BypassRoleKind::Roles && self.member.roles.contains(&b.role_id));
         let mut new_roles = self.member.roles.clone();
@@ -202,7 +200,7 @@ impl UpdateUser<'_> {
             .as_ref()
             .map_or_else(|| self.member.username.as_str(), String::as_str);
         let has_nickname_bypass =
-            self.guild.bypass_roles.0.iter().any(|b| {
+            self.guild.bypass_roles.iter().any(|b| {
                 b.kind == BypassRoleKind::Nickname && self.member.roles.contains(&b.role_id)
             });
         let new_nickname = if let Some(nickname_bind) = nickname_bind {

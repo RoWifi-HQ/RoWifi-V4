@@ -40,7 +40,7 @@ pub async fn view_rankbinds_func(
         )
         .await?;
 
-    if guild.rankbinds.0.is_empty() {
+    if guild.rankbinds.is_empty() {
         let message = r"
 This server has no rankbinds configured. Looking to add one? Use the command `/rankbinds new`.
         ";
@@ -49,7 +49,7 @@ This server has no rankbinds configured. Looking to add one? Use the command `/r
 
     let mut pages = Vec::new();
     let mut page_count = 0usize;
-    let rankbinds = guild.rankbinds.0;
+    let rankbinds = guild.rankbinds;
     for group in &rankbinds.into_iter().group_by(|r| r.group_id) {
         for rbs in &group.1.chunks(12) {
             let mut embed = EmbedBuilder::new()

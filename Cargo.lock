@@ -1288,6 +1288,7 @@ dependencies = [
 name = "rowifi_models"
 version = "4.0.0"
 dependencies = [
+ "bitflags 2.5.0",
  "bytes",
  "lazy_static",
  "regex",

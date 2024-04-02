@@ -14,18 +14,18 @@ pub struct RoGuild {
     pub guild_id: GuildId,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PartialRoGuild {
     pub guild_id: GuildId,
-    pub kind: GuildType,
-    pub bypass_roles: Json<Vec<BypassRole>>,
+    pub kind: Option<GuildType>,
+    pub bypass_roles: Vec<BypassRole>,
     pub unverified_roles: Vec<RoleId>,
     pub verified_roles: Vec<RoleId>,
-    pub rankbinds: Json<Vec<Rankbind>>,
-    pub groupbinds: Json<Vec<Groupbind>>,
-    pub assetbinds: Json<Vec<Assetbind>>,
-    pub custombinds: Json<Vec<Custombind>>,
-    pub deny_lists: Json<Vec<DenyList>>,
+    pub rankbinds: Vec<Rankbind>,
+    pub groupbinds: Vec<Groupbind>,
+    pub assetbinds: Vec<Assetbind>,
+    pub custombinds: Vec<Custombind>,
+    pub deny_lists: Vec<DenyList>,
     pub default_template: Option<Template>,
 }
 
@@ -38,7 +38,7 @@ pub enum GuildType {
     Gamma = 3,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Serialize, PartialEq)]
 pub struct BypassRole {
     pub role_id: RoleId,
     pub kind: BypassRoleKind,
@@ -57,15 +57,15 @@ impl PartialRoGuild {
     pub fn new(guild_id: GuildId) -> Self {
         Self {
             guild_id,
-            kind: GuildType::Free,
-            bypass_roles: Json(Vec::new()),
+            kind: Some(GuildType::Free),
+            bypass_roles: Vec::new(),
             unverified_roles: Vec::new(),
             verified_roles: Vec::new(),
-            rankbinds: Json(Vec::new()),
-            groupbinds: Json(Vec::new()),
-            assetbinds: Json(Vec::new()),
-            custombinds: Json(Vec::new()),
-            deny_lists: Json(Vec::new()),
+            rankbinds: Vec::new(),
+            groupbinds: Vec::new(),
+            assetbinds: Vec::new(),
+            custombinds: Vec::new(),
+            deny_lists: Vec::new(),
             default_template: None,
         }
     }
@@ -102,14 +102,14 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
         Ok(Self {
             guild_id,
             kind,
-            bypass_roles,
+            bypass_roles: bypass_roles.0,
             unverified_roles,
             verified_roles,
-            rankbinds,
-            groupbinds,
-            assetbinds,
-            custombinds,
-            deny_lists,
+            rankbinds: rankbinds.0,
+            groupbinds: groupbinds.0,
+            assetbinds: assetbinds.0,
+            custombinds: custombinds.0,
+            deny_lists: deny_lists.0,
             default_template,
         })
     }

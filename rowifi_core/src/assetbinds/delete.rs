@@ -5,13 +5,13 @@ use rowifi_models::{
     id::{GuildId, UserId},
     roblox::id::AssetId,
 };
-use serde::Deserialize;
+use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;
 
 use crate::error::RoError;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize)]
 pub struct DeleteAssetbind {
     pub deleted: u32,
     pub invalid: Vec<AssetId>,

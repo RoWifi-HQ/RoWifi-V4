@@ -82,7 +82,7 @@ pub async fn update_func(
     tracing::trace!(guild = ?guild);
 
     // Check if the user has a bypass role for both (roles & nickname)
-    for bypass_role in &guild.bypass_roles.0 {
+    for bypass_role in &guild.bypass_roles {
         if bypass_role.kind == BypassRoleKind::All && member.roles.contains(&bypass_role.role_id) {
             tracing::debug!("detected bypass role({}). aborting...", bypass_role.role_id);
             let message = format!(
@@ -128,7 +128,6 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
 
     let all_roles = guild
         .rankbinds
-        .0
         .iter()
         .flat_map(|b| b.discord_roles.clone())
         .unique()

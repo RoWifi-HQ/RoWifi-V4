@@ -44,7 +44,7 @@ pub async fn view_denylists_func(
         )
         .await?;
 
-    if guild.deny_lists.0.is_empty() {
+    if guild.deny_lists.is_empty() {
         let message = r"
 This server has no denylists configured. Looking to add one? Use the command `/denylists new`.
         ";
@@ -54,7 +54,7 @@ This server has no denylists configured. Looking to add one? Use the command `/d
 
     let mut pages = Vec::new();
     let mut page_count = 0usize;
-    let denylists = guild.deny_lists.0;
+    let denylists = guild.deny_lists;
     for denylist_chunk in &denylists.into_iter().chunks(12) {
         let mut embed = EmbedBuilder::new()
             .color(DARK_GREEN)
