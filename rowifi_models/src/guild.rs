@@ -146,6 +146,6 @@ impl<'a> FromSql<'a> for GuildType {
     }
 
     fn accepts(ty: &Type) -> bool {
-        <String as FromSql>::accepts(ty)
+        <u32 as FromSql>::accepts(ty)
     }
 }

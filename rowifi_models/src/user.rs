@@ -1,7 +1,8 @@
-use std::collections::HashMap;
-
 use bitflags::bitflags;
 use bytes::BytesMut;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::collections::HashMap;
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
 
 use crate::{
@@ -9,7 +10,7 @@ use crate::{
     roblox::id::UserId as RobloxUserId,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RoUser {
     pub user_id: UserId,
     pub default_account_id: RobloxUserId,
@@ -18,9 +19,10 @@ pub struct RoUser {
     pub flags: UserFlags,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PatreonUser {
     pub user_id: UserId,
+    pub kind: PatreonUserType,
     pub patreon_id: i64,
     pub premium_servers: Vec<GuildId>,
     pub transferred_from: Option<UserId>,
@@ -28,14 +30,23 @@ pub struct PatreonUser {
 }
 
 bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct UserFlags: i64 {
         const NONE = 0;
-        const PATREON_ALPHA = 1;
-        const PATREON_BETA = 1 << 1;
+        // Deprecated
+        // const PATREON_ALPHA = 1;
+        // const PATREON_BETA = 1 << 1;
         const STAFF = 1 << 2;
         const PARTNER = 1 << 3;
     }
+}
+
+#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
+#[repr(u32)]
+pub enum PatreonUserType {
+    None = 0,
+    Alpha = 1,
+    Beta = 2,
 }
 
 impl TryFrom<tokio_postgres::Row> for RoUser {
@@ -79,6 +90,7 @@ impl TryFrom<tokio_postgres::Row> for PatreonUser {
 
     fn try_from(row: tokio_postgres::Row) -> Result<Self, Self::Error> {
         let user_id = row.try_get("user_id")?;
+        let kind = row.try_get("kind")?;
         let patreon_id = row.try_get("patreon_id")?;
         let premium_servers = row.try_get("premium_servers")?;
         let transferred_from = row.try_get("transferred_from")?;
@@ -86,6 +98,7 @@ impl TryFrom<tokio_postgres::Row> for PatreonUser {
 
         Ok(Self {
             user_id,
+            kind,
             patreon_id,
             premium_servers,
             transferred_from,
@@ -122,4 +135,38 @@ impl ToSql for UserFlags {
     }
 
     to_sql_checked!();
+}
+
+impl ToSql for PatreonUserType {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> Result<IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        u32::to_sql(&(*self as u32), ty, out)
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <u32 as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+impl<'a> FromSql<'a> for PatreonUserType {
+    fn from_sql(
+        ty: &Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        match u32::from_sql(ty, raw)? {
+            0 => Ok(PatreonUserType::None),
+            1 => Ok(PatreonUserType::Alpha),
+            2 => Ok(PatreonUserType::Beta),
+            _ => unreachable!(),
+        }
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <String as FromSql>::accepts(ty)
+    }
 }
