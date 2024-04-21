@@ -9,13 +9,22 @@ use crate::{
     roblox::id::UserId as RobloxUserId,
 };
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct RoUser {
     pub user_id: UserId,
     pub default_account_id: RobloxUserId,
     pub linked_accounts: HashMap<GuildId, RobloxUserId>,
     pub other_accounts: Vec<RobloxUserId>,
     pub flags: UserFlags,
+}
+
+#[derive(Clone, Debug)]
+pub struct PatreonUser {
+    pub user_id: UserId,
+    pub patreon_id: i64,
+    pub premium_servers: Vec<GuildId>,
+    pub transferred_from: Option<UserId>,
+    pub transferred_to: Option<UserId>,
 }
 
 bitflags! {
@@ -61,6 +70,26 @@ impl TryFrom<tokio_postgres::Row> for RoUser {
             linked_accounts,
             other_accounts,
             flags,
+        })
+    }
+}
+
+impl TryFrom<tokio_postgres::Row> for PatreonUser {
+    type Error = tokio_postgres::Error;
+
+    fn try_from(row: tokio_postgres::Row) -> Result<Self, Self::Error> {
+        let user_id = row.try_get("user_id")?;
+        let patreon_id = row.try_get("patreon_id")?;
+        let premium_servers = row.try_get("premium_servers")?;
+        let transferred_from = row.try_get("transferred_from")?;
+        let transferred_to = row.try_get("transferred_to")?;
+
+        Ok(Self {
+            user_id,
+            patreon_id,
+            premium_servers,
+            transferred_from,
+            transferred_to,
         })
     }
 }
