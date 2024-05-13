@@ -8,12 +8,12 @@ members = [
     "rowifi_framework", 
     "rowifi_lemonsqueezy", 
     "rowifi_models", 
-    "rowifi_roblox"
-]
+    "rowifi_roblox"]
 resolver = "2"
 
 [workspace.dependencies]
 axum = { version = "0.7" }
+hyper = { version = "1.0", default-features = false, features = ["client", "http2"] }
 serde = { version = "1.0" }
 serde_json = { version = "1" }
 time = { version = "0.3", default-features = false, features = ["std"] }

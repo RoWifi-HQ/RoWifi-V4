@@ -1190,12 +1190,13 @@ dependencies = [
  "hex",
  "itertools",
  "redis",
- "rowifi_cache",
- "rowifi_core",
- "rowifi_database",
- "rowifi_framework",
- "rowifi_models",
- "rowifi_roblox",
+ "rowifi_cache 4.0.0",
+ "rowifi_core 4.0.0",
+ "rowifi_database 4.0.0",
+ "rowifi_framework 4.0.0",
+ "rowifi_models 4.0.0",
+ "rowifi_roblox 4.0.0",
+ "rowifi_tower",
  "serde_json",
  "tokio",
  "tower",
@@ -1214,7 +1215,19 @@ dependencies = [
  "async-trait",
  "deadpool-redis",
  "rmp-serde",
- "rowifi_models",
+ "rowifi_models 4.0.0",
+ "tracing",
+]
+
+[[package]]
+name = "rowifi_cache"
+version = "4.0.0"
+source = "git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main#a01f29108beea4ed9d901da411d5218dd7410fce"
+dependencies = [
+ "async-trait",
+ "deadpool-redis",
+ "rmp-serde",
+ "rowifi_models 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
  "tracing",
 ]
 
@@ -1222,10 +1235,25 @@ dependencies = [
 name = "rowifi_core"
 version = "4.0.0"
 dependencies = [
- "rowifi_cache",
- "rowifi_database",
- "rowifi_models",
- "rowifi_roblox",
+ "rowifi_cache 4.0.0",
+ "rowifi_database 4.0.0",
+ "rowifi_models 4.0.0",
+ "rowifi_roblox 4.0.0",
+ "serde",
+ "time",
+ "twilight-http",
+ "twilight-validate",
+]
+
+[[package]]
+name = "rowifi_core"
+version = "4.0.0"
+source = "git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main#a01f29108beea4ed9d901da411d5218dd7410fce"
+dependencies = [
+ "rowifi_cache 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_database 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_models 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_roblox 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
  "serde",
  "time",
  "twilight-http",
@@ -1242,8 +1270,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "rowifi_database"
+version = "4.0.0"
+source = "git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main#a01f29108beea4ed9d901da411d5218dd7410fce"
+dependencies = [
+ "deadpool-postgres",
+ "tokio-postgres",
+ "tracing",
+]
+
+[[package]]
 name = "rowifi_derive"
 version = "4.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "rowifi_derive"
+version = "4.0.0"
+source = "git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main#a01f29108beea4ed9d901da411d5218dd7410fce"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1255,12 +1303,37 @@ name = "rowifi_framework"
 version = "4.0.0"
 dependencies = [
  "axum",
- "rowifi_cache",
- "rowifi_core",
- "rowifi_database",
- "rowifi_derive",
- "rowifi_models",
- "rowifi_roblox",
+ "rowifi_cache 4.0.0",
+ "rowifi_core 4.0.0",
+ "rowifi_database 4.0.0",
+ "rowifi_derive 4.0.0",
+ "rowifi_models 4.0.0",
+ "rowifi_roblox 4.0.0",
+ "serde_json",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "tower",
+ "tracing",
+ "twilight-http",
+ "twilight-mention",
+ "twilight-standby",
+ "twilight-util",
+ "twilight-validate",
+]
+
+[[package]]
+name = "rowifi_framework"
+version = "4.0.0"
+source = "git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main#a01f29108beea4ed9d901da411d5218dd7410fce"
+dependencies = [
+ "axum",
+ "rowifi_cache 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_core 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_database 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_derive 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_models 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_roblox 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
  "serde_json",
  "time",
  "tokio",
@@ -1303,6 +1376,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rowifi_models"
+version = "4.0.0"
+source = "git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main#a01f29108beea4ed9d901da411d5218dd7410fce"
+dependencies = [
+ "bitflags 2.5.0",
+ "bytes",
+ "lazy_static",
+ "regex",
+ "serde",
+ "serde_repr",
+ "time",
+ "tokio-postgres",
+ "twilight-model",
+]
+
+[[package]]
 name = "rowifi_roblox"
 version = "4.0.0"
 dependencies = [
@@ -1311,9 +1400,43 @@ dependencies = [
  "hyper-rustls",
  "hyper-util",
  "itertools",
- "rowifi_models",
+ "rowifi_models 4.0.0",
  "serde",
  "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "rowifi_roblox"
+version = "4.0.0"
+source = "git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main#a01f29108beea4ed9d901da411d5218dd7410fce"
+dependencies = [
+ "http-body-util",
+ "hyper",
+ "hyper-rustls",
+ "hyper-util",
+ "itertools",
+ "rowifi_models 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "rowifi_tower"
+version = "4.0.0"
+source = "git+https://github.com/RoWifi-HQ/rowifi_tower?branch=main#d42dbfdd9b3016eb4e27fd6631621a9a8a31d1ac"
+dependencies = [
+ "bytes",
+ "http-body-util",
+ "hyper",
+ "rowifi_database 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_framework 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_models 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "rowifi_roblox 4.0.0 (git+https://github.com/RoWifi-HQ/RoWifi-V4?branch=main)",
+ "serde",
+ "serde_json",
+ "serde_repr",
  "tracing",
 ]
 
@@ -1845,7 +1968,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "twilight-http"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#703f016b5ee46840d87d7cc0ef06707fc60ec518"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#08ed124a201e24fda6e130100465d94b1ea7a877"
 dependencies = [
  "fastrand",
  "http",
@@ -1866,7 +1989,7 @@ dependencies = [
 [[package]]
 name = "twilight-http-ratelimiting"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#703f016b5ee46840d87d7cc0ef06707fc60ec518"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#08ed124a201e24fda6e130100465d94b1ea7a877"
 dependencies = [
  "tokio",
  "tracing",
@@ -1875,7 +1998,7 @@ dependencies = [
 [[package]]
 name = "twilight-mention"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#703f016b5ee46840d87d7cc0ef06707fc60ec518"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#08ed124a201e24fda6e130100465d94b1ea7a877"
 dependencies = [
  "twilight-model",
 ]
@@ -1883,7 +2006,7 @@ dependencies = [
 [[package]]
 name = "twilight-model"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#703f016b5ee46840d87d7cc0ef06707fc60ec518"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#08ed124a201e24fda6e130100465d94b1ea7a877"
 dependencies = [
  "bitflags 2.5.0",
  "serde",
@@ -1895,7 +2018,7 @@ dependencies = [
 [[package]]
 name = "twilight-standby"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#703f016b5ee46840d87d7cc0ef06707fc60ec518"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#08ed124a201e24fda6e130100465d94b1ea7a877"
 dependencies = [
  "dashmap",
  "futures-core",
@@ -1907,7 +2030,7 @@ dependencies = [
 [[package]]
 name = "twilight-util"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#703f016b5ee46840d87d7cc0ef06707fc60ec518"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#08ed124a201e24fda6e130100465d94b1ea7a877"
 dependencies = [
  "twilight-model",
  "twilight-validate",
@@ -1916,7 +2039,7 @@ dependencies = [
 [[package]]
 name = "twilight-validate"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#703f016b5ee46840d87d7cc0ef06707fc60ec518"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#08ed124a201e24fda6e130100465d94b1ea7a877"
 dependencies = [
  "twilight-model",
 ]

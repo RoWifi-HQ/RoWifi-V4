@@ -98,7 +98,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let standby = Standby::new();
 
     let middleware = map_request(rewrite_request_uri);
-    let app = Router::new()
+    #[allow(unused_mut)]
+    let mut router = Router::new()
         .route("/", post(pong))
         .route("/update", post(update_route))
         .route("/rankbinds/new", post(new_rankbind))
@@ -120,7 +121,14 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/account/delete", post(account_delete))
         .route("/verify", post(verify_route))
         .route("/userinfo", post(userinfo))
-        .route("/standby", post(standby_route))
+        .route("/standby", post(standby_route));
+
+    #[cfg(feature = "tower")]
+    {
+        router = router.route("/setrank", post(rowifi_tower::set_rank));
+    }
+
+    let app = router
         .layer(Extension(Arc::new(standby)))
         .layer(AsyncRequireAuthorizationLayer::new(WebhookAuth))
         .layer(Extension(Arc::new(verifying_key)))

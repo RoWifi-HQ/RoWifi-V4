@@ -3,6 +3,10 @@ name = "rowifi"
 version = "4.0.0"
 edition = "2021"
 
+[features]
+default = ["tower"]
+tower = ["dep:rowifi_tower"]
+
 [dependencies]
 axum = { workspace = true }
 deadpool-redis = { version = "0.14" }
@@ -16,6 +20,7 @@ rowifi_database = { path = "../rowifi_database" }
 rowifi_framework = { path = "../rowifi_framework" }
 rowifi_models = { path = "../rowifi_models" }
 rowifi_roblox = { path = "../rowifi_roblox" }
+rowifi_tower = { branch = "main", git = "https://github.com/RoWifi-HQ/rowifi_tower", optional = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 tower = { workspace = true }

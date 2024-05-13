@@ -44,6 +44,13 @@ impl RobloxError {
     pub fn into_parts(self) -> (ErrorKind, Option<Box<dyn StdError + Send + Sync>>) {
         (self.kind, self.source)
     }
+
+    pub fn from_parts(kind: ErrorKind, source: Option<Box<dyn StdError + Send + Sync>>) -> Self {
+        Self {
+            kind,
+            source
+        }
+    }
 }
 
 impl Display for RobloxError {

@@ -474,7 +474,7 @@ impl RobloxClient {
         Ok(json)
     }
 
-    async fn request(
+    pub async fn request(
         &self,
         request: Request<Full<Bytes>>,
     ) -> Result<(Parts, Vec<u8>), RobloxError> {
