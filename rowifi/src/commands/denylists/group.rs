@@ -76,7 +76,7 @@ Oh no! A group with the ID {} does not exist. Ensure you have entered the ID cor
     .await
     {
         Ok(res) => res,
-        Err(AddDenylistError::MissingUser) | Err(AddDenylistError::MissingGroup) => {
+        Err(AddDenylistError::MissingUser | AddDenylistError::MissingGroup) => {
             // Ignore this case since this won't occur in slash commands
             return Ok(());
         }

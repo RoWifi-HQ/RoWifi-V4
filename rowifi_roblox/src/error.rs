@@ -45,11 +45,9 @@ impl RobloxError {
         (self.kind, self.source)
     }
 
+    #[must_use]
     pub fn from_parts(kind: ErrorKind, source: Option<Box<dyn StdError + Send + Sync>>) -> Self {
-        Self {
-            kind,
-            source
-        }
+        Self { source, kind }
     }
 }
 

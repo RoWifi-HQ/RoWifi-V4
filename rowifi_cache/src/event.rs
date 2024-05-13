@@ -125,7 +125,11 @@ impl UpdateCache for ChannelUpdate {
 impl UpdateCache for GuildCreate {
     async fn update(&self, c: &Cache) -> Result<(), CacheError> {
         let mut pipeline = redis::pipe();
-        cache_guild(&mut pipeline, &self.0)?;
+        if let GuildCreate::Available(guild) = self {
+            cache_guild(&mut pipeline, guild)?;
+        } else {
+            return Ok(());
+        }
 
         let mut conn = c.0.pool.get().await?;
         pipeline.query_async(&mut conn).await?;
@@ -161,7 +165,7 @@ impl UpdateCache for GuildUpdate {
     async fn update(&self, c: &Cache) -> Result<(), CacheError> {
         let guild_id = GuildId::new(self.id.get());
         if let Some(mut guild) = c.guild(guild_id).await? {
-            guild.name = self.name.clone();
+            guild.name.clone_from(&self.name);
             guild.icon = self.icon;
             guild.owner_id = UserId(self.owner_id);
 
@@ -239,7 +243,7 @@ impl UpdateCache for MemberUpdate {
         let user_id = UserId(self.user.id);
 
         if let Some(mut member) = c.guild_member(guild_id, user_id).await? {
-            member.nickname = self.nick.clone();
+            member.nickname.clone_from(&self.nick);
             member.roles = self.roles.iter().map(|r| RoleId(*r)).collect();
 
             let mut conn = c.get().await?;

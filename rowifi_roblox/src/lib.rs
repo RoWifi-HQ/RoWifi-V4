@@ -474,6 +474,11 @@ impl RobloxClient {
         Ok(json)
     }
 
+    /// Make a request to the Roblox API.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
     pub async fn request(
         &self,
         request: Request<Full<Bytes>>,

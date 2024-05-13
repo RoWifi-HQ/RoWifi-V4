@@ -69,7 +69,7 @@ Oh no! A user with the name `{}` does not exist.
     .await
     {
         Ok(res) => res,
-        Err(AddDenylistError::MissingUser) | Err(AddDenylistError::MissingGroup) => {
+        Err(AddDenylistError::MissingUser | AddDenylistError::MissingGroup) => {
             // Ignore this case since it doesn't occur in slash commands
             return Ok(());
         }

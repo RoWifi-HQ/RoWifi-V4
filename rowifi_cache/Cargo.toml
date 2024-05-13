@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 async-trait = { version = "0.1" }
-deadpool-redis = { version = "0.14" }
+deadpool-redis = { version = "0.15" }
 rmp-serde = { version = "1.1" }
 rowifi_models = { path = "../rowifi_models" }
 tracing = { workspace = true }
