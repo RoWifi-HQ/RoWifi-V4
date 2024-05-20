@@ -27,6 +27,7 @@ pub struct PartialRoGuild {
     pub custombinds: Vec<Custombind>,
     pub deny_lists: Vec<DenyList>,
     pub default_template: Option<Template>,
+    pub update_on_join: Option<bool>
 }
 
 #[derive(Clone, Copy, Debug, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
@@ -67,6 +68,7 @@ impl PartialRoGuild {
             custombinds: Vec::new(),
             deny_lists: Vec::new(),
             default_template: None,
+            update_on_join: None
         }
     }
 }
@@ -76,7 +78,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
 
     fn try_from(row: tokio_postgres::Row) -> Result<Self, Self::Error> {
         let guild_id = row.try_get("guild_id")?;
-        let kind = row.try_get("kind")?;
+        let kind = row.try_get("kind").ok();
         let bypass_roles = row
             .try_get("bypass_roles")
             .unwrap_or_else(|_| Json(Vec::new()));
@@ -98,6 +100,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             .try_get("deny_lists")
             .unwrap_or_else(|_| Json(Vec::new()));
         let default_template = row.try_get("default_template").unwrap_or_default();
+        let update_on_join = row.try_get("update_on_join").unwrap_or_default();
 
         Ok(Self {
             guild_id,
@@ -111,6 +114,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             custombinds: custombinds.0,
             deny_lists: deny_lists.0,
             default_template,
+            update_on_join,
         })
     }
 }
@@ -121,11 +125,11 @@ impl ToSql for GuildType {
         ty: &Type,
         out: &mut BytesMut,
     ) -> Result<IsNull, Box<dyn std::error::Error + Sync + Send>> {
-        u32::to_sql(&(*self as u32), ty, out)
+        i32::to_sql(&(*self as i32), ty, out)
     }
 
     fn accepts(ty: &Type) -> bool {
-        <u32 as ToSql>::accepts(ty)
+        <i32 as ToSql>::accepts(ty)
     }
 
     to_sql_checked!();
@@ -136,7 +140,7 @@ impl<'a> FromSql<'a> for GuildType {
         ty: &Type,
         raw: &'a [u8],
     ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-        match u32::from_sql(ty, raw)? {
+        match i32::from_sql(ty, raw)? {
             0 => Ok(GuildType::Free),
             1 => Ok(GuildType::Alpha),
             2 => Ok(GuildType::Beta),
@@ -146,6 +150,6 @@ impl<'a> FromSql<'a> for GuildType {
     }
 
     fn accepts(ty: &Type) -> bool {
-        <u32 as FromSql>::accepts(ty)
+        <i32 as FromSql>::accepts(ty)
     }
 }
