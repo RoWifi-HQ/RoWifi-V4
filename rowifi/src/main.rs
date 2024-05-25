@@ -43,6 +43,7 @@ use twilight_standby::Standby;
 use crate::commands::{
     assetbinds::{delete_assetbind, new_assetbind, view_assetbinds},
     denylists::{add_group_denylist, add_user_denylist, delete_denylist, view_denylists},
+    events::{new_event, view_attendee_events, view_event, view_host_events},
     groupbinds::{delete_groupbind, new_groupbind, view_groupbinds},
     rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
     user::{
@@ -121,6 +122,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/account/delete", post(account_delete))
         .route("/verify", post(verify_route))
         .route("/userinfo", post(userinfo))
+        .route("/event/new", post(new_event))
+        .route("/event/attendee", post(view_attendee_events))
+        .route("/event/host", post(view_host_events))
+        .route("/event/view", post(view_event))
         .route("/standby", post(standby_route));
 
     #[cfg(feature = "tower")]

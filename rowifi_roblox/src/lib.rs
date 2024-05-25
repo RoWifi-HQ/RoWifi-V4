@@ -171,13 +171,13 @@ impl RobloxClient {
     /// # Errors
     ///
     /// See [`RobloxError`] for details.
-    pub async fn get_user_from_username(
+    pub async fn get_users_from_usernames(
         &self,
-        username: &str,
-    ) -> Result<Option<PartialUser>, RobloxError> {
+        usernames: impl Iterator<Item = &str>,
+    ) -> Result<Vec<PartialUser>, RobloxError> {
         let route = Route::GetUserByUsernames;
 
-        let usernames = vec![username];
+        let usernames = usernames.collect::<Vec<_>>();
         let json = serde_json::json!({"usernames": usernames});
         let body = serde_json::to_vec(&json).map_err(|source| RobloxError {
             source: Some(Box::new(source)),
@@ -217,7 +217,7 @@ impl RobloxClient {
                 kind: ErrorKind::Deserialize,
             }
         })?;
-        Ok(json.data.into_iter().next())
+        Ok(json.data)
     }
 
     /// Get the items in an user's inventory.

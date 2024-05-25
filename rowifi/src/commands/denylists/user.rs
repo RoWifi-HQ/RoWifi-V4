@@ -40,7 +40,13 @@ pub async fn add_user_denylist_func(
         )
         .await?;
 
-    let Some(user) = bot.roblox.get_user_from_username(&args.username).await? else {
+    let Some(user) = bot
+        .roblox
+        .get_users_from_usernames([args.username.as_str()].into_iter())
+        .await?
+        .into_iter()
+        .next()
+    else {
         let message = format!(
             r#"
 Oh no! A user with the name `{}` does not exist.

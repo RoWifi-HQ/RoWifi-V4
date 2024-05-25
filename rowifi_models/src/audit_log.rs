@@ -31,6 +31,7 @@ pub enum AuditLogKind {
     XPSet = 7,
     DenylistCreate = 8,
     DenylistDelete = 9,
+    EventLog = 10,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -70,6 +71,9 @@ pub enum AuditLogData {
     },
     DenylistDelete {
         count: i32,
+    },
+    EventLog {
+        guild_event_id: i64,
     },
 }
 

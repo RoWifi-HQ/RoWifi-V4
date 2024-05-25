@@ -45,7 +45,13 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         return Ok(());
     };
 
-    let Some(roblox_user) = bot.roblox.get_user_from_username(&args.username).await? else {
+    let Some(roblox_user) = bot
+        .roblox
+        .get_users_from_usernames([args.username.as_str()].into_iter())
+        .await?
+        .into_iter()
+        .next()
+    else {
         let message = format!(
             r#"
 Oh no! An account with the name `{}` does not seem to exist. Ensure you have spelled the username correctly and try again.

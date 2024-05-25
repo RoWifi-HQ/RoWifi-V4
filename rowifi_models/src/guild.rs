@@ -6,6 +6,7 @@ use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, Json, ToSql, Type};
 use crate::{
     bind::{Assetbind, Custombind, Groupbind, Rankbind, Template},
     deny_list::DenyList,
+    events::EventType,
     id::{GuildId, RoleId},
 };
 
@@ -27,12 +28,14 @@ pub struct PartialRoGuild {
     pub custombinds: Vec<Custombind>,
     pub deny_lists: Vec<DenyList>,
     pub default_template: Option<Template>,
-    pub update_on_join: Option<bool>
+    pub update_on_join: Option<bool>,
+    pub event_types: Vec<EventType>,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
+#[derive(Clone, Copy, Debug, Default, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
 #[repr(u32)]
 pub enum GuildType {
+    #[default]
     Free = 0,
     Alpha = 1,
     Beta = 2,
@@ -68,7 +71,8 @@ impl PartialRoGuild {
             custombinds: Vec::new(),
             deny_lists: Vec::new(),
             default_template: None,
-            update_on_join: None
+            update_on_join: None,
+            event_types: Vec::new(),
         }
     }
 }
@@ -101,6 +105,9 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             .unwrap_or_else(|_| Json(Vec::new()));
         let default_template = row.try_get("default_template").unwrap_or_default();
         let update_on_join = row.try_get("update_on_join").unwrap_or_default();
+        let event_types = row
+            .try_get("event_types")
+            .unwrap_or_else(|_| Json(Vec::new()));
 
         Ok(Self {
             guild_id,
@@ -115,6 +122,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             deny_lists: deny_lists.0,
             default_template,
             update_on_join,
+            event_types: event_types.0,
         })
     }
 }

@@ -5,6 +5,7 @@ pub mod audit_log;
 pub mod bind;
 pub mod deny_list;
 pub mod discord;
+pub mod events;
 pub mod guild;
 pub mod id;
 pub mod roblox;
