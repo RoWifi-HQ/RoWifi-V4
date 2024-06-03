@@ -37,4 +37,6 @@ pub struct GroupUserRole {
 pub struct GroupRole {
     pub id: String,
     pub rank: u32,
+    #[serde(rename = "displayName")]
+    pub display_name: String,
 }
