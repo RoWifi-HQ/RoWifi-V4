@@ -8,6 +8,7 @@ use crate::{
     bind::BindType,
     deny_list::DenyListType,
     id::{GuildId, UserId},
+    roblox::id::{GroupId, UserId as RobloxUserId},
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -51,20 +52,20 @@ pub enum AuditLogData {
     },
     XPAdd {
         xp: i32,
-        target_roblox_user: i64,
+        target_roblox_user: RobloxUserId,
     },
     XPRemove {
         xp: i32,
-        target_roblox_user: i64,
+        target_roblox_user: RobloxUserId,
     },
     SetRank {
-        target_roblox_user: i64,
-        group_id: i64,
-        group_rank_id: u8,
+        target_roblox_user: RobloxUserId,
+        group_id: GroupId,
+        group_rank_id: u32,
     },
     XPSet {
         xp: i32,
-        target_roblox_user: i64,
+        target_roblox_user: RobloxUserId,
     },
     DenylistCreate {
         kind: DenyListType,
