@@ -12,7 +12,7 @@ axum = { workspace = true }
 deadpool-redis = { version = "0.15" }
 ed25519-dalek = { version = "2" }
 hex = { version = "0.4" }
-itertools = { version = "0.12" }
+itertools = { workspace = true }
 redis = { version = "0.25", default-features = false, features = ["aio", "tokio-comp", "connection-manager"] }
 rowifi_cache = { path = "../rowifi_cache" }
 rowifi_core = { path = "../rowifi_core" }

@@ -50,7 +50,11 @@ This server has no rankbinds configured. Looking to add one? Use the command `/r
     let mut pages = Vec::new();
     let mut page_count = 0usize;
     let rankbinds = guild.rankbinds;
-    for group in &rankbinds.into_iter().group_by(|r| r.group_id) {
+    for group in &rankbinds
+        .into_iter()
+        .sorted_by_key(|r| r.group_id)
+        .chunk_by(|r| r.group_id)
+    {
         for rbs in &group.1.chunks(12) {
             let mut embed = EmbedBuilder::new()
                 .color(DARK_GREEN)

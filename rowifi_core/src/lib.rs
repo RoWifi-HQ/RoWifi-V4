@@ -7,3 +7,4 @@ pub mod error;
 pub mod events;
 pub mod groupbinds;
 pub mod rankbinds;
+pub mod user;

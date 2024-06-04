@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+itertools = { workspace = true }
 rowifi_cache = { path = "../rowifi_cache" }
 rowifi_database = { path = "../rowifi_database" }
 rowifi_models = { path = "../rowifi_models" }

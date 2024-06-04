@@ -2,7 +2,6 @@
 #![allow(clippy::module_name_repetitions)]
 
 mod commands;
-mod utils;
 
 use axum::{
     body::Body,

@@ -12,8 +12,7 @@ use rowifi_models::{
 };
 use std::{error::Error, fmt::Write};
 use twilight_http::error::{Error as DiscordHttpError, ErrorType as DiscordErrorType};
-
-use crate::utils::update_user::{UpdateUser, UpdateUserError};
+use rowifi_core::user::update::{UpdateUser, UpdateUserError};
 
 #[derive(Arguments, Debug)]
 pub struct UpdateArguments {
@@ -134,7 +133,8 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         .collect::<Vec<_>>();
 
     let update_user = UpdateUser {
-        ctx: &bot,
+        http: &bot.http,
+        roblox: &bot.roblox,
         member: &member,
         user: &user,
         server: &server,

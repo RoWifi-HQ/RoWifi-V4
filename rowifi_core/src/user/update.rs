@@ -1,6 +1,4 @@
 use itertools::Itertools;
-use rowifi_core::error::RoError;
-use rowifi_framework::context::BotContext;
 use rowifi_models::{
     bind::{AssetType, Bind},
     deny_list::{DenyList, DenyListData},
@@ -10,11 +8,15 @@ use rowifi_models::{
     roblox::inventory::InventoryItem,
     user::RoUser,
 };
-use rowifi_roblox::{error::RobloxError, filter::AssetFilterBuilder};
+use rowifi_roblox::{error::RobloxError, filter::AssetFilterBuilder, RobloxClient};
 use std::collections::{HashMap, HashSet};
+use twilight_http::Client as DiscordClient;
+
+use crate::error::RoError;
 
 pub struct UpdateUser<'u> {
-    pub ctx: &'u BotContext,
+    pub http: &'u DiscordClient,
+    pub roblox: &'u RobloxClient,
     pub member: &'u CachedMember,
     pub user: &'u RoUser,
     pub server: &'u CachedGuild,
@@ -58,7 +60,6 @@ impl UpdateUser<'_> {
             .get(&self.guild.guild_id)
             .unwrap_or(&self.user.default_account_id);
         let user_ranks = self
-            .ctx
             .roblox
             .get_user_roles(*user_id)
             .await?
@@ -66,7 +67,7 @@ impl UpdateUser<'_> {
             .map(|r| (r.group.id, r.role.rank))
             .collect::<HashMap<_, _>>();
 
-        let roblox_user = self.ctx.roblox.get_user(*user_id).await?;
+        let roblox_user = self.roblox.get_user(*user_id).await?;
 
         let mut asset_filter = AssetFilterBuilder::new();
         for assetbind in &self.guild.assetbinds {
@@ -78,7 +79,6 @@ impl UpdateUser<'_> {
         }
         let asset_filter = asset_filter.build();
         let inventory_items = self
-            .ctx
             .roblox
             .get_inventory_items(*user_id, asset_filter)
             .await?
@@ -172,7 +172,6 @@ impl UpdateUser<'_> {
         }
 
         let mut update = self
-            .ctx
             .http
             .update_guild_member(self.server.id.0, self.member.id.0);
 
