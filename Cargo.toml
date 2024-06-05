@@ -29,6 +29,7 @@ twilight-validate = { branch = "main", git = "https://github.com/twilight-rs/twi
 twilight-util = { branch = "main", git = "https://github.com/twilight-rs/twilight", default-features = false, features = ["builder"] }
 
 [patch.'https://github.com/RoWifi-HQ/RoWifi-V4']
+rowifi_core = { path = "rowifi_core" }
 rowifi_database = { path = "rowifi_database" }
 rowifi_framework = { path = "rowifi_framework" }
 rowifi_models = { path = "rowifi_models" }

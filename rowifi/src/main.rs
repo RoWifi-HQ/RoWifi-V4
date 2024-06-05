@@ -129,7 +129,12 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     #[cfg(feature = "tower")]
     {
-        router = router.route("/setrank", post(rowifi_tower::set_rank));
+        use rowifi_tower::commands::{set_rank, xp_add, xp_remove, xp_set};
+        router = router
+            .route("/setrank", post(set_rank))
+            .route("/xp/add", post(xp_add))
+            .route("/xp/remove", post(xp_remove))
+            .route("/xp/set", post(xp_set));
     }
 
     let app = router
