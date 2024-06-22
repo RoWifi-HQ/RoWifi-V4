@@ -1333,7 +1333,7 @@ dependencies = [
 [[package]]
 name = "rowifi_tower"
 version = "4.0.0"
-source = "git+https://github.com/RoWifi-HQ/rowifi_tower?branch=main#28518a57c2927a5fed10be0f4bf94d5c13e3fd82"
+source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#b6e9bd0f0be8ca792c346936d37839f15e4c139c"
 dependencies = [
  "bytes",
  "http-body-util",
