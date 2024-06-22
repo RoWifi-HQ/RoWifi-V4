@@ -22,10 +22,4 @@ impl Custombind {
     pub fn discord_roles(&self) -> &[RoleId] {
         &self.discord_roles
     }
-
-    #[must_use]
-    pub fn evaluate(&self) -> bool {
-        // TODO: Custombind code evaluation
-        false
-    }
 }
