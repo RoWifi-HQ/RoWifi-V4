@@ -162,6 +162,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bstr"
+version = "1.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05efc5cfd9110c8416e471df0e96702d58690178e206e61b7173706673c93706"
+dependencies = [
+ "memchr",
+ "serde",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -380,6 +390,16 @@ name = "equivalent"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
+
+[[package]]
+name = "erased-serde"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24e2389d65ab4fab27dc2a5de7b191e1f6617d1f1c8855c0dc569c94a4cbb18d"
+dependencies = [
+ "serde",
+ "typeid",
+]
 
 [[package]]
 name = "fallible-iterator"
@@ -740,6 +760,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
 
 [[package]]
+name = "libloading"
+version = "0.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c2a198fb6b0eada2a8df47933734e6d35d350665a33a3593d7164fa52c75c19"
+dependencies = [
+ "cfg-if",
+ "windows-targets 0.52.5",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -754,6 +784,15 @@ name = "log"
 version = "0.4.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
+
+[[package]]
+name = "luau0-src"
+version = "0.10.1+luau630"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16051c9b79d9118360b211fd638e8ae6923c5e83ed2ce5029e89562a071298cb"
+dependencies = [
+ "cc",
+]
 
 [[package]]
 name = "matchers"
@@ -810,6 +849,35 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "mlua"
+version = "0.9.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d111deb18a9c9bd33e1541309f4742523bfab01d276bfa9a27519f6de9c11dc7"
+dependencies = [
+ "bstr",
+ "erased-serde",
+ "libloading",
+ "mlua-sys",
+ "num-traits",
+ "once_cell",
+ "rustc-hash",
+ "serde",
+ "serde-value",
+]
+
+[[package]]
+name = "mlua-sys"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a088ed0723df7567f569ba018c5d48c23c501f3878b190b04144dfa5ebfa8abc"
+dependencies = [
+ "cc",
+ "cfg-if",
+ "luau0-src",
+ "pkg-config",
 ]
 
 [[package]]
@@ -971,6 +1039,12 @@ dependencies = [
  "der",
  "spki",
 ]
+
+[[package]]
+name = "pkg-config"
+version = "0.3.30"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d231b230927b5e4ad203db57bbcbee2802f6bce620b1e4a9024a07d94e2907ec"
 
 [[package]]
 name = "platforms"
@@ -1239,6 +1313,7 @@ dependencies = [
  "rowifi_database",
  "rowifi_models",
  "rowifi_roblox",
+ "rowifi_script",
  "serde",
  "time",
  "twilight-http",
@@ -1331,9 +1406,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rowifi_script"
+version = "4.0.0"
+source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#7dd34465184bf3d09bf3d9635a6238396f28f9ab"
+dependencies = [
+ "mlua",
+ "rowifi_models",
+]
+
+[[package]]
 name = "rowifi_tower"
 version = "4.0.0"
-source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#b6e9bd0f0be8ca792c346936d37839f15e4c139c"
+source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#7dd34465184bf3d09bf3d9635a6238396f28f9ab"
 dependencies = [
  "bytes",
  "http-body-util",
@@ -1355,6 +1439,12 @@ name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
+
+[[package]]
+name = "rustc-hash"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "583034fd73374156e66797ed8e5b0d5690409c9226b22d87cb7f19821c05d152"
 
 [[package]]
 name = "rustc_version"
@@ -1883,7 +1973,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "twilight-http"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#438ace0e2d91a1d58b8814e8cb6641264dace9fd"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#6a4402826ced167ed68d6c27d2216763d53ac7fb"
 dependencies = [
  "fastrand",
  "http",
@@ -1904,7 +1994,7 @@ dependencies = [
 [[package]]
 name = "twilight-http-ratelimiting"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#438ace0e2d91a1d58b8814e8cb6641264dace9fd"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#6a4402826ced167ed68d6c27d2216763d53ac7fb"
 dependencies = [
  "tokio",
  "tracing",
@@ -1913,7 +2003,7 @@ dependencies = [
 [[package]]
 name = "twilight-mention"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#438ace0e2d91a1d58b8814e8cb6641264dace9fd"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#6a4402826ced167ed68d6c27d2216763d53ac7fb"
 dependencies = [
  "twilight-model",
 ]
@@ -1921,7 +2011,7 @@ dependencies = [
 [[package]]
 name = "twilight-model"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#438ace0e2d91a1d58b8814e8cb6641264dace9fd"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#6a4402826ced167ed68d6c27d2216763d53ac7fb"
 dependencies = [
  "bitflags 2.5.0",
  "serde",
@@ -1933,7 +2023,7 @@ dependencies = [
 [[package]]
 name = "twilight-standby"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#438ace0e2d91a1d58b8814e8cb6641264dace9fd"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#6a4402826ced167ed68d6c27d2216763d53ac7fb"
 dependencies = [
  "dashmap",
  "futures-core",
@@ -1945,7 +2035,7 @@ dependencies = [
 [[package]]
 name = "twilight-util"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#438ace0e2d91a1d58b8814e8cb6641264dace9fd"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#6a4402826ced167ed68d6c27d2216763d53ac7fb"
 dependencies = [
  "twilight-model",
  "twilight-validate",
@@ -1954,10 +2044,16 @@ dependencies = [
 [[package]]
 name = "twilight-validate"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#438ace0e2d91a1d58b8814e8cb6641264dace9fd"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#6a4402826ced167ed68d6c27d2216763d53ac7fb"
 dependencies = [
  "twilight-model",
 ]
+
+[[package]]
+name = "typeid"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "059d83cc991e7a42fc37bd50941885db0888e34209f8cfd9aab07ddec03bc9cf"
 
 [[package]]
 name = "typenum"

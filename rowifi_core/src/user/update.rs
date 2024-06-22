@@ -9,6 +9,7 @@ use rowifi_models::{
     user::RoUser,
 };
 use rowifi_roblox::{error::RobloxError, filter::AssetFilterBuilder, RobloxClient};
+use rowifi_script::{Code, Globals};
 use std::collections::{HashMap, HashSet};
 use twilight_http::Client as DiscordClient;
 
@@ -135,8 +136,16 @@ impl UpdateUser<'_> {
             }
         }
 
+        // TODO: Pop up the error
+        let code_env = Code::new(Globals {
+            username: &roblox_user.name,
+            display_name: roblox_user.display_name.as_ref().map(|d| d.as_str()),
+            groups: &user_ranks,
+        })
+        .unwrap();
         for custombind in &self.guild.custombinds {
-            if custombind.evaluate() {
+            // TODO: Pop up the error
+            if code_env.execute(&custombind.code).unwrap() {
                 if let Some(ref highest) = nickname_bind {
                     if highest.priority() < custombind.priority {
                         nickname_bind = Some(Bind::Custom(custombind.clone()));
