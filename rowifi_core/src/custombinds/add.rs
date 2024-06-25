@@ -51,6 +51,8 @@ pub async fn add_custombind(
         }
     }
 
+    // TODO: Validate the custombind code
+
     let bind = Json(Custombind {
         custom_bind_id: existing_custombinds
             .iter()

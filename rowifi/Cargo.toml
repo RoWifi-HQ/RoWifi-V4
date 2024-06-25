@@ -4,8 +4,9 @@ version = "4.0.0"
 edition = "2021"
 
 [features]
-default = ["tower"]
+default = ["tower", "custombinds"]
 tower = ["dep:rowifi_tower"]
+custombinds = ["rowifi_core/custombinds"]
 
 [dependencies]
 axum = { workspace = true }
