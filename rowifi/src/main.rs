@@ -136,6 +136,13 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             .route("/xp/remove", post(xp_remove))
             .route("/xp/set", post(xp_set));
     }
+    #[cfg(feature = "custombinds")]
+    {
+        use crate::commands::custombinds::{delete_custombind, new_custombind};
+        router = router
+            .route("/custombinds/new", post(new_custombind))
+            .route("/custombinds/delete", post(delete_custombind));
+    }
 
     let app = router
         .layer(Extension(Arc::new(standby)))
