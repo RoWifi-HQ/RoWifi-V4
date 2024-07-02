@@ -1,5 +1,8 @@
 #![deny(clippy::all, clippy::pedantic)]
-#![allow(clippy::module_name_repetitions)]
+#![allow(
+    clippy::module_name_repetitions,
+    dependency_on_unit_never_type_fallback
+)]
 
 mod event;
 mod process;
