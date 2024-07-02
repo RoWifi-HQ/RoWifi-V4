@@ -53,7 +53,7 @@ pub async fn delete_assetbinds(
 
     let new_assetbinds = assetbinds
         .iter()
-        .filter(|r| binds_to_delete.contains(&r.asset_id))
+        .filter(|r| !binds_to_delete.contains(&r.asset_id))
         .cloned()
         .collect::<Vec<_>>();
     database

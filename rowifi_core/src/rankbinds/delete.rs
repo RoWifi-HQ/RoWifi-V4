@@ -59,7 +59,7 @@ pub async fn delete_rankbinds(
 
     let new_rankbinds = rankbinds
         .iter()
-        .filter(|r| binds_to_delete.contains(&(r.group_id, r.group_rank_id)))
+        .filter(|r| !binds_to_delete.contains(&(r.group_id, r.group_rank_id)))
         .cloned()
         .collect::<Vec<_>>();
     database

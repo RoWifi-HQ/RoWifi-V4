@@ -53,7 +53,7 @@ pub async fn delete_groupbinds(
 
     let new_groupbinds = groupbinds
         .iter()
-        .filter(|r| binds_to_delete.contains(&r.group_id))
+        .filter(|r| !binds_to_delete.contains(&r.group_id))
         .cloned()
         .collect::<Vec<_>>();
     database
