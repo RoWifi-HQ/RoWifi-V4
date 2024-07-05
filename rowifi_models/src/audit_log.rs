@@ -33,6 +33,7 @@ pub enum AuditLogKind {
     DenylistCreate = 8,
     DenylistDelete = 9,
     EventLog = 10,
+    SettingModify = 11,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -76,6 +77,10 @@ pub enum AuditLogData {
     EventLog {
         guild_event_id: i64,
     },
+    SettingModify {
+        setting: String,
+        value: String
+    }
 }
 
 impl TryFrom<tokio_postgres::Row> for AuditLog {

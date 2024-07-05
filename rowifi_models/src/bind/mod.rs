@@ -28,6 +28,7 @@ pub enum BindType {
     Group = 1,
     Custom = 2,
     Asset = 3,
+    XP = 4,
 }
 
 impl Bind {
