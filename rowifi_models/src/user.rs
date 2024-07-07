@@ -29,6 +29,13 @@ pub struct PatreonUser {
     pub transferred_to: Option<UserId>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct LinkedUser {
+    pub guild_id: GuildId,
+    pub user_id: UserId,
+    pub roblox_id: RobloxUserId,
+}
+
 bitflags! {
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct UserFlags: i64 {
@@ -168,5 +175,21 @@ impl<'a> FromSql<'a> for PatreonUserType {
 
     fn accepts(ty: &Type) -> bool {
         <String as FromSql>::accepts(ty)
+    }
+}
+
+impl TryFrom<tokio_postgres::Row> for LinkedUser {
+    type Error = tokio_postgres::Error;
+
+    fn try_from(row: tokio_postgres::Row) -> Result<Self, Self::Error> {
+        let guild_id = row.try_get("guild_id")?;
+        let user_id = row.try_get("user_id")?;
+        let roblox_id = row.try_get("roblox_id")?;
+
+        Ok(Self {
+            guild_id,
+            user_id,
+            roblox_id,
+        })
     }
 }
