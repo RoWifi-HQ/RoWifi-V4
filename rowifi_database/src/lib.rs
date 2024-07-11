@@ -12,6 +12,7 @@ pub use deadpool_postgres as deadpool;
 
 mod error;
 
+#[derive(Clone)]
 pub struct Database {
     pool: Pool,
 }
