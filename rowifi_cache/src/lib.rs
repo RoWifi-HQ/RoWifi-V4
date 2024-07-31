@@ -21,7 +21,7 @@ use rowifi_models::{
     },
     id::{GuildId, RoleId, UserId},
 };
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use error::CacheError;
 use event::UpdateCache;
@@ -91,6 +91,18 @@ impl Cache {
         } else {
             Ok(None)
         }
+    }
+
+    /// Returns all the cached members for a particular guild.
+    ///
+    /// # Errors
+    ///
+    /// See [`CacheError`] for details.
+    pub async fn guild_members(&self, id: GuildId) -> Result<HashSet<UserId>, CacheError> {
+        let mut conn = self.get().await?;
+        let res: Vec<u64> = conn.smembers(format!("discord:m:{id}")).await?;
+
+        Ok(res.into_iter().map(UserId::new).collect())
     }
 
     /// Returns the roles of the server.
