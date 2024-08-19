@@ -1,4 +1,4 @@
-use rowifi_core::custombinds::add::{add_custombind, CustombindArguments};
+use rowifi_core::custombinds::add::{add_custombind, AddCustombindError, CustombindArguments};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
     bind::Template,
@@ -53,7 +53,7 @@ async fn new_custombind_func(
         .map(|r| (r.id, r))
         .collect::<HashMap<_, _>>();
 
-    let res = add_custombind(
+    let res = match add_custombind(
         &bot.database,
         ctx.guild_id,
         ctx.author_id,
@@ -66,7 +66,15 @@ async fn new_custombind_func(
             discord_roles: args.discord_roles,
         },
     )
-    .await?;
+    .await
+    {
+        Ok(r) => r,
+        Err(AddCustombindError::Code(err)) => {
+            ctx.respond(&bot).content(&err).unwrap().await?;
+            return Ok(());
+        }
+        Err(AddCustombindError::Other(err)) => return Err(err),
+    };
 
     let mut description = String::new();
     description.push_str(&format!("**Bind Id: {}**\n", res.bind.custom_bind_id));

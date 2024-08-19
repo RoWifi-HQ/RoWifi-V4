@@ -10,11 +10,18 @@ use std::{collections::HashMap, ops::Add};
 use time::OffsetDateTime;
 
 use crate::error::RoError;
+use super::parser::parser;
 
 #[derive(Debug, Serialize)]
 pub struct AddCustombind {
     pub bind: Custombind,
     pub ignored_roles: Vec<RoleId>,
+}
+
+#[derive(Debug)]
+pub enum AddCustombindError {
+    Code(String),
+    Other(RoError)
 }
 
 #[derive(Debug, Deserialize)]
@@ -37,7 +44,7 @@ pub async fn add_custombind(
     existing_custombinds: &[Custombind],
     server_roles: &HashMap<RoleId, CachedRole>,
     args: CustombindArguments,
-) -> Result<AddCustombind, RoError> {
+) -> Result<AddCustombind, AddCustombindError> {
     let mut ignored_roles = Vec::new();
     let mut roles_to_add = Vec::new();
     // Check if the discord roles provided exist or if they are some integration's roles.
@@ -52,6 +59,9 @@ pub async fn add_custombind(
     }
 
     // TODO: Validate the custombind code
+    if let Err(err) = parser(&args.code) {
+        return Err(AddCustombindError::Code(err.to_string()));
+    }
 
     let bind = Json(Custombind {
         custom_bind_id: existing_custombinds
@@ -71,7 +81,8 @@ pub async fn add_custombind(
             "UPDATE guilds SET custombinds = custombinds || $2::jsonb WHERE guild_id = $1",
             &[&guild_id, &bind],
         )
-        .await?;
+        .await
+        .map_err(|err| AddCustombindError::Other(err.into()))?;
 
     let log = AuditLog {
         kind: AuditLogKind::BindCreate,
@@ -96,7 +107,8 @@ pub async fn add_custombind(
                 &Json(log.metadata),
             ],
         )
-        .await?;
+        .await
+        .map_err(|err| AddCustombindError::Other(err.into()))?;
 
     Ok(AddCustombind {
         bind: bind.0,
