@@ -12,7 +12,13 @@ use rowifi_roblox::{error::RobloxError, filter::AssetFilterBuilder, RobloxClient
 use std::collections::{HashMap, HashSet};
 use twilight_http::Client as DiscordClient;
 
-use crate::error::RoError;
+use crate::{
+    custombinds::{
+        self,
+        evaluate::{EvaluationContext, EvaluationError, EvaluationResult},
+    },
+    error::RoError,
+};
 
 pub struct UpdateUser<'u> {
     pub http: &'u DiscordClient,
@@ -30,6 +36,8 @@ pub enum UpdateUserError {
     DenyList(DenyList),
     InvalidNickname(String),
     Generic(RoError),
+    CustombindParsing { id: u32, err: String },
+    CustombindEvaluation { id: u32, err: EvaluationError },
 }
 
 impl UpdateUser<'_> {
@@ -135,24 +143,39 @@ impl UpdateUser<'_> {
             }
         }
 
-        // TODO: Pop up the error
-        // let code_env = Code::new(Globals {
-        //     username: &roblox_user.name,
-        //     display_name: roblox_user.display_name.as_ref().map(|d| d.as_str()),
-        //     groups: &user_ranks,
-        // })
-        // .unwrap();
-        // for custombind in &self.guild.custombinds {
-        //     // TODO: Pop up the error
-        //     if code_env.execute(&custombind.code).unwrap() {
-        //         if let Some(ref highest) = nickname_bind {
-        //             if highest.priority() < custombind.priority {
-        //                 nickname_bind = Some(Bind::Custom(custombind.clone()));
-        //             }
-        //             roles_to_add.extend(custombind.discord_roles.iter().copied());
-        //         }
-        //     }
-        // }
+        // TODO: Have parsed custombinds stored somewhere
+        for custombind in &self.guild.custombinds {
+            let exp = custombinds::parser::parser(&custombind.code).map_err(|err| {
+                UpdateUserError::CustombindParsing {
+                    id: custombind.custom_bind_id,
+                    err: err.to_string(),
+                }
+            })?;
+            let res = custombinds::evaluate::evaluate(
+                &exp,
+                &EvaluationContext {
+                    roles: &self.member.roles,
+                    ranks: &user_ranks,
+                    username: &roblox_user.name,
+                },
+            )
+            .map_err(|err| UpdateUserError::CustombindEvaluation {
+                id: custombind.custom_bind_id,
+                err,
+            })?;
+            let success = match res {
+                EvaluationResult::Bool(b) => b,
+                EvaluationResult::Number(n) => n != 0,
+            };
+            if success {
+                if let Some(ref highest) = nickname_bind {
+                    if highest.priority() < custombind.priority {
+                        nickname_bind = Some(Bind::Custom(custombind.clone()));
+                    }
+                    roles_to_add.extend(custombind.discord_roles.iter().copied());
+                }
+            }
+        }
 
         for assetbind in &self.guild.assetbinds {
             if inventory_items.contains(&assetbind.asset_id.0.to_string()) {

@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use rowifi_core::user::update::{UpdateUser, UpdateUserError};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
     deny_list::DenyListActionType,
@@ -12,7 +13,6 @@ use rowifi_models::{
 };
 use std::{error::Error, fmt::Write};
 use twilight_http::error::{Error as DiscordHttpError, ErrorType as DiscordErrorType};
-use rowifi_core::user::update::{UpdateUser, UpdateUserError};
 
 #[derive(Arguments, Debug)]
 pub struct UpdateArguments {
@@ -219,6 +219,22 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
                     }
                 }
                 return Err(err);
+            }
+            UpdateUserError::CustombindParsing { id, err } => {
+                let message = format!(
+                    "There was an error in parsing the custombind with ID {}.\nError: `{}`",
+                    id, err
+                );
+                ctx.respond(&bot).content(&message).unwrap().await?;
+                return Ok(());
+            }
+            UpdateUserError::CustombindEvaluation { id, err } => {
+                let message = format!(
+                    "There was an error in evaluating the custombind with ID {}.\nError: `{}`",
+                    id, err
+                );
+                ctx.respond(&bot).content(&message).unwrap().await?;
+                return Ok(());
             }
         },
     };
