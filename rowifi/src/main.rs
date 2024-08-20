@@ -49,6 +49,7 @@ use crate::commands::{
         account_default, account_delete, account_switch, account_view, update_route, userinfo,
         verify_route,
     },
+    custombinds::{new_custombind, delete_custombind, view_custombinds}
 };
 
 #[tokio::main]
@@ -111,6 +112,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/assetbinds/new", post(new_assetbind))
         .route("/assetbinds/delete", post(delete_assetbind))
         .route("/assetbinds/view", post(view_assetbinds))
+        .route("/custombinds/new", post(new_custombind))
+        .route("/custombinds/delete", post(delete_custombind))
+        .route("/custombinds/view", post(view_custombinds))
         .route("/denylists/user", post(add_user_denylist))
         .route("/denylists/group", post(add_group_denylist))
         .route("/denylists/delete", post(delete_denylist))
@@ -135,13 +139,6 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             .route("/xp/add", post(xp_add))
             .route("/xp/remove", post(xp_remove))
             .route("/xp/set", post(xp_set));
-    }
-    #[cfg(feature = "custombinds")]
-    {
-        use crate::commands::custombinds::{delete_custombind, new_custombind};
-        router = router
-            .route("/custombinds/new", post(new_custombind))
-            .route("/custombinds/delete", post(delete_custombind));
     }
 
     let app = router
