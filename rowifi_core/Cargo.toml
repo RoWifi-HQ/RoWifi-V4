@@ -6,12 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["custombinds"]
-custombinds = ["nom"]
 
 [dependencies]
 itertools = { workspace = true }
-nom = { version = "7", optional = true }
+nom = { version = "7" }
 rowifi_cache = { path = "../rowifi_cache" }
 rowifi_database = { path = "../rowifi_database" }
 rowifi_models = { path = "../rowifi_models" }
