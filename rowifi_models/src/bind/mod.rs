@@ -3,6 +3,7 @@ mod custom;
 mod group;
 mod rank;
 mod template;
+mod xp;
 
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
@@ -11,6 +12,7 @@ pub use custom::Custombind;
 pub use group::Groupbind;
 pub use rank::Rankbind;
 pub use template::Template;
+pub use xp::XPBind;
 
 use crate::id::RoleId;
 

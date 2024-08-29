@@ -70,6 +70,12 @@ impl Template {
     }
 }
 
+impl Default for Template {
+    fn default() -> Self {
+        Self("{roblox-username}".to_string())
+    }
+}
+
 impl ToSql for Template {
     fn to_sql(
         &self,

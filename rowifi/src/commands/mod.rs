@@ -1,4 +1,5 @@
 pub mod assetbinds;
+pub mod backups;
 pub mod custombinds;
 pub mod denylists;
 pub mod events;

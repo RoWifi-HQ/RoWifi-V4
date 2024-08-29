@@ -41,6 +41,8 @@ use twilight_standby::Standby;
 
 use crate::commands::{
     assetbinds::{delete_assetbind, new_assetbind, view_assetbinds},
+    backups::{backup_new, backup_restore, backup_view},
+    custombinds::{delete_custombind, new_custombind, view_custombinds},
     denylists::{add_group_denylist, add_user_denylist, delete_denylist, view_denylists},
     events::{new_event, view_attendee_events, view_event, view_host_events},
     groupbinds::{delete_groupbind, new_groupbind, view_groupbinds},
@@ -49,7 +51,6 @@ use crate::commands::{
         account_default, account_delete, account_switch, account_view, update_route, userinfo,
         verify_route,
     },
-    custombinds::{new_custombind, delete_custombind, view_custombinds}
 };
 
 #[tokio::main]
@@ -129,6 +130,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/event/attendee", post(view_attendee_events))
         .route("/event/host", post(view_host_events))
         .route("/event/view", post(view_event))
+        .route("/backup/new", post(backup_new))
+        .route("/backup/restore", post(backup_restore))
+        .route("/backup/view", post(backup_view))
         .route("/standby", post(standby_route));
 
     #[cfg(feature = "tower")]

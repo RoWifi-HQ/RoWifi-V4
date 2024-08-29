@@ -4,7 +4,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, Json, ToSql, Type};
 
 use crate::{
-    bind::{Assetbind, Custombind, Groupbind, Rankbind, Template},
+    bind::{Assetbind, Custombind, Groupbind, Rankbind, Template, XPBind},
     deny_list::DenyList,
     events::EventType,
     id::{GuildId, RoleId},
@@ -30,6 +30,9 @@ pub struct PartialRoGuild {
     pub default_template: Option<Template>,
     pub update_on_join: Option<bool>,
     pub event_types: Vec<EventType>,
+    pub auto_detection: Option<bool>,
+    pub xp_binds: Vec<XPBind>,
+    pub sync_xp_on_setrank: Option<bool>,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
@@ -73,6 +76,9 @@ impl PartialRoGuild {
             default_template: None,
             update_on_join: None,
             event_types: Vec::new(),
+            auto_detection: None,
+            xp_binds: Vec::new(),
+            sync_xp_on_setrank: None,
         }
     }
 }
@@ -108,6 +114,9 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
         let event_types = row
             .try_get("event_types")
             .unwrap_or_else(|_| Json(Vec::new()));
+        let auto_detection = row.try_get("auto_detection").unwrap_or_default();
+        let xp_binds = row.try_get("xp_binds").unwrap_or_else(|_| Json(Vec::new()));
+        let sync_xp_on_setrank = row.try_get("sync_xp_on_setrank").unwrap_or_default();
 
         Ok(Self {
             guild_id,
@@ -123,6 +132,9 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             default_template,
             update_on_join,
             event_types: event_types.0,
+            auto_detection,
+            xp_binds: xp_binds.0,
+            sync_xp_on_setrank,
         })
     }
 }
