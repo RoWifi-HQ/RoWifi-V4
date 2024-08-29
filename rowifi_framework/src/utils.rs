@@ -2,8 +2,7 @@ use rowifi_core::error::RoError;
 use rowifi_models::discord::{
     application::interaction::{Interaction, InteractionData, InteractionType},
     channel::message::{
-        component::{ActionRow, Button, ButtonStyle},
-        Component, Embed, MessageFlags, ReactionType,
+        component::{ActionRow, Button, ButtonStyle}, Component, Embed, EmojiReactionType, MessageFlags
     },
 };
 use std::{cmp::min, time::Duration};
@@ -38,7 +37,7 @@ pub async fn paginate_embeds(
                 components: vec![
                     Component::Button(Button {
                         style: ButtonStyle::Primary,
-                        emoji: Some(ReactionType::Unicode {
+                        emoji: Some(EmojiReactionType::Unicode {
                             name: "⏮️".into()
                         }),
                         label: Some("First Page".into()),
@@ -48,7 +47,7 @@ pub async fn paginate_embeds(
                     }),
                     Component::Button(Button {
                         style: ButtonStyle::Primary,
-                        emoji: Some(ReactionType::Unicode {
+                        emoji: Some(EmojiReactionType::Unicode {
                             name: "◀️".into()
                         }),
                         label: Some("Previous Page".into()),
@@ -58,7 +57,7 @@ pub async fn paginate_embeds(
                     }),
                     Component::Button(Button {
                         style: ButtonStyle::Primary,
-                        emoji: Some(ReactionType::Unicode {
+                        emoji: Some(EmojiReactionType::Unicode {
                             name: "▶️".into()
                         }),
                         label: Some("Next Page".into()),
@@ -68,7 +67,7 @@ pub async fn paginate_embeds(
                     }),
                     Component::Button(Button {
                         style: ButtonStyle::Primary,
-                        emoji: Some(ReactionType::Unicode {
+                        emoji: Some(EmojiReactionType::Unicode {
                             name: "⏭️".into()
                         }),
                         label: Some("Last Page".into()),

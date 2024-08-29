@@ -1,13 +1,16 @@
 mod delete;
 mod new;
 
-use std::sync::Arc;
-use rowifi_framework::{prelude::*, utils::paginate_embeds};
 use itertools::Itertools;
+use rowifi_framework::{prelude::*, utils::paginate_embeds};
+use std::sync::Arc;
 
 pub use delete::delete_custombind;
 pub use new::new_custombind;
-use rowifi_models::discord::{http::interaction::{InteractionResponse, InteractionResponseType}, util::Timestamp};
+use rowifi_models::discord::{
+    http::interaction::{InteractionResponse, InteractionResponseType},
+    util::Timestamp,
+};
 use twilight_mention::Mention;
 use twilight_standby::Standby;
 
@@ -76,4 +79,3 @@ This server has no custombinds configured. Looking to add one? Use the command `
 
     Ok(())
 }
-

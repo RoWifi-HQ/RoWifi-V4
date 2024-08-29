@@ -15,9 +15,9 @@ pub enum CacheError {
 impl Display for CacheError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
-            Self::Redis(err) => write!(f, "redis error - {}", err),
-            Self::SerdeEncode(err) => write!(f, "serde encoding error - {}", err),
-            Self::SerdeDecode(err) => write!(f, "serde decoding error - {}", err),
+            Self::Redis(err) => write!(f, "redis error - {err}"),
+            Self::SerdeEncode(err) => write!(f, "serde encoding error - {err}"),
+            Self::SerdeDecode(err) => write!(f, "serde decoding error - {err}"),
         }
     }
 }

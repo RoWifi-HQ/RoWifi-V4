@@ -79,8 +79,8 @@ pub enum AuditLogData {
     },
     SettingModify {
         setting: String,
-        value: String
-    }
+        value: String,
+    },
 }
 
 impl TryFrom<tokio_postgres::Row> for AuditLog {

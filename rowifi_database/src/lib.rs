@@ -7,8 +7,8 @@ use tokio_postgres::types::ToSql;
 use tokio_postgres::{Config as TokioPostgresConfig, NoTls, Row};
 
 pub use crate::error::DatabaseError;
-pub use tokio_postgres as postgres;
 pub use deadpool_postgres as deadpool;
+pub use tokio_postgres as postgres;
 
 mod error;
 

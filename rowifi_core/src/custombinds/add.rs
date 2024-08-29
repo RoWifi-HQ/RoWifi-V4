@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, ops::Add};
 use time::OffsetDateTime;
 
-use crate::error::RoError;
 use super::parser::parser;
+use crate::error::RoError;
 
 #[derive(Debug, Serialize)]
 pub struct AddCustombind {
@@ -21,7 +21,7 @@ pub struct AddCustombind {
 #[derive(Debug)]
 pub enum AddCustombindError {
     Code(String),
-    Other(RoError)
+    Other(RoError),
 }
 
 #[derive(Debug, Deserialize)]

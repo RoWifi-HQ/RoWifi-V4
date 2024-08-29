@@ -19,7 +19,7 @@ serde = { version = "1.0" }
 serde_json = { version = "1" }
 time = { version = "0.3", default-features = false, features = ["std"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-tower = { version = "0.4", default-features = false }
+tower = { version = "0.5", default-features = false }
 tracing = "0.1"
 twilight-http = { branch = "main", git = "https://github.com/twilight-rs/twilight", default-features = false, features = ["rustls-webpki-roots"] }
 twilight-mention = { branch = "main", git = "https://github.com/twilight-rs/twilight" }
@@ -30,6 +30,7 @@ twilight-util = { branch = "main", git = "https://github.com/twilight-rs/twiligh
 
 [patch.'https://github.com/RoWifi-HQ/RoWifi-V4']
 rowifi_core = { path = "rowifi_core" }
+rowifi_cache = { path = "rowifi_cache" }
 rowifi_database = { path = "rowifi_database" }
 rowifi_framework = { path = "rowifi_framework" }
 rowifi_models = { path = "rowifi_models" }
