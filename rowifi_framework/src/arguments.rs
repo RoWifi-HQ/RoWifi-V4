@@ -163,6 +163,15 @@ impl Argument for DenyListActionType {
     }
 }
 
+impl Argument for RoleId {
+    fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
+        match option.value {
+            CommandOptionValue::Role(role) => Ok(RoleId(role)),
+            _ => unreachable!()
+        }
+    }
+}
+
 impl Display for ArgumentError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {

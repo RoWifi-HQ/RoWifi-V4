@@ -311,7 +311,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ed4f481f6a4770b95e09b91e183ee5ed6e1d4a34c0b09814012b3ee5e585f70"
 dependencies = [
  "deadpool",
- "redis 0.26.1",
+ "redis",
 ]
 
 [[package]]
@@ -1114,28 +1114,6 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "0.25.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0d7a6955c7511f60f3ba9e86c6d02b3c3f144f8c24b288d1f4e18074ab8bbec"
-dependencies = [
- "arc-swap",
- "async-trait",
- "bytes",
- "combine",
- "futures",
- "futures-util",
- "itoa",
- "percent-encoding",
- "pin-project-lite",
- "ryu",
- "tokio",
- "tokio-retry",
- "tokio-util",
- "url",
-]
-
-[[package]]
-name = "redis"
 version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e902a69d09078829137b4a5d9d082e0490393537badd7c91a3d69d14639e115f"
@@ -1144,6 +1122,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "combine",
+ "futures",
  "futures-util",
  "itoa",
  "num-bigint",
@@ -1151,6 +1130,7 @@ dependencies = [
  "pin-project-lite",
  "ryu",
  "tokio",
+ "tokio-retry",
  "tokio-util",
  "url",
 ]
@@ -1263,7 +1243,7 @@ dependencies = [
  "ed25519-dalek",
  "hex",
  "itertools",
- "redis 0.25.4",
+ "redis",
  "rowifi_cache",
  "rowifi_core",
  "rowifi_database",
@@ -1271,6 +1251,7 @@ dependencies = [
  "rowifi_models",
  "rowifi_roblox",
  "rowifi_tower",
+ "serde",
  "serde_json",
  "tokio",
  "tower 0.5.0",

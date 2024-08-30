@@ -5,4 +5,5 @@ pub mod denylists;
 pub mod events;
 pub mod groupbinds;
 pub mod rankbinds;
+pub mod server;
 pub mod user;
