@@ -2,7 +2,8 @@ use rowifi_core::error::RoError;
 use rowifi_models::discord::{
     application::interaction::{Interaction, InteractionData, InteractionType},
     channel::message::{
-        component::{ActionRow, Button, ButtonStyle}, Component, Embed, EmojiReactionType, MessageFlags
+        component::{ActionRow, Button, ButtonStyle},
+        Component, Embed, EmojiReactionType, MessageFlags,
     },
 };
 use std::{cmp::min, time::Duration};
@@ -44,6 +45,7 @@ pub async fn paginate_embeds(
                         custom_id: Some("first-page".into()),
                         url: None,
                         disabled: false,
+                        sku_id: None,
                     }),
                     Component::Button(Button {
                         style: ButtonStyle::Primary,
@@ -54,6 +56,7 @@ pub async fn paginate_embeds(
                         custom_id: Some("previous-page".into()),
                         url: None,
                         disabled: false,
+                        sku_id: None,
                     }),
                     Component::Button(Button {
                         style: ButtonStyle::Primary,
@@ -64,6 +67,7 @@ pub async fn paginate_embeds(
                         custom_id: Some("next-page".into()),
                         url: None,
                         disabled: false,
+                        sku_id: None,
                     }),
                     Component::Button(Button {
                         style: ButtonStyle::Primary,
@@ -74,6 +78,7 @@ pub async fn paginate_embeds(
                         custom_id: Some("last-page".into()),
                         url: None,
                         disabled: false,
+                        sku_id: None,
                     }),
                 ],
             })])?
