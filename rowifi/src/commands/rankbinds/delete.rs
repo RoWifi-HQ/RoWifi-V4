@@ -55,7 +55,7 @@ pub async fn delete_rankbind_func(
         let embed = EmbedBuilder::new()
             .color(RED)
             .footer(EmbedFooterBuilder::new("RoWifi").build())
-            .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
             .title("Deletion Failed")
             .description(format!(
                 "Rankbind with Group ID {} and Rank ID {} does not exist",
@@ -67,7 +67,7 @@ pub async fn delete_rankbind_func(
         let embed = EmbedBuilder::new()
             .color(DARK_GREEN)
             .footer(EmbedFooterBuilder::new("RoWifi").build())
-            .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
             .title("Deletion Successful")
             .build();
         ctx.respond(&bot).embeds(&[embed]).unwrap().await?;

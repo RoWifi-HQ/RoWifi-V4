@@ -112,7 +112,7 @@ pub async fn new_event_func(
     let embed = EmbedBuilder::new()
         .color(DARK_GREEN)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
-        .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+        .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Event Addition Successful")
         .field(EmbedFieldBuilder::new(
             format!("Event Id: {}", new_event.guild_event_id),

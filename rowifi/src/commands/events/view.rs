@@ -146,7 +146,7 @@ pub async fn view_attendee_events_func(
         let mut embed = EmbedBuilder::new()
             .color(DARK_GREEN)
             .footer(EmbedFooterBuilder::new("RoWifi").build())
-            .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
             .title("Attended Events")
             .description(format!("Page {}", page_count + 1));
 
@@ -164,7 +164,7 @@ pub async fn view_attendee_events_func(
                 "Event Type: {}\nHost: {}\nTimestamp: <t:{}:f>",
                 event_type.name,
                 host.name,
-                event.timestamp.unix_timestamp()
+                event.timestamp.timestamp()
             );
 
             embed = embed.field(EmbedFieldBuilder::new(name, desc).inline());
@@ -254,7 +254,7 @@ pub async fn view_host_events_func(
         let mut embed = EmbedBuilder::new()
             .color(DARK_GREEN)
             .footer(EmbedFooterBuilder::new("RoWifi").build())
-            .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
             .title("Hosted Events")
             .description(format!("Page {}", page_count + 1));
 
@@ -271,7 +271,7 @@ pub async fn view_host_events_func(
                 "Event Type: {}\nHost: {}\nTimestamp: <t:{}:f>",
                 event_type.name,
                 host.name,
-                event.timestamp.unix_timestamp()
+                event.timestamp.timestamp()
             );
 
             embed = embed.field(EmbedFieldBuilder::new(name, desc).inline());
@@ -341,7 +341,7 @@ pub async fn view_event_func(
             event_type.name.clone(),
         ))
         .field(EmbedFieldBuilder::new("Host", host.name))
-        .timestamp(Timestamp::from_secs(event.timestamp.unix_timestamp()).unwrap());
+        .timestamp(Timestamp::from_secs(event.timestamp.timestamp()).unwrap());
 
     if attendees.is_empty() {
         embed = embed.field(EmbedFieldBuilder::new("Attendees", "None"));

@@ -60,7 +60,7 @@ This server has no rankbinds configured. Looking to add one? Use the command `/r
                 .color(DARK_GREEN)
                 .footer(EmbedFooterBuilder::new("RoWifi").build())
                 .timestamp(
-                    Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap(),
+                    Timestamp::from_secs(Utc::now().timestamp()).unwrap(),
                 )
                 .title("Rankbinds")
                 .description(format!("Group {} | Page {}", group.0, page_count + 1));

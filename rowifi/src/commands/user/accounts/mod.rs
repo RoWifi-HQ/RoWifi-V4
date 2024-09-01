@@ -45,7 +45,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
     let embed = EmbedBuilder::new()
         .color(BLUE)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
-        .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+        .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Linked Accounts");
 
     let mut acc_string = String::new();

@@ -88,7 +88,7 @@ Oh no! A user with the name `{}` does not exist.
     let embed = EmbedBuilder::new()
         .color(DARK_GREEN)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
-        .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+        .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Denylist Addition Successful")
         .field(EmbedFieldBuilder::new(name.clone(), desc.clone()))
         .build();

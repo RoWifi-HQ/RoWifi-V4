@@ -1434,9 +1434,10 @@ dependencies = [
 [[package]]
 name = "rowifi_tower"
 version = "4.0.0"
-source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#08df23b1be70bcf9600434ce2e85ddf4996d196f"
+source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#33ebadf495f385fb47ec3f6d17329d2947de1d19"
 dependencies = [
  "bytes",
+ "chrono",
  "http-body-util",
  "hyper",
  "itertools",
@@ -1449,7 +1450,6 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
- "time",
  "tracing",
  "twilight-http",
 ]

@@ -54,7 +54,7 @@ This server has no groupbinds configured. Looking to add one? Use the command `/
         let mut embed = EmbedBuilder::new()
             .color(DARK_GREEN)
             .footer(EmbedFooterBuilder::new("RoWifi").build())
-            .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
             .title("Groupbinds")
             .description(format!("Page {}", page_count + 1));
         for gb in gbs {

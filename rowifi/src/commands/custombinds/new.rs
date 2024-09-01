@@ -102,7 +102,7 @@ async fn new_custombind_func(
     let embed = EmbedBuilder::new()
         .color(DARK_GREEN)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
-        .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+        .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Bind Addition Successful")
         .description(description)
         .build();

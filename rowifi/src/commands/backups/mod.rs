@@ -36,7 +36,7 @@ pub async fn backup_view_func(bot: Extension<BotContext>, ctx: CommandContext) -
     let mut embed = EmbedBuilder::new()
         .color(BLUE)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
-        .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+        .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Backups");
 
     for backup in backups {

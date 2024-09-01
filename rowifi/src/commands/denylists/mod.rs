@@ -59,7 +59,7 @@ This server has no denylists configured. Looking to add one? Use the command `/d
         let mut embed = EmbedBuilder::new()
             .color(DARK_GREEN)
             .footer(EmbedFooterBuilder::new("RoWifi").build())
-            .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
             .title("Denylists")
             .description(format!("Page {}", page_count + 1));
         for denylist in denylist_chunk {

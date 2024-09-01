@@ -258,7 +258,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
     let embed = EmbedBuilder::new()
         .color(DARK_GREEN)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
-        .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+        .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Update")
         .field(EmbedFieldBuilder::new("Nickname", nickname))
         .field(EmbedFieldBuilder::new("Added Roles", added_str))

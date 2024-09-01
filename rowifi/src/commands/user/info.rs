@@ -113,13 +113,13 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
 **Created on:** <t:{}:D>
     ",
         roblox_display_name,
-        roblox_user.create_time.unwrap().unix_timestamp()
+        roblox_user.create_time.unwrap().timestamp()
     );
 
     let embed = EmbedBuilder::new()
         .color(BLUE)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
-        .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+        .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title(discord_user.nickname.unwrap_or(discord_user.username))
         .field(EmbedFieldBuilder::new("Roblox Account", roblox_account).build())
         .field(EmbedFieldBuilder::new("Ranks", ranks_info))

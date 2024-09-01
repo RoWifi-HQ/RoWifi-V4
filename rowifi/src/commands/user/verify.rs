@@ -12,7 +12,7 @@ pub async fn verify_route() -> impl IntoResponse {
     let embed = EmbedBuilder::new()
         .color(BLUE)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
-        .timestamp(Timestamp::from_secs(OffsetDateTime::now_utc().unix_timestamp()).unwrap())
+        .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Verification Process")
         .description("To link your account, click the button below")
         .build();
@@ -25,6 +25,7 @@ pub async fn verify_route() -> impl IntoResponse {
             label: Some("Link Account".into()),
             url: Some("https://dashboard.rowifi.xyz/auth/roblox".into()),
             style: ButtonStyle::Link,
+            sku_id: None,
         })],
     });
 
