@@ -1,6 +1,7 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
 
+pub mod analytics;
 pub mod audit_log;
 pub mod backup;
 pub mod bind;

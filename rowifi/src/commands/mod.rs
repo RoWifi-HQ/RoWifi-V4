@@ -1,3 +1,4 @@
+pub mod analytics;
 pub mod assetbinds;
 pub mod backups;
 pub mod custombinds;

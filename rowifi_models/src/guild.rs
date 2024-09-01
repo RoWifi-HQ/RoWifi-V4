@@ -8,6 +8,7 @@ use crate::{
     deny_list::DenyList,
     events::EventType,
     id::{GuildId, RoleId},
+    roblox::id::GroupId,
 };
 
 #[derive(Debug)]
@@ -33,6 +34,7 @@ pub struct PartialRoGuild {
     pub auto_detection: Option<bool>,
     pub xp_binds: Vec<XPBind>,
     pub sync_xp_on_setrank: Option<bool>,
+    pub registered_groups: Vec<GroupId>,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
@@ -79,6 +81,7 @@ impl PartialRoGuild {
             auto_detection: None,
             xp_binds: Vec::new(),
             sync_xp_on_setrank: None,
+            registered_groups: Vec::new(),
         }
     }
 }
@@ -117,6 +120,9 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
         let auto_detection = row.try_get("auto_detection").unwrap_or_default();
         let xp_binds = row.try_get("xp_binds").unwrap_or_else(|_| Json(Vec::new()));
         let sync_xp_on_setrank = row.try_get("sync_xp_on_setrank").unwrap_or_default();
+        let registered_groups = row
+            .try_get("registered_groups")
+            .unwrap_or_else(|_| Json(Vec::new()));
 
         Ok(Self {
             guild_id,
@@ -135,6 +141,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             auto_detection,
             xp_binds: xp_binds.0,
             sync_xp_on_setrank,
+            registered_groups: registered_groups.0,
         })
     }
 }

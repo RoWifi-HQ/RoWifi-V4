@@ -12,7 +12,7 @@ use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct AssetId(pub u64);
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct GroupId(pub u64);
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
@@ -63,6 +63,35 @@ impl ToSql for UserId {
 }
 
 impl<'a> FromSql<'a> for UserId {
+    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
+        let id = i64::from_sql(ty, raw)?;
+        #[allow(clippy::cast_sign_loss)]
+        Ok(Self(id as u64))
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as FromSql>::accepts(ty)
+    }
+}
+
+impl ToSql for GroupId {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        #[allow(clippy::cast_possible_wrap)]
+        i64::to_sql(&(self.0 as i64), ty, out)
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+impl<'a> FromSql<'a> for GroupId {
     fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
         let id = i64::from_sql(ty, raw)?;
         #[allow(clippy::cast_sign_loss)]
