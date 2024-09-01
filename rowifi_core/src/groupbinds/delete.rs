@@ -1,3 +1,4 @@
+use chrono::Utc;
 use rowifi_database::{postgres::types::Json, Database};
 use rowifi_models::{
     audit_log::{AuditLog, AuditLogData, AuditLogKind},
@@ -7,7 +8,6 @@ use rowifi_models::{
 };
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
-use time::OffsetDateTime;
 
 use crate::error::RoError;
 
@@ -68,7 +68,7 @@ pub async fn delete_groupbinds(
         kind: AuditLogKind::BindDelete,
         guild_id: Some(guild_id),
         user_id: Some(author_id),
-        timestamp: OffsetDateTime::now_utc(),
+        timestamp: Utc::now(),
         metadata: AuditLogData::BindDelete {
             count: binds_to_delete.len() as i32,
             kind: BindType::Group,

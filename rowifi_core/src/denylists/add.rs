@@ -1,3 +1,4 @@
+use chrono::Utc;
 use rowifi_database::{postgres::types::Json, Database};
 use rowifi_models::{
     audit_log::{AuditLog, AuditLogData, AuditLogKind},
@@ -6,7 +7,6 @@ use rowifi_models::{
     roblox::id::{GroupId, UserId as RobloxUserId},
 };
 use serde::Deserialize;
-use time::OffsetDateTime;
 
 use crate::error::RoError;
 
@@ -81,7 +81,7 @@ pub async fn add_denylist(
         kind: AuditLogKind::DenylistCreate,
         guild_id: Some(guild_id),
         user_id: Some(author_id),
-        timestamp: OffsetDateTime::now_utc(),
+        timestamp: Utc::now(),
         metadata: AuditLogData::DenylistCreate { kind: args.kind },
     };
 

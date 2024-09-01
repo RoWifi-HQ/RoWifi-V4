@@ -1,3 +1,4 @@
+use chrono::Utc;
 use rowifi_database::{
     postgres::{types::Json, Row},
     Database,
@@ -8,7 +9,6 @@ use rowifi_models::{
     id::{GuildId, UserId},
     roblox::id::UserId as RobloxUserId,
 };
-use time::OffsetDateTime;
 
 use crate::error::RoError;
 
@@ -49,7 +49,7 @@ pub async fn log_event(
         event_type: args.event_type as i32,
         guild_event_id: 0,
         host_id: args.host_id,
-        timestamp: OffsetDateTime::now_utc(),
+        timestamp: Utc::now(),
         attendees: args.attendees,
         notes: args.notes,
     };
@@ -68,7 +68,7 @@ pub async fn log_event(
         kind: AuditLogKind::BindDelete,
         guild_id: Some(guild_id),
         user_id: Some(author_id),
-        timestamp: OffsetDateTime::now_utc(),
+        timestamp: Utc::now(),
         metadata: AuditLogData::EventLog {
             guild_event_id: new_event.guild_event_id,
         },

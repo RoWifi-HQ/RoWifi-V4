@@ -13,11 +13,11 @@ resolver = "2"
 
 [workspace.dependencies]
 axum = { version = "0.7" }
+chrono = { version = "0.4", default-features = false, features = ["std"] }
 itertools = { version = "0.13" }
 hyper = { version = "1.0", default-features = false, features = ["client", "http2"] }
 serde = { version = "1.0" }
 serde_json = { version = "1" }
-time = { version = "0.3", default-features = false, features = ["std"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tower = { version = "0.5", default-features = false }
 tracing = "0.1"

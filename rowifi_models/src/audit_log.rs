@@ -1,7 +1,7 @@
 use bytes::BytesMut;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use time::OffsetDateTime;
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, Json, ToSql, Type};
 
 use crate::{
@@ -17,7 +17,7 @@ pub struct AuditLog {
     pub metadata: AuditLogData,
     pub guild_id: Option<GuildId>,
     pub user_id: Option<UserId>,
-    pub timestamp: OffsetDateTime,
+    pub timestamp: DateTime<Utc>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Ord, PartialEq, PartialOrd, Serialize_repr)]

@@ -8,6 +8,7 @@ edition = "2021"
 [features]
 
 [dependencies]
+chrono = { workspace = true, features = ["serde"] }
 itertools = { workspace = true }
 nom = { version = "7" }
 rowifi_cache = { path = "../rowifi_cache" }
@@ -15,6 +16,5 @@ rowifi_database = { path = "../rowifi_database" }
 rowifi_models = { path = "../rowifi_models" }
 rowifi_roblox = { path = "../rowifi_roblox" }
 serde = { workspace = true }
-time = { workspace = true }
 twilight-http = { workspace = true }
 twilight-validate = { workspace = true }

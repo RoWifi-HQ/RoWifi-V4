@@ -1,5 +1,5 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use time::OffsetDateTime;
 
 use crate::{id::GuildId, roblox::id::UserId as RobloxUserId};
 
@@ -16,7 +16,7 @@ pub struct EventLog {
     pub event_type: i32,
     pub guild_event_id: i64,
     pub host_id: RobloxUserId,
-    pub timestamp: OffsetDateTime,
+    pub timestamp: DateTime<Utc>,
     pub attendees: Vec<RobloxUserId>,
     pub notes: Option<String>,
 }
