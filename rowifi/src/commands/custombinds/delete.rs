@@ -7,7 +7,7 @@ use rowifi_models::discord::{
 
 #[derive(Arguments, Debug)]
 pub struct CustombindRouteArguments {
-    pub custom_bind_id: u32,
+    pub id: u32,
 }
 
 pub async fn delete_custombind(
@@ -41,7 +41,7 @@ pub async fn delete_custombind_func(
         ctx.guild_id,
         ctx.author_id,
         vec![CustombindArguments {
-            custom_bind_id: args.custom_bind_id,
+            custom_bind_id: args.id,
         }],
     )
     .await?;
@@ -54,7 +54,7 @@ pub async fn delete_custombind_func(
             .title("Deletion Failed")
             .description(format!(
                 "Custombind with ID {} does not exist",
-                args.custom_bind_id
+                args.id
             ))
             .build();
         ctx.respond(&bot).embeds(&[embed]).unwrap().await?;

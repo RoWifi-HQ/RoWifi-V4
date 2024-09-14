@@ -83,7 +83,7 @@ Oh no! A user with the name `{}` does not exist.
     };
 
     let name = format!("Type: {}", denylist.kind());
-    let desc = format!("User Id: {}\nReason: {}", user.id, denylist.reason);
+    let desc = format!("User Id: {}\nAction: {}\nReason: {}", user.id, denylist.action_type, denylist.reason);
 
     let embed = EmbedBuilder::new()
         .color(DARK_GREEN)

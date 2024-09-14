@@ -307,6 +307,10 @@ impl RobloxClient {
             }
 
             if !parts.status.is_success() {
+                if parts.status == StatusCode::NOT_FOUND {
+                    return Ok(None);
+                }
+
                 return Err(RobloxError {
                     source: None,
                     kind: ErrorKind::Response {

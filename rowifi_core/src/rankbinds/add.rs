@@ -30,7 +30,7 @@ pub enum AddRankbindError {
 #[derive(Debug, Deserialize)]
 pub struct RankbindArguments {
     pub group_id: GroupId,
-    pub rank_id: u8,
+    pub rank_id: u32,
     pub template: Template,
     pub priority: Option<i32>,
     pub discord_roles: Vec<RoleId>,

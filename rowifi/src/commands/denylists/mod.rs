@@ -64,7 +64,7 @@ This server has no denylists configured. Looking to add one? Use the command `/d
             .description(format!("Page {}", page_count + 1));
         for denylist in denylist_chunk {
             let name = format!("ID: {}", denylist.id);
-            let mut desc = format!("Type: `{}`\nReason: {}\n", denylist.kind(), denylist.reason,);
+            let mut desc = format!("Type: `{}`\nAction: {}\nReason: {}\n", denylist.kind(), denylist.action_type, denylist.reason);
             match denylist.data {
                 DenyListData::User(user_id) => desc.push_str(&format!("User ID: {user_id}")),
                 DenyListData::Group(group_id) => desc.push_str(&format!("Group ID: {group_id}")),

@@ -45,6 +45,7 @@ pub async fn view_groupbinds_func(
 This server has no groupbinds configured. Looking to add one? Use the command `/groupbinds new`.
         ";
         ctx.respond(&bot).content(message).unwrap().await?;
+        return Ok(());
     }
 
     let mut pages = Vec::new();

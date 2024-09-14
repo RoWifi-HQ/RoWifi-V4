@@ -38,7 +38,6 @@ pub async fn new_groupbind_func(
     ctx: CommandContext,
     args: GroupbindRouteArguments,
 ) -> CommandResult {
-    tracing::debug!("groupbinds new invoked");
     let guild = bot
         .get_guild(
             "SELECT guild_id, groupbinds FROM guilds WHERE guild_id = $1",

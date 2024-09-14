@@ -15,6 +15,7 @@ use axum::{
     http::{Request, StatusCode},
     response::{IntoResponse, Response},
 };
+use context::BotContext;
 use rowifi_core::error::RoError;
 use rowifi_models::{
     discord::application::interaction::{
@@ -90,4 +91,9 @@ where
             tracing::error!(?err);
         }
     });
+}
+
+pub async fn handle_error(bot: BotContext, ctx: CommandContext, err: RoError) {
+    tracing::error!(err = ?err);
+    let _ = ctx.respond(&bot).content("Something went wrong. Please try again. If the issue persists, please contact the RoWifi support server.").unwrap().await;
 }

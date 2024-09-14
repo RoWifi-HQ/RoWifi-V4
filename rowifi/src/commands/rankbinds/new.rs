@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use rowifi_core::rankbinds::add::{add_rankbind, AddRankbindError, RankbindArguments};
-use rowifi_framework::prelude::*;
+use rowifi_framework::{handle_error, prelude::*};
 use rowifi_models::{
     bind::Template,
     discord::{
@@ -16,7 +16,7 @@ use twilight_mention::Mention;
 #[derive(Arguments, Debug)]
 pub struct RankbindRouteArguments {
     pub group_id: u64,
-    pub rank_id: u8,
+    pub rank_id: u32,
     pub template: String,
     pub priority: Option<i32>,
     pub discord_roles: Vec<RoleId>,
@@ -26,7 +26,11 @@ pub async fn new_rankbind(
     bot: Extension<BotContext>,
     command: Command<RankbindRouteArguments>,
 ) -> impl IntoResponse {
-    spawn_command(new_rankbind_func(bot, command.ctx, command.args));
+    tokio::spawn(async move {
+        if let Err(err) = new_rankbind_func(&bot, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -36,8 +40,8 @@ pub async fn new_rankbind(
 
 #[tracing::instrument(skip_all, fields(args = ?args))]
 async fn new_rankbind_func(
-    bot: Extension<BotContext>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    ctx: &CommandContext,
     args: RankbindRouteArguments,
 ) -> CommandResult {
     tracing::debug!("rankbinds new invoked");
@@ -78,7 +82,7 @@ async fn new_rankbind_func(
         Err(AddRankbindError::InvalidRank) => {
             let message = format!(
                 r#"
-    Oh no! There does not seem to be a rank with ID {} in the group {}
+    Oh no! There does not seem to be a rank with ID {} in the group {}.
             "#,
                 args.rank_id, args.group_id
             );
@@ -88,7 +92,7 @@ async fn new_rankbind_func(
         Err(AddRankbindError::InvalidGroup) => {
             let message = format!(
                 r#"
-    Oh no! There does not seem to be a group with ID {}
+    Oh no! There does not seem to be a group with ID {}.
             "#,
                 args.group_id
             );

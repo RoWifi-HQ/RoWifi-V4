@@ -102,3 +102,13 @@ impl Display for DenyListType {
         }
     }
 }
+
+impl Display for DenyListActionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            Self::None => f.write_str("None"),
+            Self::Kick => f.write_str("Kick"),
+            Self::Ban => f.write_str("Ban"),
+        }
+    }
+}

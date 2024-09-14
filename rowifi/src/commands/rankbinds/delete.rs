@@ -11,7 +11,7 @@ use rowifi_models::{
 #[derive(Arguments, Debug)]
 pub struct RankbindRouteArguments {
     pub group_id: u64,
-    pub rank_id: u8,
+    pub rank_id: u32,
 }
 
 pub async fn delete_rankbind(
@@ -46,7 +46,7 @@ pub async fn delete_rankbind_func(
         ctx.author_id,
         vec![RankbindArguments {
             group_id: GroupId(args.group_id),
-            rank_id: u32::from(args.rank_id),
+            rank_id: args.rank_id,
         }],
     )
     .await?;

@@ -45,6 +45,7 @@ pub async fn view_rankbinds_func(
 This server has no rankbinds configured. Looking to add one? Use the command `/rankbinds new`.
         ";
         ctx.respond(&bot).content(message).unwrap().await?;
+        return Ok(());
     }
 
     let mut pages = Vec::new();
