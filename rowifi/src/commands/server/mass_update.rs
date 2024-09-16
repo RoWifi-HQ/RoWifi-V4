@@ -9,8 +9,12 @@ use rowifi_models::{
 };
 use serde::Serialize;
 
-pub async fn update_all(bot: Extension<BotContext>, cmd: Command<()>) -> impl IntoResponse {
-    spawn_command(update_all_func(bot, cmd.ctx));
+pub async fn update_all(bot: Extension<BotContext>, command: Command<()>) -> impl IntoResponse {
+    tokio::spawn(async move {
+        if let Err(err) = update_all_func(&bot, &command.ctx).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::ChannelMessageWithSource,
@@ -21,7 +25,7 @@ pub async fn update_all(bot: Extension<BotContext>, cmd: Command<()>) -> impl In
     })
 }
 
-pub async fn update_all_func(bot: Extension<BotContext>, ctx: CommandContext) -> CommandResult {
+pub async fn update_all_func(bot: &BotContext, ctx: &CommandContext) -> CommandResult {
     let mut conn = bot.cache.get().await.map_err(|err| CacheError::from(err))?;
     let _: () = conn
         .publish("update-all", &ctx.guild_id.get())
@@ -44,9 +48,13 @@ pub struct UpdateRoleQueueArguments {
 
 pub async fn update_role(
     bot: Extension<BotContext>,
-    cmd: Command<UpdateRoleArguments>,
+    command: Command<UpdateRoleArguments>,
 ) -> impl IntoResponse {
-    spawn_command(update_role_func(bot, cmd.ctx, cmd.args));
+    tokio::spawn(async move {
+        if let Err(err) = update_role_func(&bot, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::ChannelMessageWithSource,
@@ -58,8 +66,8 @@ pub async fn update_role(
 }
 
 pub async fn update_role_func(
-    bot: Extension<BotContext>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    ctx: &CommandContext,
     args: UpdateRoleArguments,
 ) -> CommandResult {
     let mut conn = bot.cache.get().await.map_err(|err| CacheError::from(err))?;

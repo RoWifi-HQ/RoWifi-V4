@@ -1,6 +1,6 @@
 pub use crate::arguments::{Argument, Arguments};
 pub use crate::context::{BotContext, CommandContext, DeferredResponse};
-pub use crate::spawn_command;
+pub use crate::handle_error;
 pub use crate::Command;
 
 pub use axum::{response::IntoResponse, Extension, Json};

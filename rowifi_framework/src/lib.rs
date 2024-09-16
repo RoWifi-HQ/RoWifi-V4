@@ -6,7 +6,7 @@ pub mod context;
 pub mod prelude;
 pub mod utils;
 
-use std::{future::Future, sync::atomic::AtomicBool};
+use std::sync::atomic::AtomicBool;
 
 use axum::{
     async_trait,
@@ -80,17 +80,6 @@ fn recurse_skip_subcommands(data: &[CommandDataOption]) -> &[CommandDataOption] 
     }
 
     data
-}
-
-pub fn spawn_command<F>(future: F)
-where
-    F: Future<Output = Result<(), RoError>> + Send + 'static,
-{
-    tokio::spawn(async move {
-        if let Err(err) = future.await {
-            tracing::error!(?err);
-        }
-    });
 }
 
 pub async fn handle_error(bot: BotContext, ctx: CommandContext, err: RoError) {

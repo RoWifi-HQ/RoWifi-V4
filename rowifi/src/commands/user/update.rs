@@ -23,7 +23,11 @@ pub async fn update_route(
     bot: Extension<BotContext>,
     command: Command<UpdateArguments>,
 ) -> impl IntoResponse {
-    spawn_command(update_func(bot, command.ctx, command.args));
+    tokio::spawn(async move {
+        if let Err(err) = update_func(&bot, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -34,8 +38,8 @@ pub async fn update_route(
 #[allow(clippy::too_many_lines)]
 #[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn update_func(
-    bot: Extension<BotContext>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    ctx: &CommandContext,
     args: UpdateArguments,
 ) -> CommandResult {
     tracing::debug!("update command invoked");

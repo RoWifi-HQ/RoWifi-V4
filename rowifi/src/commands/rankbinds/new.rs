@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use rowifi_core::rankbinds::add::{add_rankbind, AddRankbindError, RankbindArguments};
-use rowifi_framework::{handle_error, prelude::*};
+use rowifi_framework::prelude::*;
 use rowifi_models::{
     bind::Template,
     discord::{

@@ -20,7 +20,11 @@ pub async fn add_group_denylist(
     bot: Extension<BotContext>,
     command: Command<DenylistRouteArguments>,
 ) -> impl IntoResponse {
-    spawn_command(add_group_denylist_func(bot, command.ctx, command.args));
+    tokio::spawn(async move {
+        if let Err(err) = add_group_denylist_func(&bot, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -30,8 +34,8 @@ pub async fn add_group_denylist(
 
 #[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn add_group_denylist_func(
-    bot: Extension<BotContext>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    ctx: &CommandContext,
     args: DenylistRouteArguments,
 ) -> CommandResult {
     let guild = bot

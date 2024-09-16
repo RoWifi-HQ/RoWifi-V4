@@ -15,7 +15,11 @@ pub async fn account_delete(
     bot: Extension<BotContext>,
     command: Command<AccountRouteArguments>,
 ) -> impl IntoResponse {
-    spawn_command(account_delete_func(bot, command.ctx, command.args));
+    tokio::spawn(async move {
+        if let Err(err) = account_delete_func(&bot, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -25,8 +29,8 @@ pub async fn account_delete(
 
 #[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn account_delete_func(
-    bot: Extension<BotContext>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    ctx: &CommandContext,
     args: AccountRouteArguments,
 ) -> CommandResult {
     let Some(mut user) = bot

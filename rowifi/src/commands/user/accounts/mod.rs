@@ -16,7 +16,11 @@ pub use delete::account_delete;
 pub use switch::account_switch;
 
 pub async fn account_view(bot: Extension<BotContext>, command: Command<()>) -> impl IntoResponse {
-    spawn_command(account_view_func(bot, command.ctx));
+    tokio::spawn(async move {
+        if let Err(err) = account_view_func(&bot, &command.ctx).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -25,7 +29,7 @@ pub async fn account_view(bot: Extension<BotContext>, command: Command<()>) -> i
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn account_view_func(bot: Extension<BotContext>, ctx: CommandContext) -> CommandResult {
+pub async fn account_view_func(bot: &BotContext, ctx: &CommandContext) -> CommandResult {
     let Some(user) = bot
         .database
         .query_opt::<RoUser>(

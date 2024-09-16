@@ -19,7 +19,11 @@ pub async fn view_groupbinds(
     standby: Extension<Arc<Standby>>,
     command: Command<()>,
 ) -> impl IntoResponse {
-    spawn_command(view_groupbinds_func(bot, standby, command.ctx));
+    tokio::spawn(async move {
+        if let Err(err) = view_groupbinds_func(&bot, standby.0, &command.ctx).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -29,9 +33,9 @@ pub async fn view_groupbinds(
 
 #[tracing::instrument(skip_all)]
 pub async fn view_groupbinds_func(
-    bot: Extension<BotContext>,
-    standby: Extension<Arc<Standby>>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    standby: Arc<Standby>,
+    ctx: &CommandContext,
 ) -> CommandResult {
     let guild = bot
         .get_guild(

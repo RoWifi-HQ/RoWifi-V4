@@ -15,8 +15,12 @@ pub struct BackupRow {
     pub description: String,
 }
 
-pub async fn backup_view(bot: Extension<BotContext>, cmd: Command<()>) -> impl IntoResponse {
-    spawn_command(backup_view_func(bot, cmd.ctx));
+pub async fn backup_view(bot: Extension<BotContext>, command: Command<()>) -> impl IntoResponse {
+    tokio::spawn(async move {
+        if let Err(err) = backup_view_func(&bot, &command.ctx).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -24,7 +28,7 @@ pub async fn backup_view(bot: Extension<BotContext>, cmd: Command<()>) -> impl I
     })
 }
 
-pub async fn backup_view_func(bot: Extension<BotContext>, ctx: CommandContext) -> CommandResult {
+pub async fn backup_view_func(bot: &BotContext, ctx: &CommandContext) -> CommandResult {
     let backups = bot
         .database
         .query::<BackupRow>(

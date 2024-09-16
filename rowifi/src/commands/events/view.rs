@@ -28,12 +28,11 @@ pub async fn view_attendee_events(
     standby: Extension<Arc<Standby>>,
     command: Command<EventViewArguments>,
 ) -> impl IntoResponse {
-    spawn_command(view_attendee_events_func(
-        bot,
-        standby,
-        command.ctx,
-        command.args,
-    ));
+    tokio::spawn(async move {
+        if let Err(err) = view_attendee_events_func(&bot, standby.0, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -46,12 +45,11 @@ pub async fn view_host_events(
     standby: Extension<Arc<Standby>>,
     command: Command<EventViewArguments>,
 ) -> impl IntoResponse {
-    spawn_command(view_host_events_func(
-        bot,
-        standby,
-        command.ctx,
-        command.args,
-    ));
+    tokio::spawn(async move {
+        if let Err(err) = view_host_events_func(&bot, standby.0, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -63,7 +61,11 @@ pub async fn view_event(
     bot: Extension<BotContext>,
     command: Command<EventViewIdArguments>,
 ) -> impl IntoResponse {
-    spawn_command(view_event_func(bot, command.ctx, command.args));
+    tokio::spawn(async move {
+        if let Err(err) = view_event_func(&bot, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -72,9 +74,9 @@ pub async fn view_event(
 }
 
 pub async fn view_attendee_events_func(
-    bot: Extension<BotContext>,
-    standby: Extension<Arc<Standby>>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    standby: Arc<Standby>,
+    ctx: &CommandContext,
     args: EventViewArguments,
 ) -> CommandResult {
     let guild = bot
@@ -179,9 +181,9 @@ pub async fn view_attendee_events_func(
 }
 
 pub async fn view_host_events_func(
-    bot: Extension<BotContext>,
-    standby: Extension<Arc<Standby>>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    standby: Arc<Standby>,
+    ctx: &CommandContext,
     args: EventViewArguments,
 ) -> CommandResult {
     let guild = bot
@@ -286,8 +288,8 @@ pub async fn view_host_events_func(
 }
 
 pub async fn view_event_func(
-    bot: Extension<BotContext>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    ctx: &CommandContext,
     args: EventViewIdArguments,
 ) -> CommandResult {
     let guild = bot

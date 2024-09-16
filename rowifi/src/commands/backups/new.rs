@@ -9,9 +9,13 @@ pub struct BackupRouteArguments {
 
 pub async fn backup_new(
     bot: Extension<BotContext>,
-    cmd: Command<BackupRouteArguments>,
+    command: Command<BackupRouteArguments>,
 ) -> impl IntoResponse {
-    spawn_command(backup_new_func(bot, cmd.ctx, cmd.args));
+    tokio::spawn(async move {
+        if let Err(err) = backup_new_func(&bot, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -20,8 +24,8 @@ pub async fn backup_new(
 }
 
 pub async fn backup_new_func(
-    bot: Extension<BotContext>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    ctx: &CommandContext,
     args: BackupRouteArguments,
 ) -> CommandResult {
     let guild = bot

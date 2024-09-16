@@ -17,7 +17,11 @@ pub async fn delete_groupbind(
     bot: Extension<BotContext>,
     command: Command<GroupbindRouteArguments>,
 ) -> impl IntoResponse {
-    spawn_command(delete_groupbind_func(bot, command.ctx, command.args));
+    tokio::spawn(async move {
+        if let Err(err) = delete_groupbind_func(&bot, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -27,8 +31,8 @@ pub async fn delete_groupbind(
 
 #[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn delete_groupbind_func(
-    bot: Extension<BotContext>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    ctx: &CommandContext,
     args: GroupbindRouteArguments,
 ) -> CommandResult {
     let guild = bot

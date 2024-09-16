@@ -32,9 +32,13 @@ pub struct ViewArguments {
 
 pub async fn analytics_view(
     bot: Extension<BotContext>,
-    cmd: Command<ViewArguments>,
+    command: Command<ViewArguments>,
 ) -> impl IntoResponse {
-    spawn_command(analytics_view_func(bot, cmd.ctx, cmd.args));
+    tokio::spawn(async move {
+        if let Err(err) = analytics_view_func(&bot, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -43,8 +47,8 @@ pub async fn analytics_view(
 }
 
 pub async fn analytics_view_func(
-    bot: Extension<BotContext>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    ctx: &CommandContext,
     args: ViewArguments,
 ) -> CommandResult {
     let guild = bot

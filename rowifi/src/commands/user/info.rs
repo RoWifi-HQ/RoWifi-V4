@@ -18,7 +18,11 @@ pub async fn userinfo(
     bot: Extension<BotContext>,
     command: Command<UserInfoArguments>,
 ) -> impl IntoResponse {
-    spawn_command(userinfo_func(bot, command.ctx, command.args));
+    tokio::spawn(async move {
+        if let Err(err) = userinfo_func(&bot, &command.ctx, command.args).await {
+            handle_error(bot.0, command.ctx, err).await;
+        }
+    });
 
     Json(InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -28,8 +32,8 @@ pub async fn userinfo(
 
 #[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn userinfo_func(
-    bot: Extension<BotContext>,
-    ctx: CommandContext,
+    bot: &BotContext,
+    ctx: &CommandContext,
     args: UserInfoArguments,
 ) -> CommandResult {
     let user_id = args.user.unwrap_or(ctx.author_id);
