@@ -44,7 +44,7 @@ use crate::commands::{
     assetbinds::{delete_assetbind, new_assetbind, view_assetbinds},
     backups::{backup_new, backup_restore, backup_view},
     custombinds::{delete_custombind, new_custombind, view_custombinds},
-    denylists::{add_group_denylist, add_user_denylist, delete_denylist, view_denylists},
+    denylists::{add_group_denylist, add_user_denylist, delete_denylist, view_denylists, add_custom_denylist},
     events::{new_event, view_attendee_events, view_event, view_host_events},
     groupbinds::{delete_groupbind, new_groupbind, view_groupbinds},
     rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
@@ -120,6 +120,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/custombinds/view", post(view_custombinds))
         .route("/denylists/user", post(add_user_denylist))
         .route("/denylists/group", post(add_group_denylist))
+        .route("/denylists/custom", post(add_custom_denylist))
         .route("/denylists/delete", post(delete_denylist))
         .route("/denylists/view", post(view_denylists))
         .route("/account/view", post(account_view))

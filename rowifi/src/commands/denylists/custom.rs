@@ -1,4 +1,3 @@
-use rowifi_core::denylists::add::{add_denylist, AddDenylistError, DenylistArguments};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
     deny_list::{DenyListActionType, DenyListType},
@@ -7,20 +6,21 @@ use rowifi_models::{
         util::Timestamp,
     },
 };
+use rowifi_core::denylists::add::{add_denylist, AddDenylistError, DenylistArguments};
 
 #[derive(Arguments, Debug)]
 pub struct DenylistRouteArguments {
-    pub username: String,
+    pub code: String,
     pub action: DenyListActionType,
     pub reason: Option<String>,
 }
 
-pub async fn add_user_denylist(
+pub async fn add_custom_denylist(
     bot: Extension<BotContext>,
     command: Command<DenylistRouteArguments>,
 ) -> impl IntoResponse {
     tokio::spawn(async move {
-        if let Err(err) = add_user_denylist_func(&bot, &command.ctx, command.args).await {
+        if let Err(err) = add_custom_denylist_func(&bot, &command.ctx, command.args).await {
             handle_error(bot.0, command.ctx, err).await;
         }
     });
@@ -32,7 +32,7 @@ pub async fn add_user_denylist(
 }
 
 #[tracing::instrument(skip_all, fields(args = ?args))]
-pub async fn add_user_denylist_func(
+pub async fn add_custom_denylist_func(
     bot: &BotContext,
     ctx: &CommandContext,
     args: DenylistRouteArguments,
@@ -44,23 +44,6 @@ pub async fn add_user_denylist_func(
         )
         .await?;
 
-    let Some(user) = bot
-        .roblox
-        .get_users_from_usernames([args.username.as_str()].into_iter())
-        .await?
-        .into_iter()
-        .next()
-    else {
-        let message = format!(
-            r#"
-Oh no! A user with the name `{}` does not exist.
-        "#,
-            args.username
-        );
-        ctx.respond(&bot).content(&message).unwrap().await?;
-        return Ok(());
-    };
-
     let reason = args.reason.unwrap_or_else(|| "N/A".into());
 
     let denylist = match add_denylist(
@@ -69,19 +52,23 @@ Oh no! A user with the name `{}` does not exist.
         ctx.author_id,
         &guild.deny_lists,
         DenylistArguments {
-            kind: DenyListType::User,
+            kind: DenyListType::Custom,
             action: args.action,
             reason,
-            user_id: Some(user.id),
+            user_id: None,
             group_id: None,
-            code: None,
+            code: Some(args.code)
         },
     )
     .await
     {
         Ok(res) => res,
-        Err(AddDenylistError::MissingUser | AddDenylistError::MissingGroup | AddDenylistError::MissingCode | AddDenylistError::IncorrectCode(_)) => {
+        Err(AddDenylistError::MissingUser | AddDenylistError::MissingGroup | AddDenylistError::MissingCode) => {
             // Ignore this case since it doesn't occur in slash commands
+            return Ok(());
+        },
+        Err(AddDenylistError::IncorrectCode(err)) => {
+            ctx.respond(&bot).content(&err).unwrap().await?;
             return Ok(());
         }
         Err(AddDenylistError::Generic(err)) => return Err(err),

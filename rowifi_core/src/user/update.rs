@@ -15,7 +15,8 @@ use twilight_http::Client as DiscordClient;
 use crate::{
     custombinds::{
         self,
-        evaluate::{EvaluationContext, EvaluationError, EvaluationResult},
+        evaluate::{evaluate, EvaluationContext, EvaluationError, EvaluationResult},
+        parser::parser,
     },
     error::RoError,
 };
@@ -38,6 +39,8 @@ pub enum UpdateUserError {
     Generic(RoError),
     CustombindParsing { id: u32, err: String },
     CustombindEvaluation { id: u32, err: EvaluationError },
+    CustomDenylistParsing { id: u32, err: String },
+    CustomDenylistEvaluation { id: u32, err: String },
 }
 
 impl UpdateUser<'_> {
@@ -98,18 +101,57 @@ impl UpdateUser<'_> {
             })
             .collect::<HashSet<_>>();
 
-        let active_deny_lists = self
-            .guild
-            .deny_lists
+        let mut active_deny_lists = Vec::new();
+        for denylist in &self.guild.deny_lists {
+            let success = match &denylist.data {
+                DenyListData::User(u) => *u == roblox_user.id,
+                DenyListData::Group(g) => user_ranks.contains_key(g),
+                DenyListData::Custom(c) => {
+                    // TODO: Figure out a better way to hold the expression of custom
+                    // denylists in memory
+                    match parser(&c) {
+                        Ok(exp) => {
+                            let res = match evaluate(
+                                &exp,
+                                &EvaluationContext {
+                                    roles: &self.member.roles,
+                                    ranks: &user_ranks,
+                                    username: &roblox_user.name,
+                                },
+                            ) {
+                                Ok(res) => res,
+                                Err(err) => {
+                                    return Err(UpdateUserError::CustomDenylistEvaluation {
+                                        id: denylist.id,
+                                        err: err.to_string(),
+                                    })
+                                }
+                            };
+                            match res {
+                                EvaluationResult::Bool(b) => b,
+                                EvaluationResult::Number(n) => n != 0,
+                            }
+                        }
+                        Err(err) => {
+                            return Err(UpdateUserError::CustomDenylistParsing {
+                                id: denylist.id,
+                                err: err.to_string(),
+                            })
+                        }
+                    }
+                }
+            };
+            if success {
+                active_deny_lists.push(denylist);
+            }
+        }
+
+        let active_deny_list = active_deny_lists
             .iter()
-            .filter(|d| match d.data {
-                DenyListData::User(u) => u == roblox_user.id,
-                DenyListData::Group(g) => user_ranks.contains_key(&g),
-            })
             .sorted_by_key(|d| d.action_type)
             .last();
-        if let Some(deny_list) = active_deny_lists {
-            return Err(UpdateUserError::DenyList(deny_list.clone()));
+        if let Some(deny_list) = active_deny_list {
+            return Err(UpdateUserError::DenyList((*deny_list).clone()));
         }
 
         let mut nickname_bind: Option<Bind> = None;

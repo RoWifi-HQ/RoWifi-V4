@@ -16,7 +16,7 @@ pub struct DenyList {
 pub enum DenyListData {
     User(UserId),
     Group(GroupId),
-    // TODO: Add custom denylist
+    Custom(String),
 }
 
 #[derive(Clone, Copy, Debug, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
@@ -46,6 +46,7 @@ struct DenyListIntermediary {
     pub action_type: DenyListActionType,
     pub user_id: Option<UserId>,
     pub group_id: Option<GroupId>,
+    pub code: Option<String>,
 }
 
 impl DenyList {
@@ -54,6 +55,7 @@ impl DenyList {
         match self.data {
             DenyListData::User(_) => DenyListType::User,
             DenyListData::Group(_) => DenyListType::Group,
+            DenyListData::Custom(_) => DenyListType::Custom,
         }
     }
 }
@@ -64,7 +66,7 @@ impl<'de> Deserialize<'de> for DenyList {
         let data = match intermediary.kind {
             DenyListType::User => DenyListData::User(intermediary.user_id.unwrap()),
             DenyListType::Group => DenyListData::Group(intermediary.group_id.unwrap()),
-            DenyListType::Custom => todo!(),
+            DenyListType::Custom => DenyListData::Custom(intermediary.code.unwrap()),
         };
         Ok(DenyList {
             id: intermediary.id,
@@ -77,9 +79,10 @@ impl<'de> Deserialize<'de> for DenyList {
 
 impl Serialize for DenyList {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let (user_id, group_id) = match &self.data {
-            DenyListData::User(u) => (Some(*u), None),
-            DenyListData::Group(g) => (None, Some(*g)),
+        let (user_id, group_id, code) = match &self.data {
+            DenyListData::User(u) => (Some(*u), None, None),
+            DenyListData::Group(g) => (None, Some(*g), None),
+            DenyListData::Custom(c) => (None, None, Some(c.clone()))
         };
         let intermediary = DenyListIntermediary {
             id: self.id,
@@ -88,6 +91,7 @@ impl Serialize for DenyList {
             action_type: self.action_type,
             user_id,
             group_id,
+            code
         };
         intermediary.serialize(serializer)
     }

@@ -1,6 +1,7 @@
 mod delete;
 mod group;
 mod user;
+mod custom;
 
 use itertools::Itertools;
 use rowifi_framework::{prelude::*, utils::paginate_embeds};
@@ -17,6 +18,7 @@ use twilight_standby::Standby;
 pub use delete::delete_denylist;
 pub use group::add_group_denylist;
 pub use user::add_user_denylist;
+pub use custom::add_custom_denylist;
 
 pub async fn view_denylists(
     bot: Extension<BotContext>,
@@ -72,6 +74,7 @@ This server has no denylists configured. Looking to add one? Use the command `/d
             match denylist.data {
                 DenyListData::User(user_id) => desc.push_str(&format!("User ID: {user_id}")),
                 DenyListData::Group(group_id) => desc.push_str(&format!("Group ID: {group_id}")),
+                DenyListData::Custom(code) => desc.push_str(&format!("Code: `{code}`")),
             }
             embed = embed.field(EmbedFieldBuilder::new(name, desc).inline().build());
         }

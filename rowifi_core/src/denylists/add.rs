@@ -8,7 +8,7 @@ use rowifi_models::{
 };
 use serde::Deserialize;
 
-use crate::error::RoError;
+use crate::{custombinds::parser::parser, error::RoError};
 
 #[derive(Debug, Deserialize)]
 pub struct DenylistArguments {
@@ -17,12 +17,15 @@ pub struct DenylistArguments {
     pub reason: String,
     pub user_id: Option<RobloxUserId>,
     pub group_id: Option<GroupId>,
+    pub code: Option<String>,
 }
 
 #[derive(Debug)]
 pub enum AddDenylistError {
     MissingUser,
     MissingGroup,
+    MissingCode,
+    IncorrectCode(String),
     Generic(RoError),
 }
 
@@ -38,20 +41,31 @@ pub async fn add_denylist(
     existing_denylists: &[DenyList],
     args: DenylistArguments,
 ) -> Result<DenyList, AddDenylistError> {
-    let data = if args.kind == DenyListType::User {
-        if let Some(user_id) = args.user_id {
-            DenyListData::User(user_id)
-        } else {
-            return Err(AddDenylistError::MissingUser);
+    let data = match args.kind {
+        DenyListType::User => {
+            if let Some(user_id) = args.user_id {
+                DenyListData::User(user_id)
+            } else {
+                return Err(AddDenylistError::MissingUser);
+            }
+        },
+        DenyListType::Group => {
+            if let Some(group_id) = args.group_id {
+                DenyListData::Group(group_id)
+            } else {
+                return Err(AddDenylistError::MissingGroup);
+            }
+        },
+        DenyListType::Custom => {
+            if let Some(code) = args.code {
+                if let Err(err) = parser(&code) {
+                    return Err(AddDenylistError::IncorrectCode(err.to_string()));
+                }
+                DenyListData::Custom(code)
+            } else {
+                return Err(AddDenylistError::MissingCode);
+            }
         }
-    } else if args.kind == DenyListType::Group {
-        if let Some(group_id) = args.group_id {
-            DenyListData::Group(group_id)
-        } else {
-            return Err(AddDenylistError::MissingGroup);
-        }
-    } else {
-        unreachable!()
     };
 
     let denylist_id = existing_denylists.iter().map(|d| d.id).max().unwrap_or(0) + 1;

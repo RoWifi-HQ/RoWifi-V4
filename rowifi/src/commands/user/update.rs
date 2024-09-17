@@ -239,6 +239,22 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
                 );
                 ctx.respond(&bot).content(&message).unwrap().await?;
                 return Ok(());
+            },
+            UpdateUserError::CustomDenylistEvaluation { id, err } => {
+                let message = format!(
+                    "There was an error in evaluating the custom denylist with ID {}.\nError: `{}`",
+                    id, err
+                );
+                ctx.respond(&bot).content(&message).unwrap().await?;
+                return Ok(());
+            },
+            UpdateUserError::CustomDenylistParsing { id, err } => {
+                let message = format!(
+                    "There was an error in parsing the custombind with ID {}.\nError: `{}`",
+                    id, err
+                );
+                ctx.respond(&bot).content(&message).unwrap().await?;
+                return Ok(());
             }
         },
     };
