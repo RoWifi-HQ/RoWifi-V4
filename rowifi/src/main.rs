@@ -42,7 +42,7 @@ use twilight_standby::Standby;
 use crate::commands::{
     analytics::analytics_view,
     assetbinds::{delete_assetbind, new_assetbind, view_assetbinds},
-    backups::{backup_new, backup_restore, backup_view},
+    backups::{backup_new, backup_restore, backup_view, backup_delete},
     custombinds::{delete_custombind, new_custombind, view_custombinds},
     denylists::{add_group_denylist, add_user_denylist, delete_denylist, view_denylists, add_custom_denylist},
     events::{new_event, view_attendee_events, view_event, view_host_events},
@@ -136,6 +136,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/backup/new", post(backup_new))
         .route("/backup/restore", post(backup_restore))
         .route("/backup/view", post(backup_view))
+        .route("/backup/delete", post(backup_delete))
         .route("/update-all", post(update_all))
         .route("/update-role", post(update_role))
         .route("/analytics/view", post(analytics_view))

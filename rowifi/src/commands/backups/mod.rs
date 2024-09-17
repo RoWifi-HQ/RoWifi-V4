@@ -1,6 +1,8 @@
+mod delete;
 mod new;
 mod restore;
 
+pub use delete::backup_delete;
 pub use new::backup_new;
 pub use restore::backup_restore;
 
