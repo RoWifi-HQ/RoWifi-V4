@@ -57,7 +57,7 @@ pub async fn add_custom_denylist_func(
             reason,
             user_id: None,
             group_id: None,
-            code: Some(args.code)
+            code: Some(args.code.clone())
         },
     )
     .await
@@ -75,7 +75,7 @@ pub async fn add_custom_denylist_func(
     };
 
     let name = format!("Type: {}", denylist.kind());
-    let desc = format!("User Id: {}\nAction: {}\nReason: {}", user.id, denylist.action_type, denylist.reason);
+    let desc = format!("Code: `{}`\nAction: {}\nReason: {}", args.code, denylist.action_type, denylist.reason);
 
     let embed = EmbedBuilder::new()
         .color(DARK_GREEN)

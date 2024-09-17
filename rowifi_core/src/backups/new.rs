@@ -130,7 +130,7 @@ pub async fn create_backup(
     };
     database
         .execute(
-            "INSERT INTO backups(user_id, name, data) VALUES($1, $2, $3)",
+            "INSERT INTO backups(user_id, name, data) VALUES($1, $2, $3) ON CONFLICT(user_id, name) DO UPDATE SET data = $3",
             &[&args.author, &args.name, &Json(backup)],
         )
         .await?;

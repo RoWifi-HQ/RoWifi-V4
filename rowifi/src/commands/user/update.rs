@@ -250,7 +250,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
             },
             UpdateUserError::CustomDenylistParsing { id, err } => {
                 let message = format!(
-                    "There was an error in parsing the custombind with ID {}.\nError: `{}`",
+                    "There was an error in parsing the custom denylist with ID {}.\nError: `{}`",
                     id, err
                 );
                 ctx.respond(&bot).content(&message).unwrap().await?;
