@@ -1,6 +1,7 @@
 use bytes::BytesMut;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, Json, ToSql, Type};
 
 use crate::{
@@ -35,6 +36,7 @@ pub struct PartialRoGuild {
     pub xp_binds: Vec<XPBind>,
     pub sync_xp_on_setrank: Option<bool>,
     pub registered_groups: Vec<GroupId>,
+    pub sticky_roles: Vec<RoleId>,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
@@ -82,6 +84,7 @@ impl PartialRoGuild {
             xp_binds: Vec::new(),
             sync_xp_on_setrank: None,
             registered_groups: Vec::new(),
+            sticky_roles: Vec::new(),
         }
     }
 }
@@ -123,6 +126,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
         let registered_groups = row
             .try_get("registered_groups")
             .unwrap_or_else(|_| Json(Vec::new()));
+        let sticky_roles = row.try_get("sticky_roles").unwrap_or_default();
 
         Ok(Self {
             guild_id,
@@ -142,6 +146,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             xp_binds: xp_binds.0,
             sync_xp_on_setrank,
             registered_groups: registered_groups.0,
+            sticky_roles,
         })
     }
 }
@@ -178,5 +183,16 @@ impl<'a> FromSql<'a> for GuildType {
 
     fn accepts(ty: &Type) -> bool {
         <i32 as FromSql>::accepts(ty)
+    }
+}
+
+impl Display for GuildType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            Self::Free => f.write_str("Free"),
+            Self::Alpha => f.write_str("Alpha"),
+            Self::Beta => f.write_str("Beta"),
+            Self::Gamma => f.write_str("Gamma"),
+        }
     }
 }

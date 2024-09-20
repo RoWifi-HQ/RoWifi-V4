@@ -11,7 +11,7 @@ use rowifi_models::{
 
 #[derive(Arguments, Debug)]
 pub struct EventArguments {
-    pub event_type: u32,
+    pub id: u32,
     pub attendees: String,
     pub notes: Option<String>,
 }
@@ -85,7 +85,7 @@ pub async fn new_event_func(
         &guild.event_types,
         EventLogArguments {
             host_id: *host_id,
-            event_type: args.event_type,
+            event_type: args.id,
             attendees: attendee_ids,
             notes: args.notes,
         },
@@ -95,7 +95,7 @@ pub async fn new_event_func(
         Ok(event) => event,
         Err(EventLogError::InvalidEventType) => {
             // Should not happen since the argument comes from slash commands
-            let message = format!("There is no event type with the ID {}", args.event_type);
+            let message = format!("There is no event type with the ID {}", args.id);
             ctx.respond(&bot).content(&message).unwrap().await?;
             return Ok(());
         }
@@ -105,7 +105,7 @@ pub async fn new_event_func(
     let event_type = guild
         .event_types
         .iter()
-        .find(|e| e.id == args.event_type)
+        .find(|e| e.id == args.id)
         .unwrap();
     let value = format!(
         "Host: <@{}>\nType: {}\nAttendees: {}",

@@ -78,7 +78,7 @@ pub async fn update_func(
 
     let guild = bot
         .get_guild(
-            "SELECT guild_id, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, custombinds, assetbinds, deny_lists, default_template FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, custombinds, assetbinds, deny_lists, default_template, sticky_roles FROM guilds WHERE guild_id = $1",
             server.id,
         )
         .await?;

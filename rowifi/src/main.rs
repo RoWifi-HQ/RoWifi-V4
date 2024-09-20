@@ -48,7 +48,7 @@ use crate::commands::{
     events::{new_event, view_attendee_events, view_event, view_host_events},
     groupbinds::{delete_groupbind, new_groupbind, view_groupbinds},
     rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
-    server::{update_all, update_role},
+    server::{update_all, update_role, serverinfo},
     user::{
         account_default, account_delete, account_switch, account_view, update_route, userinfo,
         verify_route,
@@ -140,6 +140,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/update-all", post(update_all))
         .route("/update-role", post(update_role))
         .route("/analytics/view", post(analytics_view))
+        .route("/serverinfo", post(serverinfo))
         .route("/standby", post(standby_route));
 
     #[cfg(feature = "tower")]
