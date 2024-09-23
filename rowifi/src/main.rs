@@ -51,7 +51,7 @@ use crate::commands::{
     server::{update_all, update_role, serverinfo},
     user::{
         account_default, account_delete, account_switch, account_view, update_route, userinfo,
-        verify_route,
+        verify_route, debug_update
     },
 };
 
@@ -141,6 +141,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/update-role", post(update_role))
         .route("/analytics/view", post(analytics_view))
         .route("/serverinfo", post(serverinfo))
+        .route("/debug/update", post(debug_update))
         .route("/standby", post(standby_route));
 
     #[cfg(feature = "tower")]

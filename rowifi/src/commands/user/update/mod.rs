@@ -1,3 +1,5 @@
+mod debug;
+
 use itertools::Itertools;
 use rowifi_core::user::update::{UpdateUser, UpdateUserError};
 use rowifi_framework::prelude::*;
@@ -13,6 +15,8 @@ use rowifi_models::{
 };
 use std::{error::Error, fmt::Write};
 use twilight_http::error::{Error as DiscordHttpError, ErrorType as DiscordErrorType};
+
+pub use debug::debug_update;
 
 #[derive(Arguments, Debug)]
 pub struct UpdateArguments {
@@ -49,7 +53,6 @@ pub async fn update_func(
         Some(s) => s,
         None => ctx.author_id,
     };
-    tracing::trace!("running on {}", user_id);
 
     let Some(member) = bot.member(server.id, user_id).await? else {
         tracing::trace!("could not find user");
