@@ -14,6 +14,7 @@ use crate::{
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AuditLog {
     pub kind: AuditLogKind,
+    // TODO: Write custom deserializer for this
     pub metadata: AuditLogData,
     pub guild_id: Option<GuildId>,
     pub user_id: Option<UserId>,
@@ -34,6 +35,9 @@ pub enum AuditLogKind {
     DenylistDelete = 9,
     EventLog = 10,
     SettingModify = 11,
+    EventTypeCreate = 12,
+    EventTypeDelete = 13,
+    EventTypeModify = 14,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -81,6 +85,18 @@ pub enum AuditLogData {
         setting: String,
         value: String,
     },
+    EventTypeCreate {
+        id: u32,
+        name: String,
+    },
+    EventTypeDelete {
+        id: u32,
+        name: String,
+    },
+    EventTypeModify {
+        id: u32,
+        name: String
+    }
 }
 
 impl TryFrom<tokio_postgres::Row> for AuditLog {
