@@ -44,7 +44,7 @@ pub async fn new_groupbind_func(
 ) -> CommandResult {
     let guild = bot
         .get_guild(
-            "SELECT guild_id, groupbinds FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, groupbinds, log_channel FROM guilds WHERE guild_id = $1",
             ctx.guild_id,
         )
         .await?;
@@ -98,7 +98,7 @@ pub async fn new_groupbind_func(
         res.bind.priority,
         res.bind
             .discord_roles
-            .into_iter()
+            .iter()
             .map(|r| r.0.mention().to_string())
             .collect::<String>()
     ));
@@ -120,6 +120,34 @@ pub async fn new_groupbind_func(
         .description(description)
         .build();
     ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+
+    if let Some(log_channel) = guild.log_channel {
+        let embed = EmbedBuilder::new()
+            .color(BLUE)
+            .footer(EmbedFooterBuilder::new("RoWifi").build())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
+            .title(format!("Action by <@{}>", ctx.author_id))
+            .description("Groupbind Added")
+            .field(EmbedFieldBuilder::new(
+                format!("**Group Id: {}**\n", res.bind.group_id),
+                format!(
+                    "Template: {}\nPriority: {}\n Roles: {}",
+                    res.bind.template,
+                    res.bind.priority,
+                    res.bind
+                        .discord_roles
+                        .iter()
+                        .map(|r| r.0.mention().to_string())
+                        .collect::<String>()
+                ),
+            ))
+            .build();
+        let _ = bot
+            .http
+            .create_message(log_channel.0)
+            .embeds(&[embed])
+            .await;
+    }
 
     Ok(())
 }

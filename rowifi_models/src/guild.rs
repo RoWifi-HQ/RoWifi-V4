@@ -8,7 +8,7 @@ use crate::{
     bind::{Assetbind, Custombind, Groupbind, Rankbind, Template, XPBind},
     deny_list::DenyList,
     events::EventType,
-    id::{GuildId, RoleId},
+    id::{ChannelId, GuildId, RoleId},
     roblox::id::GroupId,
 };
 
@@ -37,6 +37,7 @@ pub struct PartialRoGuild {
     pub sync_xp_on_setrank: Option<bool>,
     pub registered_groups: Vec<GroupId>,
     pub sticky_roles: Vec<RoleId>,
+    pub log_channel: Option<ChannelId>,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
@@ -85,6 +86,7 @@ impl PartialRoGuild {
             sync_xp_on_setrank: None,
             registered_groups: Vec::new(),
             sticky_roles: Vec::new(),
+            log_channel: None,
         }
     }
 }
@@ -127,6 +129,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             .try_get("registered_groups")
             .unwrap_or_else(|_| Json(Vec::new()));
         let sticky_roles = row.try_get("sticky_roles").unwrap_or_default();
+        let log_channel = row.try_get("channel_id").ok();
 
         Ok(Self {
             guild_id,
@@ -147,6 +150,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             sync_xp_on_setrank,
             registered_groups: registered_groups.0,
             sticky_roles,
+            log_channel,
         })
     }
 }

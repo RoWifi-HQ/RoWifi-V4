@@ -37,7 +37,7 @@ pub async fn delete_assetbind_func(
 ) -> CommandResult {
     let guild = bot
         .get_guild(
-            "SELECT guild_id, assetbinds FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, assetbinds, log_channel FROM guilds WHERE guild_id = $1",
             ctx.guild_id,
         )
         .await?;
@@ -71,6 +71,21 @@ pub async fn delete_assetbind_func(
             .title("Deletion Successful")
             .build();
         ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    }
+
+    if let Some(log_channel) = guild.log_channel {
+        let embed = EmbedBuilder::new()
+            .color(BLUE)
+            .footer(EmbedFooterBuilder::new("RoWifi").build())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
+            .title(format!("Action by <@{}>", ctx.author_id))
+            .description(format!("Deleted {} assetbind(s)", res.deleted))
+            .build();
+        let _ = bot
+            .http
+            .create_message(log_channel.0)
+            .embeds(&[embed])
+            .await;
     }
 
     Ok(())

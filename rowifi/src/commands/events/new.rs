@@ -39,7 +39,7 @@ pub async fn new_event_func(
 ) -> CommandResult {
     let guild = bot
         .get_guild(
-            "SELECT guild_id, kind, event_types FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, kind, event_types, log_channel FROM guilds WHERE guild_id = $1",
             ctx.guild_id,
         )
         .await?;
@@ -102,11 +102,7 @@ pub async fn new_event_func(
         Err(EventLogError::Other(err)) => return Err(err),
     };
 
-    let event_type = guild
-        .event_types
-        .iter()
-        .find(|e| e.id == args.id)
-        .unwrap();
+    let event_type = guild.event_types.iter().find(|e| e.id == args.id).unwrap();
     let value = format!(
         "Host: <@{}>\nType: {}\nAttendees: {}",
         ctx.author_id.get(),
@@ -120,10 +116,28 @@ pub async fn new_event_func(
         .title("Event Addition Successful")
         .field(EmbedFieldBuilder::new(
             format!("Event Id: {}", new_event.guild_event_id),
-            value,
+            &value,
         ))
         .build();
     ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+
+    if let Some(log_channel) = guild.log_channel {
+        let embed = EmbedBuilder::new()
+            .color(BLUE)
+            .footer(EmbedFooterBuilder::new("RoWifi").build())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
+            .title("Event Logged")
+            .field(EmbedFieldBuilder::new(
+                format!("Event Id: {}", new_event.guild_event_id),
+                &value,
+            ))
+            .build();
+        let _ = bot
+            .http
+            .create_message(log_channel.0)
+            .embeds(&[embed])
+            .await;
+    }
 
     Ok(())
 }

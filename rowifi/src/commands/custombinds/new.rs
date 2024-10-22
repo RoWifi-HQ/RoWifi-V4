@@ -43,7 +43,7 @@ async fn new_custombind_func(
 ) -> CommandResult {
     let guild = bot
         .get_guild(
-            "SELECT guild_id, custombinds FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, custombinds, log_channel FROM guilds WHERE guild_id = $1",
             ctx.guild_id,
         )
         .await?;
@@ -89,7 +89,7 @@ async fn new_custombind_func(
         res.bind.priority,
         res.bind
             .discord_roles
-            .into_iter()
+            .iter()
             .map(|r| r.0.mention().to_string())
             .collect::<String>()
     ));
@@ -111,6 +111,35 @@ async fn new_custombind_func(
         .description(description)
         .build();
     ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+
+    if let Some(log_channel) = guild.log_channel {
+        let embed = EmbedBuilder::new()
+            .color(BLUE)
+            .footer(EmbedFooterBuilder::new("RoWifi").build())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
+            .title(format!("Action by <@{}>", ctx.author_id))
+            .description("Custombind Added")
+            .field(EmbedFieldBuilder::new(
+                format!("**Bind Id: {}**\n", res.bind.custom_bind_id),
+                format!(
+                    "Code: {}\nTemplate: {}\nPriority: {}\n Roles: {}",
+                    res.bind.code,
+                    res.bind.template,
+                    res.bind.priority,
+                    res.bind
+                        .discord_roles
+                        .iter()
+                        .map(|r| r.0.mention().to_string())
+                        .collect::<String>()
+                ),
+            ))
+            .build();
+        let _ = bot
+            .http
+            .create_message(log_channel.0)
+            .embeds(&[embed])
+            .await;
+    }
 
     Ok(())
 }

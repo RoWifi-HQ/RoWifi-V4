@@ -77,5 +77,20 @@ pub async fn delete_rankbind_func(
         ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
     }
 
+    if let Some(log_channel) = guild.log_channel {
+        let embed = EmbedBuilder::new()
+            .color(BLUE)
+            .footer(EmbedFooterBuilder::new("RoWifi").build())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
+            .title(format!("Action by <@{}>", ctx.author_id))
+            .description(format!("Deleted {} rankbind(s)", res.deleted))
+            .build();
+        let _ = bot
+            .http
+            .create_message(log_channel.0)
+            .embeds(&[embed])
+            .await;
+    }
+
     Ok(())
 }

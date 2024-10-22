@@ -39,7 +39,7 @@ pub async fn add_custom_denylist_func(
 ) -> CommandResult {
     let guild = bot
         .get_guild(
-            "SELECT guild_id, deny_lists FROM guilds WHERE guild_id = $1",
+            "SELECT guild_id, deny_lists, log_channel FROM guilds WHERE guild_id = $1",
             ctx.guild_id,
         )
         .await?;
@@ -82,9 +82,25 @@ pub async fn add_custom_denylist_func(
         .footer(EmbedFooterBuilder::new("RoWifi").build())
         .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Denylist Addition Successful")
-        .field(EmbedFieldBuilder::new(name.clone(), desc.clone()))
+        .field(EmbedFieldBuilder::new(&name, &desc))
         .build();
     ctx.respond(&bot).embeds(&[embed])?.await?;
+
+    if let Some(log_channel) = guild.log_channel {
+        let embed = EmbedBuilder::new()
+            .color(BLUE)
+            .footer(EmbedFooterBuilder::new("RoWifi").build())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
+            .title(format!("Action by <@{}>", ctx.author_id))
+            .description("Denylist Added")
+            .field(EmbedFieldBuilder::new(&name, &desc))
+            .build();
+        let _ = bot
+            .http
+            .create_message(log_channel.0)
+            .embeds(&[embed])
+            .await;
+    }
 
     Ok(())
 }
