@@ -36,6 +36,7 @@ use crate::{
 pub struct RobloxClient {
     client: HyperClient<HttpsConnector<HttpConnector>, Full<Bytes>>,
     open_cloud_auth: String,
+    proxy_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -67,7 +68,7 @@ pub struct ThumbnailResponse {
 
 impl RobloxClient {
     #[must_use]
-    pub fn new(open_cloud_auth: &str) -> Self {
+    pub fn new(open_cloud_auth: &str, proxy_url: Option<String>) -> Self {
         let connector = hyper_rustls::HttpsConnectorBuilder::new()
             .with_webpki_roots()
             .https_or_http()
@@ -77,6 +78,7 @@ impl RobloxClient {
         Self {
             client,
             open_cloud_auth: open_cloud_auth.to_string(),
+            proxy_url,
         }
     }
 
@@ -485,8 +487,14 @@ impl RobloxClient {
     /// See [`RobloxError`] for details.
     pub async fn request(
         &self,
-        request: Request<Full<Bytes>>,
+        mut request: Request<Full<Bytes>>,
     ) -> Result<(Parts, Vec<u8>), RobloxError> {
+        if let Some(proxy_url) = &self.proxy_url {
+            let uri = request.uri_mut();
+            let uri_str = uri.to_string();
+            let url = urlencoding::encode(uri_str.as_str());
+            *uri = format!("{}?url={}", proxy_url, url).parse().unwrap();
+        }
         let res = self
             .client
             .request(request)
