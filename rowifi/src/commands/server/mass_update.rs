@@ -5,9 +5,15 @@ use rowifi_models::{
     discord::http::interaction::{
         InteractionResponse, InteractionResponseData, InteractionResponseType,
     },
-    id::GuildId,
+    id::{GuildId, RoleId},
 };
 use serde::Serialize;
+
+#[derive(Debug, Serialize)]
+pub struct MassUpdateQueueArguments {
+    pub guild_id: GuildId,
+    pub role_id: Option<RoleId>,
+}
 
 pub async fn update_all(bot: Extension<BotContext>, command: Command<()>) -> impl IntoResponse {
     tokio::spawn(async move {
@@ -28,7 +34,14 @@ pub async fn update_all(bot: Extension<BotContext>, command: Command<()>) -> imp
 pub async fn update_all_func(bot: &BotContext, ctx: &CommandContext) -> CommandResult {
     let mut conn = bot.cache.get().await.map_err(|err| CacheError::from(err))?;
     let _: () = conn
-        .publish("update-all", &ctx.guild_id.get())
+        .publish(
+            "update-all",
+            serde_json::to_vec(&MassUpdateQueueArguments {
+                guild_id: ctx.guild_id,
+                role_id: None,
+            })
+            .unwrap(),
+        )
         .await
         .map_err(|err| CacheError::from(err))?;
     Ok(())
@@ -37,12 +50,6 @@ pub async fn update_all_func(bot: &BotContext, ctx: &CommandContext) -> CommandR
 #[derive(Arguments, Debug)]
 pub struct UpdateRoleArguments {
     // TODO: Change this to RoleId
-    pub role: u64,
-}
-
-#[derive(Debug, Serialize)]
-pub struct UpdateRoleQueueArguments {
-    pub guild: GuildId,
     pub role: u64,
 }
 
@@ -74,9 +81,9 @@ pub async fn update_role_func(
     let _: () = conn
         .publish(
             "update-role",
-            serde_json::to_vec(&UpdateRoleQueueArguments {
-                guild: ctx.guild_id,
-                role: args.role,
+            serde_json::to_vec(&MassUpdateQueueArguments {
+                guild_id: ctx.guild_id,
+                role_id: Some(RoleId::new(args.role)),
             })
             .unwrap(),
         )
