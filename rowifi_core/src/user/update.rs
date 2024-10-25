@@ -4,7 +4,7 @@ use rowifi_models::{
     deny_list::{DenyList, DenyListData},
     discord::cache::{CachedGuild, CachedMember},
     guild::{BypassRoleKind, PartialRoGuild},
-    id::RoleId,
+    id::{RoleId, UserId},
     roblox::inventory::InventoryItem,
     user::RoUser,
 };
@@ -34,7 +34,7 @@ pub struct UpdateUser<'u> {
 type UpdateUserSuccess = (Vec<RoleId>, Vec<RoleId>, String);
 
 pub enum UpdateUserError {
-    DenyList(DenyList),
+    DenyList((UserId, DenyList)),
     InvalidNickname(String),
     Generic(RoError),
     CustombindParsing { id: u32, err: String },
@@ -151,7 +151,7 @@ impl UpdateUser<'_> {
             .sorted_by_key(|d| d.action_type)
             .last();
         if let Some(deny_list) = active_deny_list {
-            return Err(UpdateUserError::DenyList((*deny_list).clone()));
+            return Err(UpdateUserError::DenyList((self.member.id, (*deny_list).clone())));
         }
 
         let mut nickname_bind: Option<Bind> = None;
