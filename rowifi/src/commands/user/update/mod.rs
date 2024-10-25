@@ -151,7 +151,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
     let (added_roles, removed_roles, nickname) = match update_user.execute().await {
         Ok(u) => u,
         Err(err) => match err {
-            UpdateUserError::DenyList(deny_list) => {
+            UpdateUserError::DenyList((_, deny_list)) => {
                 tracing::debug!("user on a deny list. {:?}", deny_list);
                 let message = if args.user_id.is_some() {
                     format!(

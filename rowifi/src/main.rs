@@ -42,16 +42,18 @@ use twilight_standby::Standby;
 use crate::commands::{
     analytics::analytics_view,
     assetbinds::{delete_assetbind, new_assetbind, view_assetbinds},
-    backups::{backup_new, backup_restore, backup_view, backup_delete},
+    backups::{backup_delete, backup_new, backup_restore, backup_view},
     custombinds::{delete_custombind, new_custombind, view_custombinds},
-    denylists::{add_group_denylist, add_user_denylist, delete_denylist, view_denylists, add_custom_denylist},
+    denylists::{
+        add_custom_denylist, add_group_denylist, add_user_denylist, delete_denylist, view_denylists,
+    },
     events::{new_event, view_attendee_events, view_event, view_host_events},
     groupbinds::{delete_groupbind, new_groupbind, view_groupbinds},
     rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
-    server::{update_all, update_role, serverinfo},
+    server::{serverinfo, update_all, update_role},
     user::{
-        account_default, account_delete, account_switch, account_view, update_route, userinfo,
-        verify_route, debug_update
+        account_default, account_delete, account_switch, account_view, debug_update, update_route,
+        userinfo, verify_route,
     },
 };
 
@@ -147,12 +149,13 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     #[cfg(feature = "tower")]
     {
-        use rowifi_tower::commands::{set_rank, xp_add, xp_remove, xp_set};
+        use rowifi_tower::{commands::{set_rank, xp_add, xp_remove, xp_set}, init_tower};     
         router = router
             .route("/setrank", post(set_rank))
             .route("/xp/add", post(xp_add))
             .route("/xp/remove", post(xp_remove))
             .route("/xp/set", post(xp_set));
+        router = init_tower(router);
     }
 
     let app = router
