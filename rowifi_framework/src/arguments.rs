@@ -181,6 +181,15 @@ impl Argument for GroupId {
     }
 }
 
+impl Argument for bool {
+    fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
+        match option.value {
+            CommandOptionValue::Boolean(bool) => Ok(bool),
+            _ => unreachable!()
+        }
+    }
+}
+
 impl Display for ArgumentError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
