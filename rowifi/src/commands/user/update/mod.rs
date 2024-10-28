@@ -132,12 +132,30 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
     };
     tracing::trace!(user = ?user);
 
-    let all_roles = guild
+    let mut all_roles = guild
         .rankbinds
         .iter()
         .flat_map(|b| b.discord_roles.clone())
-        .unique()
         .collect::<Vec<_>>();
+    all_roles.extend(
+        guild
+            .groupbinds
+            .iter()
+            .flat_map(|b| b.discord_roles.clone()),
+    );
+    all_roles.extend(
+        guild
+            .custombinds
+            .iter()
+            .flat_map(|b| b.discord_roles.clone()),
+    );
+    all_roles.extend(
+        guild
+            .assetbinds
+            .iter()
+            .flat_map(|b| b.discord_roles.clone()),
+    );
+    all_roles = all_roles.into_iter().unique().collect();
 
     let update_user = UpdateUser {
         http: &bot.http,
