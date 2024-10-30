@@ -30,7 +30,7 @@ impl Database {
             .runtime(Runtime::Tokio1)
             .recycle_timeout(Some(Duration::from_secs(30)))
             .create_timeout(Some(Duration::from_secs(30)))
-            .wait_timeout(Some(Duration::from_secs(30)))
+            .wait_timeout(Some(Duration::from_secs(300)))
             .build()
             .unwrap();
 
