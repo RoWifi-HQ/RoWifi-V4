@@ -7,6 +7,7 @@ use hyper::{
 use itertools::Itertools;
 use std::collections::HashMap;
 
+#[derive(Clone)]
 pub struct Request {
     uri: Option<String>,
     method: Option<Method>,
@@ -88,5 +89,13 @@ impl Request {
         } else {
             builder.body(Full::default())
         }
+    }
+
+    pub fn headers(&self) -> &HeaderMap {
+        &self.headers
+    }
+
+    pub fn headers_mut(&mut self) -> &mut HeaderMap {
+        &mut self.headers
     }
 }
