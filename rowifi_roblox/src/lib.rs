@@ -3,15 +3,15 @@
 
 pub mod error;
 pub mod filter;
+pub mod request;
 mod route;
 
-use error::DeserializeBodyError;
 use http_body_util::{BodyExt, Full};
 use hyper::{
     body::Bytes,
-    header::{HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
+    header::{HeaderName, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     http::response::Parts,
-    Method, Request, StatusCode,
+    Method, Request as HyperRequest, StatusCode,
 };
 use hyper_rustls::HttpsConnector;
 use hyper_util::{
@@ -26,6 +26,9 @@ use rowifi_models::roblox::{
     Operation,
 };
 use serde::{Deserialize, Serialize};
+
+use error::DeserializeBodyError;
+use request::Request;
 
 use crate::{
     error::{ErrorKind, RobloxError},
@@ -82,6 +85,10 @@ impl RobloxClient {
         }
     }
 
+    pub fn proxy_uri(&self) -> Option<&str> {
+        self.proxy_url.as_ref().map(|x| x.as_str())
+    }
+
     /// Get the ranks of the user of all the groups they are part of.
     ///
     /// # Errors
@@ -90,10 +97,11 @@ impl RobloxClient {
     pub async fn get_user_roles(&self, user_id: UserId) -> Result<Vec<GroupUserRole>, RobloxError> {
         let route = Route::GetUserGroupRoles { user_id: user_id.0 };
 
-        let request = Request::builder()
+        let request = Request::new()
             .uri(route.to_string())
             .method(Method::GET)
             .body(Full::default())
+            .build()
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -134,11 +142,15 @@ impl RobloxClient {
     pub async fn get_user(&self, user_id: UserId) -> Result<PartialUser, RobloxError> {
         let route = Route::GetUser { user_id: user_id.0 };
 
-        let request = Request::builder()
+        let request = Request::new()
             .uri(route.to_string())
             .method(Method::GET)
-            .header("x-api-key", &self.open_cloud_auth)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
             .body(Full::default())
+            .build()
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -186,12 +198,13 @@ impl RobloxClient {
             kind: ErrorKind::BuildingRequest,
         })?;
 
-        let request = Request::builder()
+        let request = Request::new()
             .uri(route.to_string())
             .method(Method::POST)
             .header(CONTENT_TYPE, HeaderValue::from_static("application/json"))
             .header(CONTENT_LENGTH, body.len())
             .body(Full::new(Bytes::from(body)))
+            .build()
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -237,11 +250,15 @@ impl RobloxClient {
             filter: asset_filter,
         };
 
-        let request = Request::builder()
+        let request = Request::new()
             .uri(route.to_string())
             .method(Method::GET)
-            .header("x-api-key", &self.open_cloud_auth)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
             .body(Full::default())
+            .build()
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -292,11 +309,15 @@ impl RobloxClient {
             if let Some(next_page_token) = next_page_token {
                 route.push_str(&format!("&pageToken={next_page_token}"));
             }
-            let request = Request::builder()
+            let request = Request::new()
                 .uri(&route)
                 .method(Method::GET)
-                .header("x-api-key", &self.open_cloud_auth)
+                .header(
+                    HeaderName::from_static("x-api-key"),
+                    HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+                )
                 .body(Full::default())
+                .build()
                 .map_err(|source| RobloxError {
                     source: Some(Box::new(source)),
                     kind: ErrorKind::BuildingRequest,
@@ -356,11 +377,15 @@ impl RobloxClient {
             group_id: group_id.0,
         };
 
-        let request = Request::builder()
+        let request = Request::new()
             .uri(route.to_string())
             .method(Method::GET)
-            .header("x-api-key", &self.open_cloud_auth)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
             .body(Full::default())
+            .build()
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -402,11 +427,15 @@ impl RobloxClient {
     pub async fn get_user_thumbnail(&self, user_id: UserId) -> Result<String, RobloxError> {
         let route = Route::GetUserThumbail { user_id: user_id.0 };
 
-        let request = Request::builder()
+        let request = Request::new()
             .uri(route.to_string())
             .method(Method::GET)
-            .header("x-api-key", &self.open_cloud_auth)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
             .body(Full::default())
+            .build()
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -446,11 +475,12 @@ impl RobloxClient {
     /// See [`RobloxError`] for details.
     pub async fn get_oauth_userinfo(&self, authorization: &str) -> Result<OAuthUser, RobloxError> {
         let route = Route::OAuthUserInfo;
-        let request = Request::builder()
+        let request = Request::new()
             .uri(route.to_string())
             .method(Method::GET)
-            .header(AUTHORIZATION, authorization)
+            .header(AUTHORIZATION, HeaderValue::from_str(authorization).unwrap())
             .body(Full::default())
+            .build()
             .map_err(|source| RobloxError {
                 source: Some(Box::new(source)),
                 kind: ErrorKind::BuildingRequest,
@@ -487,7 +517,7 @@ impl RobloxClient {
     /// See [`RobloxError`] for details.
     pub async fn request(
         &self,
-        mut request: Request<Full<Bytes>>,
+        mut request: HyperRequest<Full<Bytes>>,
     ) -> Result<(Parts, Vec<u8>), RobloxError> {
         if let Some(proxy_url) = &self.proxy_url {
             let uri = request.uri_mut();
