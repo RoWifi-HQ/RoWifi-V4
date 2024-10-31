@@ -127,12 +127,30 @@ pub async fn debug_update_func(
         return Ok(());
     };
 
-    let all_roles = guild
+    let mut all_roles = guild
         .rankbinds
         .iter()
         .flat_map(|b| b.discord_roles.clone())
-        .unique()
         .collect::<Vec<_>>();
+    all_roles.extend(
+        guild
+            .groupbinds
+            .iter()
+            .flat_map(|b| b.discord_roles.clone()),
+    );
+    all_roles.extend(
+        guild
+            .custombinds
+            .iter()
+            .flat_map(|b| b.discord_roles.clone()),
+    );
+    all_roles.extend(
+        guild
+            .assetbinds
+            .iter()
+            .flat_map(|b| b.discord_roles.clone()),
+    );
+    all_roles = all_roles.into_iter().unique().collect();
 
     let user_id = user
         .linked_accounts
