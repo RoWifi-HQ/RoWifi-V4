@@ -6,6 +6,7 @@ ENV GH_PAT=$GITHUB_PAT
 RUN apt-get update -y && apt-get install -y libfontconfig1-dev libfreetype6-dev libexpat1-dev
 WORKDIR /usr/src/rowifi
 COPY . .
+RUN rm -rf .cargo
 RUN git config --global url."https://${GH_PAT}:@github.com".insteadOf "https://github.com"
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 RUN cargo build --release
