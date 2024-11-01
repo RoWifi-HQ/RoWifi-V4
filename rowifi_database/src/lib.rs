@@ -26,11 +26,11 @@ impl Database {
         let postgres_config = TokioPostgresConfig::from_str(connection_string).unwrap();
         let manager = Manager::new(postgres_config, NoTls);
         let pool = Pool::builder(manager)
-            .max_size(128)
+            .max_size(32)
             .runtime(Runtime::Tokio1)
             .recycle_timeout(Some(Duration::from_secs(30)))
             .create_timeout(Some(Duration::from_secs(30)))
-            .wait_timeout(Some(Duration::from_secs(300)))
+            .wait_timeout(Some(Duration::from_secs(30)))
             .build()
             .unwrap();
 
