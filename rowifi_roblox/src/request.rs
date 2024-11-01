@@ -81,6 +81,9 @@ impl Request {
         };
 
         let mut builder = HyperRequest::builder().uri(final_uri);
+        for header in self.headers {
+            builder = builder.header(header.0.unwrap(), header.1);
+        }
         if let Some(method) = self.method {
             builder = builder.method(method);
         }
