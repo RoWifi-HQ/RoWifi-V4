@@ -79,6 +79,7 @@ impl Request {
         } else {
             uri
         };
+        tracing::debug!("{}", final_uri);
 
         let mut builder = HyperRequest::builder().uri(final_uri);
         for header in self.headers {
