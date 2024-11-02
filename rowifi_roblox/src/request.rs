@@ -50,8 +50,8 @@ impl Request {
         self
     }
 
-    pub fn proxy_uri(mut self, proxy_uri: impl Into<String>) -> Self {
-        self.proxy_uri = Some(proxy_uri.into());
+    pub fn proxy_uri(mut self, proxy_uri: Option<String>) -> Self {
+        self.proxy_uri = proxy_uri;
         self
     }
 

@@ -100,6 +100,7 @@ impl RobloxClient {
         let request = Request::new()
             .uri(route.to_string())
             .method(Method::GET)
+            .proxy_uri(self.proxy_url.clone())
             .body(Full::default())
             .build()
             .map_err(|source| RobloxError {
@@ -149,6 +150,7 @@ impl RobloxClient {
                 HeaderName::from_static("x-api-key"),
                 HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
             )
+            .proxy_uri(self.proxy_url.clone())
             .body(Full::default())
             .build()
             .map_err(|source| RobloxError {
@@ -203,6 +205,7 @@ impl RobloxClient {
             .method(Method::POST)
             .header(CONTENT_TYPE, HeaderValue::from_static("application/json"))
             .header(CONTENT_LENGTH, body.len())
+            .proxy_uri(self.proxy_url.clone())
             .body(Full::new(Bytes::from(body)))
             .build()
             .map_err(|source| RobloxError {
@@ -257,6 +260,7 @@ impl RobloxClient {
                 HeaderName::from_static("x-api-key"),
                 HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
             )
+            .proxy_uri(self.proxy_url.clone())
             .body(Full::default())
             .build()
             .map_err(|source| RobloxError {
@@ -317,6 +321,7 @@ impl RobloxClient {
                     HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
                 )
                 .body(Full::default())
+                .proxy_uri(self.proxy_url.clone())
                 .build()
                 .map_err(|source| RobloxError {
                     source: Some(Box::new(source)),
@@ -384,6 +389,7 @@ impl RobloxClient {
                 HeaderName::from_static("x-api-key"),
                 HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
             )
+            .proxy_uri(self.proxy_url.clone())
             .body(Full::default())
             .build()
             .map_err(|source| RobloxError {
@@ -434,6 +440,7 @@ impl RobloxClient {
                 HeaderName::from_static("x-api-key"),
                 HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
             )
+            .proxy_uri(self.proxy_url.clone())
             .body(Full::default())
             .build()
             .map_err(|source| RobloxError {
@@ -479,6 +486,7 @@ impl RobloxClient {
             .uri(route.to_string())
             .method(Method::GET)
             .header(AUTHORIZATION, HeaderValue::from_str(authorization).unwrap())
+            .proxy_uri(self.proxy_url.clone())
             .body(Full::default())
             .build()
             .map_err(|source| RobloxError {
@@ -517,14 +525,8 @@ impl RobloxClient {
     /// See [`RobloxError`] for details.
     pub async fn request(
         &self,
-        mut request: HyperRequest<Full<Bytes>>,
+        request: HyperRequest<Full<Bytes>>,
     ) -> Result<(Parts, Vec<u8>), RobloxError> {
-        if let Some(proxy_url) = &self.proxy_url {
-            let uri = request.uri_mut();
-            let uri_str = uri.to_string();
-            let url = urlencoding::encode(uri_str.as_str());
-            *uri = format!("{}?url={}", proxy_url, url).parse().unwrap();
-        }
         let res = self
             .client
             .request(request)
