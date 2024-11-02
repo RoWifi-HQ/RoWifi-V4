@@ -63,7 +63,7 @@ impl Request {
     pub fn build(mut self) -> Result<HyperRequest<Full<Bytes>>, hyper::http::Error> {
         let original_uri = self.uri.unwrap_or_default();
         let uri = if let Some(proxy_uri) = &self.proxy_uri {
-            self.proxy_params.insert("url".into(), original_uri);
+            self.proxy_params.insert("url".into(), urlencoding::encode(&original_uri).to_string());
             proxy_uri.clone()
         } else {
             original_uri
