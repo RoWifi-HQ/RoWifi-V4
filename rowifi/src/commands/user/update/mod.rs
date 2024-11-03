@@ -247,33 +247,37 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
             }
             UpdateUserError::CustombindParsing { id, err } => {
                 let message = format!(
-                    "There was an error in parsing the custombind with ID {}.\nError: `{}`",
-                    id, err
+                    "There was an error in parsing the custombind with ID {}.",
+                    id
                 );
+                tracing::error!("{}", err);
                 ctx.respond(&bot).content(&message).unwrap().await?;
                 return Ok(());
             }
             UpdateUserError::CustombindEvaluation { id, err } => {
                 let message = format!(
-                    "There was an error in evaluating the custombind with ID {}.\nError: `{}`",
-                    id, err
+                    "There was an error in evaluating the custombind with ID {}.",
+                    id
                 );
+                tracing::error!("{}", err);
                 ctx.respond(&bot).content(&message).unwrap().await?;
                 return Ok(());
             }
             UpdateUserError::CustomDenylistEvaluation { id, err } => {
                 let message = format!(
-                    "There was an error in evaluating the custom denylist with ID {}.\nError: `{}`",
-                    id, err
+                    "There was an error in evaluating the custom denylist with ID {}.",
+                    id
                 );
+                tracing::error!("{}", err);
                 ctx.respond(&bot).content(&message).unwrap().await?;
                 return Ok(());
             }
             UpdateUserError::CustomDenylistParsing { id, err } => {
                 let message = format!(
-                    "There was an error in parsing the custom denylist with ID {}.\nError: `{}`",
-                    id, err
+                    "There was an error in parsing the custom denylist with ID {}.",
+                    id
                 );
+                tracing::error!("{}", err);
                 ctx.respond(&bot).content(&message).unwrap().await?;
                 return Ok(());
             }

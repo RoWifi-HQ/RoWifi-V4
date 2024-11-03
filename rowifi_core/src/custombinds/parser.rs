@@ -1,12 +1,13 @@
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{alpha1, alphanumeric1, char, digit1, multispace0},
+    character::complete::{alpha1, alphanumeric1, char, digit1, multispace0, multispace1},
     combinator::{all_consuming, map, map_res},
     error::VerboseError,
     sequence::{delimited, pair, preceded, tuple},
     Err, IResult, Parser,
 };
+use std::fmt::{Display, Formatter, Result as FmtResult};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Operator {
@@ -30,7 +31,7 @@ pub enum Atom {
 pub enum Expression {
     Constant(Atom),
     Function(String, Vec<Expression>),
-    Operation(Operator, Box<Expression>, Box<Expression>),
+    Operation(Operator, Box<Expression>, Option<Box<Expression>>),
 }
 
 fn parse_operator(i: &str) -> IResult<&str, Operator, VerboseError<&str>> {
@@ -79,9 +80,16 @@ fn parse_constant(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
 }
 
 fn parse_function(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
-    let (i, t) = pair(alphanumeric1, delimited(char('('), parse_atom, char(')'))).parse(i)?;
-    let exp = Expression::Function(t.0.to_string(), vec![Expression::Constant(t.1)]);
-    Ok((i, exp))
+    let (i, (name, args)) = pair(
+        alphanumeric1,
+        delimited(
+            char('('),
+            map(parse_atom, |atom| vec![Expression::Constant(atom)]),
+            char(')'),
+        ),
+    )
+    .parse(i)?;
+    Ok((i, Expression::Function(name.to_string(), args)))
 }
 
 fn parse_brackets(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
@@ -93,23 +101,97 @@ fn parse_brackets(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
     .parse(i)
 }
 
-fn parse_operation(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
+fn parse_comparison(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
     let (i, (e1, op, e2)) = tuple((
-        preceded(multispace0, parse_expression),
-        preceded(multispace0, parse_operator),
-        preceded(multispace0, parse_expression),
+        preceded(multispace0, parse_term),
+        preceded(
+            multispace0,
+            alt((tag(">="), tag(">"), tag("<="), tag("<"), tag("=="))),
+        ),
+        preceded(multispace0, parse_term),
     ))
     .parse(i)?;
-    Ok((i, Expression::Operation(op, Box::new(e1), Box::new(e2))))
+
+    let operator = match op {
+        ">=" => Operator::GreaterEqual,
+        ">" => Operator::Greater,
+        "<=" => Operator::LessEqual,
+        "<" => Operator::Less,
+        "==" => Operator::Equal,
+        _ => unreachable!(),
+    };
+
+    Ok((
+        i,
+        Expression::Operation(operator, Box::new(e1), Some(Box::new(e2))),
+    ))
+}
+
+fn parse_term(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
+    alt((
+        parse_negation,
+        parse_brackets,
+        parse_function,
+        parse_constant,
+    ))
+    .parse(i)
+}
+
+fn parse_negation(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
+    let (i, _) = tag("not")(i)?;
+    let (i, _) = multispace1(i)?;
+    let (i, expr) = parse_term(i)?;
+    Ok((
+        i,
+        Expression::Operation(Operator::Not, Box::new(expr), None),
+    ))
+}
+
+fn parse_operation(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
+    let (i, e1) = preceded(multispace0, parse_expression)(i)?;
+    let (i, rest) = nom::multi::many0(|input| {
+        let (input, op) = preceded(multispace0, parse_operator)(input)?;
+        let (input, expr) = preceded(multispace0, parse_expression)(input)?;
+        Ok((input, (op, expr)))
+    })(i)?;
+
+    Ok((
+        i,
+        rest.into_iter().fold(e1, |acc, (op, expr)| {
+            Expression::Operation(op, Box::new(acc), Some(Box::new(expr)))
+        }),
+    ))
 }
 
 fn parse_expression(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
-    alt((parse_brackets, parse_function, parse_constant)).parse(i)
+    alt((
+        parse_comparison,
+        parse_negation,
+        parse_brackets,
+        parse_function,
+        parse_constant,
+    ))
+    .parse(i)
 }
 
 pub fn parser(code: &str) -> Result<Expression, Err<VerboseError<&str>>> {
-    let (_, t) = all_consuming(alt((parse_operation, parse_expression))).parse(code)?;
+    let (_, t) = all_consuming(parse_operation).parse(code)?;
     Ok(t)
+}
+
+impl Display for Operator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            Operator::Greater => write!(f, ">"),
+            Operator::GreaterEqual => write!(f, ">="),
+            Operator::Less => write!(f, "<"),
+            Operator::LessEqual => write!(f, "<="),
+            Operator::Equal => write!(f, "=="),
+            Operator::Not => write!(f, "not"),
+            Operator::And => write!(f, "and"),
+            Operator::Or => write!(f, "or"),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -181,10 +263,10 @@ mod tests {
                         "IsInGroup".to_string(),
                         vec![Expression::Constant(Atom::Num(1))]
                     )),
-                    Box::new(Expression::Function(
+                    Some(Box::new(Expression::Function(
                         "IsInGroup".to_string(),
                         vec![Expression::Constant(Atom::Num(2))]
-                    ))
+                    )))
                 )
             ))
         );
@@ -193,21 +275,28 @@ mod tests {
     #[test]
     fn full_test() {
         assert_eq!(
-            parser("IsInGroup(1) and (GetRank(2) >= 3)"),
+            parser("IsInGroup(1) and (GetRank(2) >= 3) or IsInGroup(2)"),
             Ok(Expression::Operation(
-                Operator::And,
-                Box::new(Expression::Function(
-                    "IsInGroup".to_string(),
-                    vec![Expression::Constant(Atom::Num(1))]
-                )),
+                Operator::Or,
                 Box::new(Expression::Operation(
-                    Operator::GreaterEqual,
+                    Operator::And,
                     Box::new(Expression::Function(
-                        "GetRank".to_string(),
-                        vec![Expression::Constant(Atom::Num(2))]
+                        "IsInGroup".to_string(),
+                        vec![Expression::Constant(Atom::Num(1))]
                     )),
-                    Box::new(Expression::Constant(Atom::Num(3)))
-                ))
+                    Some(Box::new(Expression::Operation(
+                        Operator::GreaterEqual,
+                        Box::new(Expression::Function(
+                            "GetRank".to_string(),
+                            vec![Expression::Constant(Atom::Num(2))]
+                        )),
+                        Some(Box::new(Expression::Constant(Atom::Num(3))))
+                    )))
+                )),
+                Some(Box::new(Expression::Function(
+                    "IsInGroup".to_string(),
+                    vec![Expression::Constant(Atom::Num(2))]
+                )))
             ))
         )
     }

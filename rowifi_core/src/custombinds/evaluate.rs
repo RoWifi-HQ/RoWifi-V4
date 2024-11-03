@@ -2,7 +2,7 @@ use rowifi_models::{id::RoleId, roblox::id::GroupId};
 use std::{
     cmp::Ordering,
     collections::HashMap,
-    fmt::{Display, Formatter, Result as FmtResult},
+    fmt::{Display, Formatter, Result as FmtResult}, ops::Not,
 };
 
 use super::parser::{Atom, Expression, Operator};
@@ -33,6 +33,9 @@ pub enum EvaluationError {
     UnknownFunction {
         name: String,
     },
+    IncorrectOperator {
+        op: Operator
+    }
 }
 
 pub fn evaluate(
@@ -40,7 +43,7 @@ pub fn evaluate(
     context: &EvaluationContext<'_>,
 ) -> Result<EvaluationResult, EvaluationError> {
     match expr {
-        Expression::Operation(op, e1, e2) => {
+        Expression::Operation(op, e1, Some(e2)) => {
             let lhs = evaluate(e1, context)?;
             let rhs = evaluate(e2, context)?;
             let res = match op {
@@ -51,9 +54,16 @@ pub fn evaluate(
                 Operator::LessEqual => EvaluationResult::Bool(lhs <= rhs),
                 Operator::Less => EvaluationResult::Bool(lhs < rhs),
                 Operator::Equal => EvaluationResult::Bool(lhs == rhs),
-                Operator::Not => todo!(),
+                _ => return Err(EvaluationError::IncorrectOperator { op: Operator::Not })
             };
             Ok(res)
+        },
+        Expression::Operation(op, e1, None) => {
+            let lhs = evaluate(e1, context)?;
+            if *op != Operator::Not {
+                return Err(EvaluationError::IncorrectOperator { op: *op })
+            }
+            Ok(!lhs)
         }
         Expression::Function(name, args) => {
             let res = match name.as_str() {
@@ -273,6 +283,17 @@ impl PartialEq for EvaluationResult {
     }
 }
 
+impl Not for EvaluationResult {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        match self {
+            Self::Bool(b) => Self::Bool(!b),
+            Self::Number(n) => Self::Number(!n),
+        }
+    }
+}
+
 impl Display for EvaluationError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
@@ -300,6 +321,9 @@ impl Display for EvaluationError {
             ),
             Self::UnknownFunction { name } => {
                 write!(f, "Function {} is not a valid function", name)
+            },
+            Self::IncorrectOperator { op } => {
+                write!(f, "Did not expect `{}` operator", op)
             }
         }
     }
