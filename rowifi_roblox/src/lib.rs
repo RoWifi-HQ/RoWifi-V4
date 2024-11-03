@@ -248,6 +248,12 @@ impl RobloxClient {
         user_id: UserId,
         asset_filter: String,
     ) -> Result<Vec<InventoryItem>, RobloxError> {
+        // We request inventory items indivdually specifically, so if the filter is empty, it means
+        // we do not want anything.
+        if asset_filter.is_empty() {
+            return Ok(Vec::new());
+        }
+        
         let route = Route::ListInventoryItems {
             user_id: user_id.0,
             filter: asset_filter,
