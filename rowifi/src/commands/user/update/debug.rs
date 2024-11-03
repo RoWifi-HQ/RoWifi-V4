@@ -309,8 +309,10 @@ pub async fn debug_update_func(
                 if highest.priority() < rankbind.priority {
                     nickname_bind = Some(Bind::Rank(rankbind.clone()));
                 }
-                roles_to_add.extend(rankbind.discord_roles.iter().copied());
+            } else {
+                nickname_bind = Some(Bind::Rank(rankbind.clone()));
             }
+            roles_to_add.extend(rankbind.discord_roles.iter().copied());
         }
     }
 
@@ -359,8 +361,10 @@ pub async fn debug_update_func(
                 if highest.priority() < custombind.priority {
                     nickname_bind = Some(Bind::Custom(custombind.clone()));
                 }
-                roles_to_add.extend(custombind.discord_roles.iter().copied());
+            } else {
+                nickname_bind = Some(Bind::Custom(custombind.clone()));
             }
+            roles_to_add.extend(custombind.discord_roles.iter().copied());
         }
     }
 
@@ -370,8 +374,10 @@ pub async fn debug_update_func(
                 if highest.priority() < assetbind.priority {
                     nickname_bind = Some(Bind::Asset(assetbind.clone()));
                 }
-                roles_to_add.extend(assetbind.discord_roles.iter().copied());
+            } else {
+                nickname_bind = Some(Bind::Asset(assetbind.clone()));
             }
+            roles_to_add.extend(assetbind.discord_roles.iter().copied());
         }
     }
 

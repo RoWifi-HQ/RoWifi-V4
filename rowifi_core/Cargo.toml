@@ -16,5 +16,6 @@ rowifi_database = { path = "../rowifi_database" }
 rowifi_models = { path = "../rowifi_models" }
 rowifi_roblox = { path = "../rowifi_roblox" }
 serde = { workspace = true }
+tracing = { workspace = true }
 twilight-http = { workspace = true }
 twilight-validate = { workspace = true }

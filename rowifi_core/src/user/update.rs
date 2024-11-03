@@ -155,7 +155,7 @@ impl UpdateUser<'_> {
         }
 
         let mut nickname_bind: Option<Bind> = None;
-
+        tracing::info!("{:?}", user_ranks);
         for rankbind in &self.guild.rankbinds {
             // Check if the user's rank in the group is the same as the rankbind
             // or check if the bind is for the Guest role and the user is not in
@@ -169,8 +169,10 @@ impl UpdateUser<'_> {
                     if highest.priority() < rankbind.priority {
                         nickname_bind = Some(Bind::Rank(rankbind.clone()));
                     }
-                    roles_to_add.extend(rankbind.discord_roles.iter().copied());
+                } else {
+                    nickname_bind = Some(Bind::Rank(rankbind.clone()));
                 }
+                roles_to_add.extend(rankbind.discord_roles.iter().copied());
             }
         }
 
@@ -180,8 +182,10 @@ impl UpdateUser<'_> {
                     if highest.priority() < groupbind.priority {
                         nickname_bind = Some(Bind::Group(groupbind.clone()));
                     }
-                    roles_to_add.extend(groupbind.discord_roles.iter().copied());
+                } else {
+                    nickname_bind = Some(Bind::Group(groupbind.clone()));
                 }
+                roles_to_add.extend(groupbind.discord_roles.iter().copied());
             }
         }
 
@@ -214,8 +218,10 @@ impl UpdateUser<'_> {
                     if highest.priority() < custombind.priority {
                         nickname_bind = Some(Bind::Custom(custombind.clone()));
                     }
-                    roles_to_add.extend(custombind.discord_roles.iter().copied());
+                } else {
+                    nickname_bind = Some(Bind::Custom(custombind.clone()));
                 }
+                roles_to_add.extend(custombind.discord_roles.iter().copied());
             }
         }
 
@@ -225,8 +231,10 @@ impl UpdateUser<'_> {
                     if highest.priority() < assetbind.priority {
                         nickname_bind = Some(Bind::Asset(assetbind.clone()));
                     }
-                    roles_to_add.extend(assetbind.discord_roles.iter().copied());
+                } else {
+                    nickname_bind = Some(Bind::Asset(assetbind.clone()));
                 }
+                roles_to_add.extend(assetbind.discord_roles.iter().copied());
             }
         }
 

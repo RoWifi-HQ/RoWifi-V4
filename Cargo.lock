@@ -1650,6 +1650,7 @@ dependencies = [
  "rowifi_models",
  "rowifi_roblox",
  "serde",
+ "tracing",
  "twilight-http",
  "twilight-validate",
 ]
