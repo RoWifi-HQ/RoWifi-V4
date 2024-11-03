@@ -12,7 +12,6 @@ use axum::{
     routing::post,
     Extension, Json, Router, ServiceExt,
 };
-use deadpool_redis::{Manager as RedisManager, Pool as RedisPool, Runtime};
 use ed25519_dalek::{Verifier, VerifyingKey, PUBLIC_KEY_LENGTH};
 use hex::FromHex;
 use rowifi_cache::Cache;
@@ -28,7 +27,7 @@ use rowifi_models::discord::{
     id::{marker::ApplicationMarker, Id},
 };
 use rowifi_roblox::RobloxClient;
-use std::{error::Error, future::Future, pin::Pin, sync::Arc, time::Duration};
+use std::{error::Error, future::Future, pin::Pin, sync::Arc};
 use tokio::net::TcpListener;
 use tower::Layer as _;
 use tower_http::{
@@ -77,16 +76,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         std::env::var("DISCORD_PUBLIC_KEY").expect("Expected the discord public key");
     let roblox_proxy = std::env::var("ROBLOX_PROXY").ok();
 
-    let redis = RedisPool::builder(RedisManager::new(redis_url).unwrap())
-        .max_size(16)
-        .runtime(Runtime::Tokio1)
-        .recycle_timeout(Some(Duration::from_secs(30)))
-        .wait_timeout(Some(Duration::from_secs(30)))
-        .create_timeout(Some(Duration::from_secs(30)))
-        .build()
-        .unwrap();
+    let redis = redis::Client::open(redis_url)?;
 
-    let cache = Cache::new(redis);
+    let cache = Cache::new(redis).await?;
     let database = Arc::new(Database::new(&connection_string).await);
     let twilight_http = Arc::new(TwilightClient::new(bot_token.clone()));
     let roblox = RobloxClient::new(&open_cloud_auth, roblox_proxy);

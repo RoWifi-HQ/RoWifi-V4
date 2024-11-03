@@ -1,4 +1,4 @@
-use deadpool_redis::redis::Pipeline;
+use redis::Pipeline;
 use rowifi_models::{
     discord::{
         cache::{CachedChannel, CachedGuild, CachedMember, CachedRole, CachedTextChannel},

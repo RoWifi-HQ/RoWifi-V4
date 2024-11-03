@@ -1,4 +1,4 @@
-use deadpool_redis::{redis::RedisError, PoolError};
+use redis::RedisError;
 use rmp_serde::{decode::Error as SerdeDecodeError, encode::Error as SerdeEncodeError};
 use std::{
     error::Error as StdError,
@@ -7,7 +7,7 @@ use std::{
 
 #[derive(Debug)]
 pub enum CacheError {
-    Redis(PoolError),
+    Redis(RedisError),
     SerdeEncode(SerdeEncodeError),
     SerdeDecode(SerdeDecodeError),
 }
@@ -36,14 +36,8 @@ impl From<SerdeDecodeError> for CacheError {
     }
 }
 
-impl From<PoolError> for CacheError {
-    fn from(err: PoolError) -> Self {
-        CacheError::Redis(err)
-    }
-}
-
 impl From<RedisError> for CacheError {
     fn from(err: RedisError) -> Self {
-        CacheError::Redis(PoolError::Backend(err))
+        CacheError::Redis(err)
     }
 }

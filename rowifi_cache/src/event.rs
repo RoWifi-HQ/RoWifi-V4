@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use deadpool_redis::redis::{self, AsyncCommands};
+use redis::{self, AsyncCommands};
 use rowifi_models::{
     discord::{
         application::interaction::InteractionType,
@@ -75,7 +75,7 @@ impl UpdateCache for ChannelCreate {
                     }
                 }
 
-                let mut conn = c.get().await?;
+                let mut conn = c.get();
                 pipeline.query_async(&mut conn).await?;
             }
         }
@@ -97,7 +97,7 @@ impl UpdateCache for ChannelDelete {
 
             pipeline.del(CachedChannel::key(ChannelId(self.id)));
 
-            let mut conn = c.get().await?;
+            let mut conn = c.get();
             pipeline.query_async(&mut conn).await?;
         }
 
@@ -113,7 +113,7 @@ impl UpdateCache for ChannelUpdate {
 
             cache_guild_channel(&mut pipeline, self)?;
 
-            let mut conn = c.get().await?;
+            let mut conn = c.get();
             pipeline.query_async(&mut conn).await?;
         }
 
@@ -131,7 +131,7 @@ impl UpdateCache for GuildCreate {
             return Ok(());
         }
 
-        let mut conn = c.0.pool.get().await?;
+        let mut conn = c.get();
         pipeline.query_async(&mut conn).await?;
 
         Ok(())
@@ -153,7 +153,7 @@ impl UpdateCache for GuildDelete {
                 pipeline.del(CachedRole::key(role));
             }
 
-            let mut conn = c.get().await?;
+            let mut conn = c.get();
             pipeline.query_async(&mut conn).await?;
         }
         Ok(())
@@ -169,7 +169,7 @@ impl UpdateCache for GuildUpdate {
             guild.icon = self.icon;
             guild.owner_id = UserId(self.owner_id);
 
-            let mut conn = c.get().await?;
+            let mut conn = c.get();
             conn.set(CachedGuild::key(guild_id), rmp_serde::to_vec(&guild)?)
                 .await?;
         }
@@ -187,7 +187,7 @@ impl UpdateCache for MemberAdd {
 
         pipeline.sadd(format!("discord:m:{guild_id}"), self.user.id.get());
 
-        let mut conn = c.get().await?;
+        let mut conn = c.get();
         pipeline.query_async(&mut conn).await?;
 
         Ok(())
@@ -211,7 +211,7 @@ impl UpdateCache for MemberChunk {
             pipeline.sadd(format!("discord:m:{guild_id}"), member.user.id.get());
         }
 
-        let mut conn = c.get().await?;
+        let mut conn = c.get();
         pipeline.query_async(&mut conn).await?;
 
         Ok(())
@@ -229,7 +229,7 @@ impl UpdateCache for MemberRemove {
         pipeline.del(CachedMember::key(guild_id, user_id));
         pipeline.srem(format!("discord:m:{guild_id}"), self.user.id.get());
 
-        let mut conn = c.get().await?;
+        let mut conn = c.get();
         pipeline.query_async(&mut conn).await?;
 
         Ok(())
@@ -246,7 +246,7 @@ impl UpdateCache for MemberUpdate {
             member.nickname.clone_from(&self.nick);
             member.roles = self.roles.iter().map(|r| RoleId(*r)).collect();
 
-            let mut conn = c.get().await?;
+            let mut conn = c.get();
             conn.set(
                 CachedMember::key(guild_id, user_id),
                 rmp_serde::to_vec(&member)?,
@@ -269,7 +269,7 @@ impl UpdateCache for MessageCreate {
 
             pipeline.sadd(format!("discord:m:{guild_id}"), self.author.id.get());
 
-            let mut conn = c.get().await?;
+            let mut conn = c.get();
             pipeline.query_async(&mut conn).await?;
         }
 
@@ -291,7 +291,7 @@ impl UpdateCache for InteractionCreate {
 
                 pipeline.sadd(format!("discord:m:{guild_id}"), user.id.get());
 
-                let mut conn = c.get().await?;
+                let mut conn = c.get();
                 pipeline.query_async(&mut conn).await?;
             }
         }
@@ -312,7 +312,7 @@ impl UpdateCache for RoleCreate {
             pipeline.set(CachedGuild::key(guild_id), rmp_serde::to_vec(&guild)?);
         }
 
-        let mut conn = c.get().await?;
+        let mut conn = c.get();
         pipeline.query_async(&mut conn).await?;
 
         Ok(())
@@ -332,7 +332,7 @@ impl UpdateCache for RoleDelete {
 
         pipeline.del(CachedRole::key(RoleId(self.role_id)));
 
-        let mut conn = c.get().await?;
+        let mut conn = c.get();
         pipeline.query_async(&mut conn).await?;
 
         Ok(())
@@ -352,7 +352,7 @@ impl UpdateCache for RoleUpdate {
             pipeline.set(CachedGuild::key(guild_id), rmp_serde::to_vec(&guild)?);
         }
 
-        let mut conn = c.get().await?;
+        let mut conn = c.get();
         pipeline.query_async(&mut conn).await?;
 
         Ok(())

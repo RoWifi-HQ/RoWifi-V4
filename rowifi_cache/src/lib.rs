@@ -9,11 +9,8 @@ mod process;
 
 pub mod error;
 
-use deadpool_redis::{
-    redis::{self, AsyncCommands},
-    Connection, Pool as RedisPool, PoolError,
-};
 use process::cache_guild;
+use redis::{aio::ConnectionManager, AsyncCommands, Client as RedisClient};
 use rowifi_models::{
     discord::{
         cache::{CachedGuild, CachedMember, CachedRole},
@@ -27,7 +24,7 @@ use error::CacheError;
 use event::UpdateCache;
 
 pub struct CacheInner {
-    pub(crate) pool: RedisPool,
+    pub(crate) conn: ConnectionManager,
 }
 
 #[derive(Clone)]
@@ -35,8 +32,9 @@ pub struct Cache(Arc<CacheInner>);
 
 impl Cache {
     #[must_use]
-    pub fn new(pool: RedisPool) -> Self {
-        Self(Arc::new(CacheInner { pool }))
+    pub async fn new(client: RedisClient) -> Result<Self, CacheError> {
+        let conn = client.get_connection_manager().await?;
+        Ok(Self(Arc::new(CacheInner { conn })))
     }
 
     /// Update data in the cache.
@@ -53,8 +51,8 @@ impl Cache {
     /// # Errors
     ///
     /// See [`CacheError`] for details.
-    pub async fn get(&self) -> Result<Connection, PoolError> {
-        self.0.pool.get().await
+    pub fn get(&self) -> ConnectionManager {
+        self.0.conn.clone()
     }
 
     /// Returns the server from the cache.
@@ -63,7 +61,7 @@ impl Cache {
     ///
     /// See [`CacheError`] for details.
     pub async fn guild(&self, id: GuildId) -> Result<Option<CachedGuild>, CacheError> {
-        let mut conn = self.get().await?;
+        let mut conn = self.get();
         let res: Option<Vec<u8>> = conn.get(CachedGuild::key(id)).await?;
 
         if let Some(res) = res {
@@ -83,7 +81,7 @@ impl Cache {
         guild_id: GuildId,
         user_id: UserId,
     ) -> Result<Option<CachedMember>, CacheError> {
-        let mut conn = self.get().await?;
+        let mut conn = self.get();
         let res: Option<Vec<u8>> = conn.get(CachedMember::key(guild_id, user_id)).await?;
 
         if let Some(res) = res {
@@ -99,7 +97,7 @@ impl Cache {
     ///
     /// See [`CacheError`] for details.
     pub async fn guild_members(&self, id: GuildId) -> Result<HashSet<UserId>, CacheError> {
-        let mut conn = self.get().await?;
+        let mut conn = self.get();
         let res: Vec<u64> = conn.smembers(format!("discord:m:{id}")).await?;
 
         Ok(res.into_iter().map(UserId::new).collect())
@@ -114,7 +112,7 @@ impl Cache {
         &self,
         role_ids: impl Iterator<Item = RoleId>,
     ) -> Result<Vec<CachedRole>, CacheError> {
-        let mut conn = self.get().await?;
+        let mut conn = self.get();
         let keys = role_ids
             .into_iter()
             .map(CachedRole::key)
@@ -148,7 +146,7 @@ impl Cache {
             discriminator: member.user.discriminator,
         };
 
-        let mut conn = self.get().await?;
+        let mut conn = self.get();
         conn.set(
             CachedMember::key(guild_id, cached.id),
             rmp_serde::to_vec(&cached)?,
@@ -167,7 +165,7 @@ impl Cache {
         let mut pipeline = redis::pipe();
         let cached = cache_guild(&mut pipeline, &guild)?;
 
-        let mut conn = self.get().await?;
+        let mut conn = self.get();
         pipeline.query_async(&mut conn).await?;
 
         Ok(cached)

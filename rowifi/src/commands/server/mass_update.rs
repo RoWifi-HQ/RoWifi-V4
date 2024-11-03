@@ -1,4 +1,4 @@
-use deadpool_redis::redis::AsyncCommands;
+use redis::AsyncCommands;
 use rowifi_cache::error::CacheError;
 use rowifi_framework::prelude::*;
 use rowifi_models::{
@@ -32,7 +32,7 @@ pub async fn update_all(bot: Extension<BotContext>, command: Command<()>) -> imp
 }
 
 pub async fn update_all_func(bot: &BotContext, ctx: &CommandContext) -> CommandResult {
-    let mut conn = bot.cache.get().await.map_err(|err| CacheError::from(err))?;
+    let mut conn = bot.cache.get();
     let _: () = conn
         .publish(
             "update-all",
@@ -77,7 +77,7 @@ pub async fn update_role_func(
     ctx: &CommandContext,
     args: UpdateRoleArguments,
 ) -> CommandResult {
-    let mut conn = bot.cache.get().await.map_err(|err| CacheError::from(err))?;
+    let mut conn = bot.cache.get();
     let _: () = conn
         .publish(
             "update-role",

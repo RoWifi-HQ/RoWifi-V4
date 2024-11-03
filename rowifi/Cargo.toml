@@ -9,7 +9,6 @@ tower = ["dep:rowifi_tower"]
 
 [dependencies]
 axum = { workspace = true }
-deadpool-redis = { version = "0.18" }
 ed25519-dalek = { version = "2" }
 hex = { version = "0.4" }
 image = { version = "0.25", default-features = false, features = ["png"] }
