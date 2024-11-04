@@ -5,7 +5,8 @@ use rowifi_models::{
         application::interaction::application_command::{CommandDataOption, CommandOptionValue},
         id::{marker::RoleMarker, Id},
     },
-    id::{RoleId, UserId}, roblox::id::GroupId,
+    id::{RoleId, UserId},
+    roblox::id::GroupId,
 };
 use std::{
     error::Error as StdError,
@@ -167,7 +168,7 @@ impl Argument for RoleId {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match option.value {
             CommandOptionValue::Role(role) => Ok(RoleId(role)),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
@@ -176,7 +177,7 @@ impl Argument for GroupId {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match option.value {
             CommandOptionValue::Integer(group) => Ok(GroupId(group as u64)),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
@@ -185,7 +186,7 @@ impl Argument for bool {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match option.value {
             CommandOptionValue::Boolean(bool) => Ok(bool),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }

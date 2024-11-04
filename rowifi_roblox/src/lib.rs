@@ -254,7 +254,7 @@ impl RobloxClient {
         if asset_filter.is_empty() {
             return Ok(Vec::new());
         }
-        
+
         let route = Route::ListInventoryItems {
             user_id: user_id.0,
             filter: asset_filter.build(),

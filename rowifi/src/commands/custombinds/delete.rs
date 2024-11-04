@@ -56,10 +56,7 @@ pub async fn delete_custombind_func(
             .footer(EmbedFooterBuilder::new("RoWifi").build())
             .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
             .title("Deletion Failed")
-            .description(format!(
-                "Custombind with ID {} does not exist",
-                args.id
-            ))
+            .description(format!("Custombind with ID {} does not exist", args.id))
             .build();
         ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
     } else {

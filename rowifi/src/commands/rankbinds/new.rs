@@ -143,16 +143,19 @@ async fn new_rankbind_func(
             .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
             .title(format!("Action by <@{}>", ctx.author_id))
             .description("Rankbind added")
-            .field(EmbedFieldBuilder::new(format!("**Rank Id: {}**\n", res.bind.group_rank_id), format!(
-                "Template: {}\nPriority: {}\n Roles: {}",
-                res.bind.template,
-                res.bind.priority,
-                res.bind
-                    .discord_roles
-                    .iter()
-                    .map(|r| r.0.mention().to_string())
-                    .collect::<String>()
-            )))
+            .field(EmbedFieldBuilder::new(
+                format!("**Rank Id: {}**\n", res.bind.group_rank_id),
+                format!(
+                    "Template: {}\nPriority: {}\n Roles: {}",
+                    res.bind.template,
+                    res.bind.priority,
+                    res.bind
+                        .discord_roles
+                        .iter()
+                        .map(|r| r.0.mention().to_string())
+                        .collect::<String>()
+                ),
+            ))
             .build();
         let _ = bot
             .http

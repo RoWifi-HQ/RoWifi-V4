@@ -81,7 +81,12 @@ Oh no! A group with the ID {} does not exist. Ensure you have entered the ID cor
     .await
     {
         Ok(res) => res,
-        Err(AddDenylistError::MissingUser | AddDenylistError::MissingGroup | AddDenylistError::MissingCode | AddDenylistError::IncorrectCode(_)) => {
+        Err(
+            AddDenylistError::MissingUser
+            | AddDenylistError::MissingGroup
+            | AddDenylistError::MissingCode
+            | AddDenylistError::IncorrectCode(_),
+        ) => {
             // Ignore this case since this won't occur in slash commands
             return Ok(());
         }
@@ -89,7 +94,10 @@ Oh no! A group with the ID {} does not exist. Ensure you have entered the ID cor
     };
 
     let name = format!("Type: {}", denylist.kind());
-    let desc = format!("Group Id: {}\nAction: {}\nReason: {}", args.group_id, denylist.action_type, denylist.reason);
+    let desc = format!(
+        "Group Id: {}\nAction: {}\nReason: {}",
+        args.group_id, denylist.action_type, denylist.reason
+    );
 
     let embed = EmbedBuilder::new()
         .color(DARK_GREEN)

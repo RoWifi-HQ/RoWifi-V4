@@ -150,7 +150,10 @@ impl UpdateUser<'_> {
             .sorted_by_key(|d| d.action_type)
             .last();
         if let Some(deny_list) = active_deny_list {
-            return Err(UpdateUserError::DenyList((self.member.id, (*deny_list).clone())));
+            return Err(UpdateUserError::DenyList((
+                self.member.id,
+                (*deny_list).clone(),
+            )));
         }
 
         let mut nickname_bind: Option<Bind> = None;

@@ -48,14 +48,14 @@ pub async fn add_denylist(
             } else {
                 return Err(AddDenylistError::MissingUser);
             }
-        },
+        }
         DenyListType::Group => {
             if let Some(group_id) = args.group_id {
                 DenyListData::Group(group_id)
             } else {
                 return Err(AddDenylistError::MissingGroup);
             }
-        },
+        }
         DenyListType::Custom => {
             if let Some(code) = args.code {
                 if let Err(err) = parser(&code) {

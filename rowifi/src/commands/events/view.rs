@@ -29,7 +29,9 @@ pub async fn view_attendee_events(
     command: Command<EventViewArguments>,
 ) -> impl IntoResponse {
     tokio::spawn(async move {
-        if let Err(err) = view_attendee_events_func(&bot, standby.0, &command.ctx, command.args).await {
+        if let Err(err) =
+            view_attendee_events_func(&bot, standby.0, &command.ctx, command.args).await
+        {
             handle_error(bot.0, command.ctx, err).await;
         }
     });

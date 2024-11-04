@@ -1,7 +1,7 @@
+mod custom;
 mod delete;
 mod group;
 mod user;
-mod custom;
 
 use itertools::Itertools;
 use rowifi_framework::{prelude::*, utils::paginate_embeds};
@@ -15,10 +15,10 @@ use rowifi_models::{
 use std::sync::Arc;
 use twilight_standby::Standby;
 
+pub use custom::add_custom_denylist;
 pub use delete::delete_denylist;
 pub use group::add_group_denylist;
 pub use user::add_user_denylist;
-pub use custom::add_custom_denylist;
 
 pub async fn view_denylists(
     bot: Extension<BotContext>,
@@ -70,7 +70,12 @@ This server has no denylists configured. Looking to add one? Use the command `/d
             .description(format!("Page {}", page_count + 1));
         for denylist in denylist_chunk {
             let name = format!("ID: {}", denylist.id);
-            let mut desc = format!("Type: `{}`\nAction: {}\nReason: {}\n", denylist.kind(), denylist.action_type, denylist.reason);
+            let mut desc = format!(
+                "Type: `{}`\nAction: {}\nReason: {}\n",
+                denylist.kind(),
+                denylist.action_type,
+                denylist.reason
+            );
             match denylist.data {
                 DenyListData::User(user_id) => desc.push_str(&format!("User ID: {user_id}")),
                 DenyListData::Group(group_id) => desc.push_str(&format!("Group ID: {group_id}")),

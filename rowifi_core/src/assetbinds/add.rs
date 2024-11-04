@@ -1,3 +1,4 @@
+use crate::error::RoError;
 use chrono::Utc;
 use rowifi_database::{postgres::types::Json, Database};
 use rowifi_models::{
@@ -9,7 +10,6 @@ use rowifi_models::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::error::RoError;
 
 #[derive(Debug, Serialize)]
 pub struct AddAssetbind {

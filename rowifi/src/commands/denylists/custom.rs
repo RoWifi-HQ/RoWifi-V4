@@ -1,3 +1,4 @@
+use rowifi_core::denylists::add::{add_denylist, AddDenylistError, DenylistArguments};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
     deny_list::{DenyListActionType, DenyListType},
@@ -6,7 +7,6 @@ use rowifi_models::{
         util::Timestamp,
     },
 };
-use rowifi_core::denylists::add::{add_denylist, AddDenylistError, DenylistArguments};
 
 #[derive(Arguments, Debug)]
 pub struct DenylistRouteArguments {
@@ -57,16 +57,20 @@ pub async fn add_custom_denylist_func(
             reason,
             user_id: None,
             group_id: None,
-            code: Some(args.code.clone())
+            code: Some(args.code.clone()),
         },
     )
     .await
     {
         Ok(res) => res,
-        Err(AddDenylistError::MissingUser | AddDenylistError::MissingGroup | AddDenylistError::MissingCode) => {
+        Err(
+            AddDenylistError::MissingUser
+            | AddDenylistError::MissingGroup
+            | AddDenylistError::MissingCode,
+        ) => {
             // Ignore this case since it doesn't occur in slash commands
             return Ok(());
-        },
+        }
         Err(AddDenylistError::IncorrectCode(err)) => {
             ctx.respond(&bot).content(&err).unwrap().await?;
             return Ok(());
@@ -75,7 +79,10 @@ pub async fn add_custom_denylist_func(
     };
 
     let name = format!("Type: {}", denylist.kind());
-    let desc = format!("Code: `{}`\nAction: {}\nReason: {}", args.code, denylist.action_type, denylist.reason);
+    let desc = format!(
+        "Code: `{}`\nAction: {}\nReason: {}",
+        args.code, denylist.action_type, denylist.reason
+    );
 
     let embed = EmbedBuilder::new()
         .color(DARK_GREEN)

@@ -82,7 +82,7 @@ impl Serialize for DenyList {
         let (user_id, group_id, code) = match &self.data {
             DenyListData::User(u) => (Some(*u), None, None),
             DenyListData::Group(g) => (None, Some(*g), None),
-            DenyListData::Custom(c) => (None, None, Some(c.clone()))
+            DenyListData::Custom(c) => (None, None, Some(c.clone())),
         };
         let intermediary = DenyListIntermediary {
             id: self.id,
@@ -91,7 +91,7 @@ impl Serialize for DenyList {
             action_type: self.action_type,
             user_id,
             group_id,
-            code
+            code,
         };
         intermediary.serialize(serializer)
     }

@@ -104,7 +104,7 @@ pub async fn add_rankbind(
         kind: AuditLogKind::BindCreate,
         guild_id: Some(guild_id),
         user_id: Some(author_id),
-        timestamp:Utc::now(),
+        timestamp: Utc::now(),
         metadata: AuditLogData::BindCreate {
             count: 1,
             kind: BindType::Rank,

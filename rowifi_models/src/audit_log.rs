@@ -95,8 +95,8 @@ pub enum AuditLogData {
     },
     EventTypeModify {
         id: u32,
-        name: String
-    }
+        name: String,
+    },
 }
 
 impl TryFrom<tokio_postgres::Row> for AuditLog {

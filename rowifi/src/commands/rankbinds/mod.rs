@@ -64,9 +64,7 @@ This server has no rankbinds configured. Looking to add one? Use the command `/r
             let mut embed = EmbedBuilder::new()
                 .color(DARK_GREEN)
                 .footer(EmbedFooterBuilder::new("RoWifi").build())
-                .timestamp(
-                    Timestamp::from_secs(Utc::now().timestamp()).unwrap(),
-                )
+                .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
                 .title("Rankbinds")
                 .description(format!("Group {} | Page {}", group.0, page_count + 1));
             let rbs = rbs.sorted_unstable_by_key(|r| r.group_rank_id);

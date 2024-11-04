@@ -80,7 +80,12 @@ Oh no! A user with the name `{}` does not exist.
     .await
     {
         Ok(res) => res,
-        Err(AddDenylistError::MissingUser | AddDenylistError::MissingGroup | AddDenylistError::MissingCode | AddDenylistError::IncorrectCode(_)) => {
+        Err(
+            AddDenylistError::MissingUser
+            | AddDenylistError::MissingGroup
+            | AddDenylistError::MissingCode
+            | AddDenylistError::IncorrectCode(_),
+        ) => {
             // Ignore this case since it doesn't occur in slash commands
             return Ok(());
         }
@@ -88,7 +93,10 @@ Oh no! A user with the name `{}` does not exist.
     };
 
     let name = format!("Type: {}", denylist.kind());
-    let desc = format!("User Id: {}\nAction: {}\nReason: {}", user.id, denylist.action_type, denylist.reason);
+    let desc = format!(
+        "User Id: {}\nAction: {}\nReason: {}",
+        user.id, denylist.action_type, denylist.reason
+    );
 
     let embed = EmbedBuilder::new()
         .color(DARK_GREEN)
