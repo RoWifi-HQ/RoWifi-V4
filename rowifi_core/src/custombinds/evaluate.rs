@@ -2,11 +2,13 @@ use rowifi_models::{id::RoleId, roblox::id::GroupId};
 use std::{
     cmp::Ordering,
     collections::HashMap,
-    fmt::{Display, Formatter, Result as FmtResult}, ops::Not,
+    fmt::{Display, Formatter, Result as FmtResult},
+    ops::Not,
 };
 
 use super::parser::{Atom, Expression, Operator};
 
+#[derive(Debug)]
 pub enum EvaluationResult {
     Bool(bool),
     Number(u64),
@@ -18,6 +20,7 @@ pub struct EvaluationContext<'c> {
     pub username: &'c str,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum EvaluationError {
     IncorrectArgumentCount {
         name: &'static str,
@@ -34,8 +37,8 @@ pub enum EvaluationError {
         name: String,
     },
     IncorrectOperator {
-        op: Operator
-    }
+        op: Operator,
+    },
 }
 
 pub fn evaluate(
@@ -54,14 +57,14 @@ pub fn evaluate(
                 Operator::LessEqual => EvaluationResult::Bool(lhs <= rhs),
                 Operator::Less => EvaluationResult::Bool(lhs < rhs),
                 Operator::Equal => EvaluationResult::Bool(lhs == rhs),
-                _ => return Err(EvaluationError::IncorrectOperator { op: Operator::Not })
+                _ => return Err(EvaluationError::IncorrectOperator { op: Operator::Not }),
             };
             Ok(res)
-        },
+        }
         Expression::Operation(op, e1, None) => {
             let lhs = evaluate(e1, context)?;
             if *op != Operator::Not {
-                return Err(EvaluationError::IncorrectOperator { op: *op })
+                return Err(EvaluationError::IncorrectOperator { op: *op });
             }
             Ok(!lhs)
         }
@@ -221,7 +224,12 @@ pub fn evaluate(
                                 })
                             }
                         };
-                        Ok(EvaluationResult::Number(group))
+                        let rank = context
+                            .ranks
+                            .get(&GroupId(group))
+                            .copied()
+                            .unwrap_or_default();
+                        Ok(EvaluationResult::Number(rank as u64))
                     } else {
                         return Err(EvaluationError::IncorrectArgumentCount {
                             name: "GetRank",
@@ -321,10 +329,43 @@ impl Display for EvaluationError {
             ),
             Self::UnknownFunction { name } => {
                 write!(f, "Function {} is not a valid function", name)
-            },
+            }
             Self::IncorrectOperator { op } => {
                 write!(f, "Did not expect `{}` operator", op)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn evaluate_test_1() {
+        let exp = Expression::Operation(
+            Operator::GreaterEqual,
+            Box::new(Expression::Function(
+                "GetRank".into(),
+                vec![Expression::Constant(Atom::Num(1000))],
+            )),
+            Some(Box::new(Expression::Constant(Atom::Num(10)))),
+        );
+        let mut ranks = HashMap::new();
+        ranks.insert(GroupId(1000), 20);
+        let context1 = EvaluationContext {
+            roles: &[],
+            ranks: &ranks,
+            username: "test",
+        };
+        assert_eq!(evaluate(&exp, &context1), Ok(EvaluationResult::Bool(true)));
+
+        ranks.insert(GroupId(1000), 5);
+        let context2 = EvaluationContext {
+            roles: &[],
+            ranks: &ranks,
+            username: "test",
+        };
+        assert_eq!(evaluate(&exp, &context2), Ok(EvaluationResult::Bool(false)));
     }
 }
