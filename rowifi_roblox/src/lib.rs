@@ -6,6 +6,7 @@ pub mod filter;
 pub mod request;
 mod route;
 
+use filter::AssetFilterBuilder;
 use http_body_util::{BodyExt, Full};
 use hyper::{
     body::Bytes,
@@ -246,7 +247,7 @@ impl RobloxClient {
     pub async fn get_inventory_items(
         &self,
         user_id: UserId,
-        asset_filter: String,
+        asset_filter: AssetFilterBuilder,
     ) -> Result<Vec<InventoryItem>, RobloxError> {
         // We request inventory items indivdually specifically, so if the filter is empty, it means
         // we do not want anything.
@@ -256,7 +257,7 @@ impl RobloxClient {
         
         let route = Route::ListInventoryItems {
             user_id: user_id.0,
-            filter: asset_filter,
+            filter: asset_filter.build(),
         };
 
         let request = Request::new()

@@ -57,4 +57,9 @@ impl AssetFilterBuilder {
         let filter = String::from("filter=") + filters.join(";").as_str();
         filter
     }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.asset_ids.is_empty() && self.badge_ids.is_empty() && self.gamepass_ids.is_empty()
+    }
 }

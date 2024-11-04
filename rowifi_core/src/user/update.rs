@@ -88,7 +88,6 @@ impl UpdateUser<'_> {
                 AssetType::Gamepass => asset_filter = asset_filter.gamepass(assetbind.asset_id),
             }
         }
-        let asset_filter = asset_filter.build();
         let inventory_items = self
             .roblox
             .get_inventory_items(*user_id, asset_filter)
@@ -155,7 +154,7 @@ impl UpdateUser<'_> {
         }
 
         let mut nickname_bind: Option<Bind> = None;
-        tracing::info!("{:?}", user_ranks);
+        tracing::trace!("{:?}", user_ranks);
         for rankbind in &self.guild.rankbinds {
             // Check if the user's rank in the group is the same as the rankbind
             // or check if the bind is for the Guest role and the user is not in

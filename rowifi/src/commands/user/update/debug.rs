@@ -267,7 +267,6 @@ pub async fn debug_update_func(
             AssetType::Gamepass => asset_filter = asset_filter.gamepass(assetbind.asset_id),
         }
     }
-    let asset_filter = asset_filter.build();
     let inventory_items = bot
         .roblox
         .get_inventory_items(*user_id, asset_filter)
