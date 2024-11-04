@@ -51,6 +51,7 @@ pub struct BotContextInner {
 pub struct BotContext(Arc<BotContextInner>);
 
 pub struct CommandContext {
+    pub name: String,
     pub guild_id: GuildId,
     pub channel_id: ChannelId,
     pub author_id: UserId,

@@ -308,11 +308,12 @@ impl UpdateUser<'_> {
                 }
             }
         } else {
-            self.guild.default_template.as_ref().unwrap().nickname(
-                &roblox_user,
-                self.user.user_id,
-                &self.member.username,
-            )
+            self.guild
+                .default_template
+                .as_ref()
+                .cloned()
+                .unwrap_or_default()
+                .nickname(&roblox_user, self.user.user_id, &self.member.username)
         };
 
         if !has_nickname_bypass && (original_nickname != new_nickname) {

@@ -4,6 +4,7 @@ use nom::{
     character::complete::{alpha1, alphanumeric1, char, digit1, multispace0, multispace1},
     combinator::{all_consuming, map, map_res},
     error::VerboseError,
+    multi::separated_list0,
     sequence::{delimited, pair, preceded, tuple},
     Err, IResult, Parser,
 };
@@ -79,13 +80,19 @@ fn parse_constant(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
     map(parse_atom, Expression::Constant).parse(i)
 }
 
+fn parse_function_args(i: &str) -> IResult<&str, Vec<Expression>, VerboseError<&str>> {
+    separated_list0(
+        preceded(multispace0, char(',')),
+        preceded(multispace0, map(parse_atom, Expression::Constant)),
+    )(i)
+}
+
 fn parse_function(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
     let (i, (name, args)) = pair(
         alphanumeric1,
-        delimited(
-            char('('),
-            map(parse_atom, |atom| vec![Expression::Constant(atom)]),
-            char(')'),
+        preceded(
+            multispace0,
+            delimited(char('('), parse_function_args, char(')')),
         ),
     )
     .parse(i)?;
@@ -128,13 +135,7 @@ fn parse_comparison(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
 }
 
 fn parse_term(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
-    alt((
-        parse_negation,
-        parse_brackets,
-        parse_function,
-        parse_constant,
-    ))
-    .parse(i)
+    alt((parse_function, parse_constant)).parse(i)
 }
 
 fn parse_negation(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
@@ -165,8 +166,8 @@ fn parse_operation(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
 
 fn parse_expression(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
     alt((
-        parse_comparison,
         parse_negation,
+        parse_comparison,
         parse_brackets,
         parse_function,
         parse_constant,
@@ -298,6 +299,38 @@ mod tests {
                     vec![Expression::Constant(Atom::Num(2))]
                 )))
             ))
-        )
+        );
+    }
+
+    #[test]
+    fn full_test_2() {
+        assert_eq!(
+            parser("not HasRank(1000,25) and not HasRank (2000,25)"),
+            Ok(Expression::Operation(
+                Operator::And,
+                Box::new(Expression::Operation(
+                    Operator::Not,
+                    Box::new(Expression::Function(
+                        "HasRank".to_string(),
+                        vec![
+                            Expression::Constant(Atom::Num(1000)),
+                            Expression::Constant(Atom::Num(25))
+                        ]
+                    )),
+                    None
+                )),
+                Some(Box::new(Expression::Operation(
+                    Operator::Not,
+                    Box::new(Expression::Function(
+                        "HasRank".to_string(),
+                        vec![
+                            Expression::Constant(Atom::Num(2000)),
+                            Expression::Constant(Atom::Num(25))
+                        ]
+                    )),
+                    None
+                )))
+            ))
+        );
     }
 }
