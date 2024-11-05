@@ -1,10 +1,10 @@
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{alpha1, alphanumeric1, char, digit1, multispace0, multispace1},
+    character::complete::{alphanumeric1, anychar, char, digit1, multispace0, multispace1},
     combinator::{all_consuming, map, map_res},
     error::VerboseError,
-    multi::separated_list0,
+    multi::{many1, separated_list0},
     sequence::{delimited, pair, preceded, tuple},
     Err, IResult, Parser,
 };
@@ -66,8 +66,8 @@ fn parse_number(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
 }
 
 fn parse_string(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
-    map(delimited(char('"'), alpha1, char('"')), |s: &str| {
-        Atom::String(s.to_string())
+    map(delimited(char('"'), many1(anychar), char('"')), |s| {
+        Atom::String(s.into_iter().collect())
     })
     .parse(i)
 }
@@ -343,27 +343,36 @@ mod tests {
         assert_eq!(
             parser("(GetRank(1000) >= 200 and GetRank(1000) <= 253) and not (GetRank(2000) >= 10)"),
             Ok(Expression::Operation(
-                Operator::And, 
+                Operator::And,
                 Box::new(Expression::Operation(
-                    Operator::And, 
+                    Operator::And,
                     Box::new(Expression::Operation(
-                        Operator::GreaterEqual, 
-                        Box::new(Expression::Function("GetRank".into(), vec![Expression::Constant(Atom::Num(1000))])), 
+                        Operator::GreaterEqual,
+                        Box::new(Expression::Function(
+                            "GetRank".into(),
+                            vec![Expression::Constant(Atom::Num(1000))]
+                        )),
                         Some(Box::new(Expression::Constant(Atom::Num(200))))
-                    )), 
+                    )),
                     Some(Box::new(Expression::Operation(
-                        Operator::LessEqual, 
-                        Box::new(Expression::Function("GetRank".into(), vec![Expression::Constant(Atom::Num(1000))])), 
+                        Operator::LessEqual,
+                        Box::new(Expression::Function(
+                            "GetRank".into(),
+                            vec![Expression::Constant(Atom::Num(1000))]
+                        )),
                         Some(Box::new(Expression::Constant(Atom::Num(253))))
                     )),)
-                )), 
+                )),
                 Some(Box::new(Expression::Operation(
-                    Operator::Not, 
+                    Operator::Not,
                     Box::new(Expression::Operation(
-                        Operator::GreaterEqual, 
-                        Box::new(Expression::Function("GetRank".into(), vec![Expression::Constant(Atom::Num(2000))])), 
+                        Operator::GreaterEqual,
+                        Box::new(Expression::Function(
+                            "GetRank".into(),
+                            vec![Expression::Constant(Atom::Num(2000))]
+                        )),
                         Some(Box::new(Expression::Constant(Atom::Num(10))))
-                    )), 
+                    )),
                     None
                 )))
             ))
