@@ -84,6 +84,6 @@ fn recurse_skip_subcommands(data: &[CommandDataOption]) -> &[CommandDataOption] 
 }
 
 pub async fn handle_error(bot: BotContext, ctx: CommandContext, err: RoError) {
-    tracing::error!(name =? ctx.name, err = ?err);
+    tracing::error!(name =? ctx.name, guild_id = ?ctx.guild_id, err = ?err);
     let _ = ctx.respond(&bot).content("Something went wrong. Please try again. If the issue persists, please contact the RoWifi support server.").unwrap().await;
 }

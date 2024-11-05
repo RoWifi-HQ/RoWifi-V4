@@ -87,7 +87,7 @@ Oh no! An account with the name `{}` does not seem to exist. Ensure you have spe
         )
         .await?;
     bot.database.execute(
-        "INSERT INTO linked_users(roblox_id, user_id, guild_id) VALUES($1, $2, $3) ON CONFLICT(guild_id, user_id) SET roblox_id = $1", 
+        "INSERT INTO linked_users(roblox_id, user_id, guild_id) VALUES($1, $2, $3) ON CONFLICT(guild_id, user_id) DO UPDATE SET roblox_id = $1", 
         &[&roblox_user.id, &user.user_id, &ctx.guild_id]
     ).await?;
 

@@ -49,7 +49,7 @@ impl AssetFilterBuilder {
         }
 
         if !self.gamepass_ids.is_empty() {
-            let filter = String::from("gamepassIds=");
+            let filter = String::from("gamePassIds=");
             let gamepass_ids = self.gamepass_ids.into_iter().join(",");
             filters.push(filter + &gamepass_ids);
         }
