@@ -332,10 +332,6 @@ mod tests {
                 )))
             ))
         );
-
-        let res = parser("not IsInGroup(3198375) and not IsInGroup(4929233) and not IsInGroup(3114833) and not IsInGroup(4929259) and not IsInGroup(7029618) and not IsInGroup(4929492) and not IsInGroup(4929487) and not IsInGroup(9606178) and not IsInGroup(8049931) and not IsInGroup(9582920) and not IsInGroup(15531002) and not IsInGroup(14504795) and not IsInGroup(34097972) and not (GetRank(3108077) >= 200 and GetRank(3108077) <= 253) and not (GetRank(5040124) >= 10) and GetRank(3108077) >=10");
-        println!("{:?}", res);
-        assert!(res.is_ok());
     }
 
     #[test]

@@ -278,6 +278,9 @@ impl RobloxClient {
         let (parts, bytes) = self.request(request).await?;
 
         if !parts.status.is_success() {
+            if parts.status == StatusCode::FORBIDDEN {
+                return Ok(Vec::new());
+            }
             return Err(RobloxError {
                 source: None,
                 kind: ErrorKind::Response {
