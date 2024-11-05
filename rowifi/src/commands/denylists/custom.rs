@@ -50,7 +50,7 @@ pub async fn add_custom_denylist_func(
         &bot.database,
         ctx.guild_id,
         ctx.author_id,
-        &guild.deny_lists,
+        guild.deny_lists,
         DenylistArguments {
             kind: DenyListType::Custom,
             action: args.action,

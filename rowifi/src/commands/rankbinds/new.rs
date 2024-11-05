@@ -66,7 +66,7 @@ async fn new_rankbind_func(
         &bot.database,
         ctx.guild_id,
         ctx.author_id,
-        &guild.rankbinds,
+        guild.rankbinds,
         &server_roles,
         RankbindArguments {
             group_id: GroupId(args.group_id),

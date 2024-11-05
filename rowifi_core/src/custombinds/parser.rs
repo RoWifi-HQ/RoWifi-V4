@@ -101,9 +101,9 @@ fn parse_function(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
 
 fn parse_brackets(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
     delimited(
-        char('('),
-        alt((parse_operation, parse_expression)),
-        char(')'),
+        preceded(multispace0, char('(')),
+        preceded(multispace0, alt((parse_operation, parse_expression))),
+        preceded(multispace0, char(')')),
     )
     .parse(i)
 }

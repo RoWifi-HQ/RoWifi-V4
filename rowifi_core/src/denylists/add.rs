@@ -38,7 +38,7 @@ pub async fn add_denylist(
     database: &Database,
     guild_id: GuildId,
     author_id: UserId,
-    existing_denylists: &[DenyList],
+    mut existing_denylists: Vec<DenyList>,
     args: DenylistArguments,
 ) -> Result<DenyList, AddDenylistError> {
     let data = match args.kind {
@@ -69,24 +69,27 @@ pub async fn add_denylist(
     };
 
     let denylist_id = existing_denylists.iter().map(|d| d.id).max().unwrap_or(0) + 1;
-    let denylist = Json(DenyList {
+    let new_denylist = DenyList {
         id: denylist_id,
         reason: args.reason,
         action_type: args.action,
         data,
-    });
+    };
 
-    let idx = existing_denylists
-        .iter()
-        .position(|d| d.data == denylist.0.data);
+    if let Some(denylist) = existing_denylists
+        .iter_mut()
+        .find(|d| d.data == new_denylist.data)
+    {
+        denylist.reason = new_denylist.reason.clone();
+        denylist.action_type = new_denylist.action_type;
+    } else {
+        existing_denylists.push(new_denylist.clone());
+    }
 
     database
         .execute(
-            &format!(
-                "UPDATE guilds SET deny_lists[{}] = $2 WHERE guild_id = $1",
-                idx.unwrap_or(existing_denylists.len())
-            ),
-            &[&guild_id, &denylist],
+            "UPDATE guilds SET deny_lists = $2 WHERE guild_id = $1",
+            &[&guild_id, &Json(existing_denylists)],
         )
         .await
         .map_err(|err| AddDenylistError::Generic(err.into()))?;
@@ -114,5 +117,5 @@ pub async fn add_denylist(
         .await
         .map_err(|err| AddDenylistError::Generic(err.into()))?;
 
-    Ok(denylist.0)
+    Ok(new_denylist)
 }

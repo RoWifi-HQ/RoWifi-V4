@@ -57,7 +57,7 @@ pub async fn delete_custombinds(
 
     let new_custombinds = custombinds
         .iter()
-        .filter(|c| binds_to_delete.contains(&c.custom_bind_id))
+        .filter(|c| !binds_to_delete.contains(&c.custom_bind_id))
         .cloned()
         .collect::<Vec<_>>();
     database

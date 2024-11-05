@@ -45,7 +45,7 @@ pub async fn add_groupbind(
     database: &Database,
     guild_id: GuildId,
     author_id: UserId,
-    existing_groupbinds: &[Groupbind],
+    mut existing_groupbinds: Vec<Groupbind>,
     server_roles: &HashMap<RoleId, CachedRole>,
     args: GroupbindArguments,
 ) -> Result<AddGroupbind, AddGroupbindError> {
@@ -71,24 +71,30 @@ pub async fn add_groupbind(
         }
     }
 
-    let bind = Json(Groupbind {
+    let new_bind = Groupbind {
         group_id: args.group_id,
         discord_roles: roles_to_add,
         priority: args.priority.unwrap_or_default(),
         template: args.template,
-    });
+    };
 
-    let idx = existing_groupbinds
-        .iter()
-        .position(|r| r.group_id == bind.0.group_id);
+    let mut modified = false;
+    if let Some(bind) = existing_groupbinds
+        .iter_mut()
+        .find(|r| r.group_id == new_bind.group_id)
+    {
+        bind.priority = new_bind.priority;
+        bind.template = new_bind.template.clone();
+        bind.discord_roles = new_bind.discord_roles.clone();
+        modified = true;
+    } else {
+        existing_groupbinds.push(new_bind.clone());
+    }
 
     database
         .execute(
-            &format!(
-                "UPDATE guilds SET groupbinds[{}] = $2 WHERE guild_id = $1",
-                idx.unwrap_or(existing_groupbinds.len())
-            ),
-            &[&guild_id, &bind],
+            "UPDATE guilds SET groupbinds = $2 WHERE guild_id = $1",
+            &[&guild_id, &Json(existing_groupbinds)],
         )
         .await
         .map_err(RoError::from)?;
@@ -120,9 +126,9 @@ pub async fn add_groupbind(
         .map_err(RoError::from)?;
 
     Ok(AddGroupbind {
-        bind: bind.0,
+        bind: new_bind,
         ignored_roles,
-        modified: idx.is_some(),
+        modified,
     })
 }
 

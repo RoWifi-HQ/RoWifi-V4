@@ -42,7 +42,7 @@ pub async fn add_assetbind(
     database: &Database,
     guild_id: GuildId,
     author_id: UserId,
-    existing_assetbinds: &[Assetbind],
+    mut existing_assetbinds: Vec<Assetbind>,
     server_roles: &HashMap<RoleId, CachedRole>,
     args: AssetbindArguments,
 ) -> Result<AddAssetbind, AddAssetbindError> {
@@ -60,25 +60,31 @@ pub async fn add_assetbind(
         }
     }
 
-    let bind = Json(Assetbind {
+    let new_bind = Assetbind {
         asset_type: args.kind,
         asset_id: args.asset_id,
         discord_roles: roles_to_add,
         priority: args.priority.unwrap_or_default(),
         template: args.template,
-    });
+    };
 
-    let idx = existing_assetbinds
-        .iter()
-        .position(|r| r.asset_id == bind.0.asset_id);
+    let mut modified = false;
+    if let Some(bind) = existing_assetbinds
+        .iter_mut()
+        .find(|r| r.asset_id == new_bind.asset_id)
+    {
+        bind.priority = new_bind.priority;
+        bind.template = new_bind.template.clone();
+        bind.discord_roles = new_bind.discord_roles.clone();
+        modified = true;
+    } else {
+        existing_assetbinds.push(new_bind.clone());
+    }
 
     database
         .execute(
-            &format!(
-                "UPDATE guilds SET assetbinds[{}] = $2 WHERE guild_id = $1",
-                idx.unwrap_or(existing_assetbinds.len())
-            ),
-            &[&guild_id, &bind],
+            "UPDATE guilds SET assetbinds = $2 WHERE guild_id = $1",
+            &[&guild_id, &Json(existing_assetbinds)],
         )
         .await
         .map_err(RoError::from)?;
@@ -110,9 +116,9 @@ pub async fn add_assetbind(
         .map_err(RoError::from)?;
 
     Ok(AddAssetbind {
-        bind: bind.0,
+        bind: new_bind,
         ignored_roles,
-        modified: idx.is_some(),
+        modified,
     })
 }
 

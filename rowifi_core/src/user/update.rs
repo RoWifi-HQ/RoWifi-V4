@@ -59,7 +59,7 @@ impl UpdateUser<'_> {
 
         for verified_role in &self.guild.verified_roles {
             if self.server.roles.contains(verified_role)
-                && self.member.roles.contains(verified_role)
+                && !self.member.roles.contains(verified_role)
             {
                 roles_to_add.insert(*verified_role);
             }

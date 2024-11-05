@@ -47,7 +47,7 @@ pub async fn add_rankbind(
     database: &Database,
     guild_id: GuildId,
     author_id: UserId,
-    existing_rankbinds: &[Rankbind],
+    mut existing_rankbinds: Vec<Rankbind>,
     server_roles: &HashMap<RoleId, CachedRole>,
     args: RankbindArguments,
 ) -> Result<AddRankbind, AddRankbindError> {
@@ -76,26 +76,32 @@ pub async fn add_rankbind(
         }
     }
 
-    let bind = Json(Rankbind {
+    let new_bind = Rankbind {
         group_id: args.group_id,
         discord_roles: roles_to_add,
         group_rank_id: u32::from(args.rank_id),
         roblox_rank_id: rank.id.clone(),
         priority: args.priority.unwrap_or_default(),
         template: args.template,
-    });
+    };
 
-    let idx = existing_rankbinds
-        .iter()
-        .position(|r| r.roblox_rank_id == bind.0.roblox_rank_id);
+    let mut modified = false;
+    if let Some(bind) = existing_rankbinds
+        .iter_mut()
+        .find(|r| r.roblox_rank_id == new_bind.roblox_rank_id)
+    {
+        bind.priority = new_bind.priority;
+        bind.template = new_bind.template.clone();
+        bind.discord_roles = new_bind.discord_roles.clone();
+        modified = true;
+    } else {
+        existing_rankbinds.push(new_bind.clone());
+    }
 
     database
         .execute(
-            &format!(
-                "UPDATE guilds SET rankbinds[{}] = $2 WHERE guild_id = $1",
-                idx.unwrap_or(existing_rankbinds.len())
-            ),
-            &[&guild_id, &bind],
+            "UPDATE guilds SET rankbinds = $2 WHERE guild_id = $1",
+            &[&guild_id, &Json(existing_rankbinds)],
         )
         .await
         .map_err(RoError::from)?;
@@ -127,9 +133,9 @@ pub async fn add_rankbind(
         .map_err(RoError::from)?;
 
     Ok(AddRankbind {
-        bind: bind.0,
+        bind: new_bind,
         ignored_roles,
-        modified: idx.is_some(),
+        modified,
     })
 }
 

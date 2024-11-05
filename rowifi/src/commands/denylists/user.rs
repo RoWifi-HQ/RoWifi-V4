@@ -67,7 +67,7 @@ Oh no! A user with the name `{}` does not exist.
         &bot.database,
         ctx.guild_id,
         ctx.author_id,
-        &guild.deny_lists,
+        guild.deny_lists,
         DenylistArguments {
             kind: DenyListType::User,
             action: args.action,
