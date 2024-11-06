@@ -1625,6 +1625,7 @@ dependencies = [
  "twilight-http",
  "twilight-mention",
  "twilight-standby",
+ "twilight-util",
 ]
 
 [[package]]
@@ -1744,7 +1745,7 @@ dependencies = [
 [[package]]
 name = "rowifi_tower"
 version = "4.0.0"
-source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#fe2a18cbf5e2b0f57a9f7f54ce46088730fbde47"
+source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#127235b3149304fcfa24b7cb991b3c29de94e6dc"
 dependencies = [
  "axum",
  "bytes",

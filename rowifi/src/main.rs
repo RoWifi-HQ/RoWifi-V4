@@ -75,6 +75,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let discord_public_key =
         std::env::var("DISCORD_PUBLIC_KEY").expect("Expected the discord public key");
     let roblox_proxy = std::env::var("ROBLOX_PROXY").ok();
+    let error_logger = std::env::var("ERROR_LOGGER").expect("Expected the error logger");
+
+    let error_logger = twilight_util::link::webhook::parse(&error_logger)?;
 
     let redis = redis::Client::open(redis_url)?;
 
@@ -88,6 +91,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         database,
         cache,
         roblox,
+        (error_logger.0, error_logger.1.unwrap().to_string()),
     );
 
     let verifying_key = VerifyingKey::from_bytes(

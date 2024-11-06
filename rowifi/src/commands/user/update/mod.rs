@@ -155,6 +155,8 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
             .iter()
             .flat_map(|b| b.discord_roles.clone()),
     );
+    all_roles.extend(&guild.unverified_roles);
+    all_roles.extend(&guild.verified_roles);
     all_roles = all_roles.into_iter().unique().collect();
 
     let update_user = UpdateUser {

@@ -14,7 +14,7 @@ use rowifi_models::{
             interaction::{InteractionResponse, InteractionResponseData, InteractionResponseType},
         },
         id::{
-            marker::{ApplicationMarker, InteractionMarker},
+            marker::{ApplicationMarker, InteractionMarker, WebhookMarker},
             Id,
         },
     },
@@ -45,6 +45,7 @@ pub struct BotContextInner {
     /// The cache holding all discord data
     pub cache: Cache,
     pub roblox: RobloxClient,
+    pub error_logger: (Id<WebhookMarker>, String),
 }
 
 #[derive(Clone)]
@@ -74,6 +75,7 @@ impl BotContext {
         database: Arc<Database>,
         cache: Cache,
         roblox: RobloxClient,
+        error_logger: (Id<WebhookMarker>, String),
     ) -> Self {
         Self(Arc::new(BotContextInner {
             application_id,
@@ -81,6 +83,7 @@ impl BotContext {
             database,
             cache,
             roblox,
+            error_logger,
         }))
     }
 

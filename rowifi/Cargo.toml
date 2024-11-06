@@ -32,3 +32,4 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 twilight-http = { workspace = true }
 twilight-mention = { workspace = true }
 twilight-standby = { workspace = true }
+twilight-util = { workspace = true, features = ["link"] }

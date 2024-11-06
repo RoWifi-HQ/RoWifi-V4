@@ -51,7 +51,11 @@ where
                 unreachable!()
             };
             let ctx = CommandContext {
-                name: parts.uri.path_and_query().map(|s| s.to_string()).unwrap_or_default(),
+                name: parts
+                    .uri
+                    .path_and_query()
+                    .map(|s| s.to_string())
+                    .unwrap_or_default(),
                 guild_id: GuildId(interaction.guild_id.unwrap()),
                 channel_id: ChannelId(interaction.channel.as_ref().unwrap().id),
                 author_id: UserId(interaction.author_id().unwrap()),
@@ -85,5 +89,20 @@ fn recurse_skip_subcommands(data: &[CommandDataOption]) -> &[CommandDataOption] 
 
 pub async fn handle_error(bot: BotContext, ctx: CommandContext, err: RoError) {
     tracing::error!(name =? ctx.name, guild_id = ?ctx.guild_id, err = ?err);
-    let _ = ctx.respond(&bot).content("Something went wrong. Please try again. If the issue persists, please contact the RoWifi support server.").unwrap().await;
+    let _ = ctx.respond(&bot)
+        .content("Something went wrong. Please try again. If the issue persists, please contact the RoWifi support server.")
+        .unwrap()
+        .await;
+    let _ = bot
+        .http
+        .execute_webhook(bot.error_logger.0, &bot.error_logger.1)
+        .content(&format!(
+            "```
+Guild Id: {}
+Command: {}
+Error: {}
+        ```",
+            ctx.guild_id, ctx.name, err
+        ))
+        .await;
 }
