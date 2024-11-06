@@ -50,17 +50,13 @@ impl UpdateUser<'_> {
         let mut roles_to_remove = HashSet::<RoleId>::new();
 
         for unverified_role in &self.guild.unverified_roles {
-            if self.server.roles.contains(unverified_role)
-                && self.member.roles.contains(unverified_role)
-            {
+            if self.server.roles.contains(unverified_role) {
                 roles_to_remove.insert(*unverified_role);
             }
         }
 
         for verified_role in &self.guild.verified_roles {
-            if self.server.roles.contains(verified_role)
-                && !self.member.roles.contains(verified_role)
-            {
+            if self.server.roles.contains(verified_role) {
                 roles_to_add.insert(*verified_role);
             }
         }
