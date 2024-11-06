@@ -146,14 +146,15 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     #[cfg(feature = "tower")]
     {
         use rowifi_tower::{
-            commands::{set_rank, xp_add, xp_remove, xp_set},
+            commands::{set_rank, xp_add, xp_remove, xp_set, xp_view},
             init_tower,
         };
         router = router
             .route("/setrank", post(set_rank))
             .route("/xp/add", post(xp_add))
             .route("/xp/remove", post(xp_remove))
-            .route("/xp/set", post(xp_set));
+            .route("/xp/set", post(xp_set))
+            .route("/xp/view", post(xp_view));
         router = init_tower(router);
     }
 

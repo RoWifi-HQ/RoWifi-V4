@@ -1,7 +1,7 @@
 use nom::{
     branch::alt,
-    bytes::complete::tag,
-    character::complete::{alphanumeric1, anychar, char, digit1, multispace0, multispace1},
+    bytes::complete::{is_not, tag},
+    character::complete::{alphanumeric1, char, digit1, multispace0},
     combinator::{all_consuming, map, map_res},
     error::VerboseError,
     multi::{many1, separated_list0},
@@ -66,7 +66,7 @@ fn parse_number(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
 }
 
 fn parse_string(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
-    map(delimited(char('"'), many1(anychar), char('"')), |s| {
+    map(delimited(char('"'), many1(is_not("\"")), char('"')), |s| {
         Atom::String(s.into_iter().collect())
     })
     .parse(i)
@@ -140,7 +140,7 @@ fn parse_term(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
 
 fn parse_negation(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
     let (i, _) = tag("not")(i)?;
-    let (i, _) = multispace1(i)?;
+    let (i, _) = multispace0(i)?;
     let (i, expr) = parse_expression(i)?;
     Ok((
         i,
@@ -337,7 +337,7 @@ mod tests {
     #[test]
     fn full_test_3() {
         assert_eq!(
-            parser("(GetRank(1000) >= 200 and GetRank(1000) <= 253) and not (GetRank(2000) >= 10)"),
+            parser("(GetRank(1000) >= 200 and GetRank(1000) <= 253) and not(GetRank(2000) >= 10)"),
             Ok(Expression::Operation(
                 Operator::And,
                 Box::new(Expression::Operation(
