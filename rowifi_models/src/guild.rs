@@ -129,7 +129,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             .try_get("registered_groups")
             .unwrap_or_else(|_| Json(Vec::new()));
         let sticky_roles = row.try_get("sticky_roles").unwrap_or_default();
-        let log_channel = row.try_get("channel_id").ok();
+        let log_channel = row.try_get("log_channel").ok();
 
         Ok(Self {
             guild_id,
