@@ -47,13 +47,6 @@ impl UpdateUser<'_> {
     #[allow(clippy::too_many_lines)]
     pub async fn execute(self) -> Result<UpdateUserSuccess, UpdateUserError> {
         let mut roles_to_add = HashSet::<RoleId>::new();
-        let mut roles_to_remove = HashSet::<RoleId>::new();
-
-        for unverified_role in &self.guild.unverified_roles {
-            if self.server.roles.contains(unverified_role) {
-                roles_to_remove.insert(*unverified_role);
-            }
-        }
 
         for verified_role in &self.guild.verified_roles {
             if self.server.roles.contains(verified_role) {
@@ -244,11 +237,10 @@ impl UpdateUser<'_> {
                     if !self.member.roles.contains(bind_role) {
                         added_roles.push(*bind_role);
                     }
-                } else if self.member.roles.contains(bind_role)
-                    && roles_to_remove.contains(bind_role)
-                    && !self.guild.sticky_roles.contains(bind_role)
-                {
-                    removed_roles.push(*bind_role);
+                } else {
+                    if self.member.roles.contains(bind_role) {
+                        removed_roles.push(*bind_role);
+                    }
                 }
             }
         }
