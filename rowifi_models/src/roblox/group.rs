@@ -39,4 +39,6 @@ pub struct GroupRole {
     pub rank: u32,
     #[serde(rename = "displayName")]
     pub display_name: String,
+    #[serde(rename = "memberCount")]
+    pub member_count: Option<u64>,
 }
