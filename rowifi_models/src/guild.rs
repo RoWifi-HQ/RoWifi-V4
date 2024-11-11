@@ -127,7 +127,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
         let sync_xp_on_setrank = row.try_get("sync_xp_on_setrank").unwrap_or_default();
         let registered_groups = row
             .try_get("registered_groups")
-            .unwrap_or_else(|_| Json(Vec::new()));
+            .unwrap_or_else(|_| Vec::new());
         let sticky_roles = row.try_get("sticky_roles").unwrap_or_default();
         let log_channel = row.try_get("log_channel").ok();
 
@@ -148,7 +148,7 @@ impl TryFrom<tokio_postgres::Row> for PartialRoGuild {
             auto_detection,
             xp_binds: xp_binds.0,
             sync_xp_on_setrank,
-            registered_groups: registered_groups.0,
+            registered_groups,
             sticky_roles,
             log_channel,
         })
