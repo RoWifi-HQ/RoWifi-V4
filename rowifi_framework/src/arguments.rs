@@ -99,6 +99,7 @@ impl Argument for u64 {
         match &option.value {
             #[allow(clippy::cast_sign_loss)]
             CommandOptionValue::Integer(value) => Ok(*value as Self),
+            CommandOptionValue::Role(value) => Ok(value.get()),
             _ => unreachable!("u64 reached"),
         }
     }
