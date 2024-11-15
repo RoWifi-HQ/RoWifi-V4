@@ -1,3 +1,5 @@
+mod register;
+
 use image::{codecs::png::PngEncoder, ExtendedColorType, ImageEncoder};
 use plotters::{
     chart::{ChartBuilder, LabelAreaPosition},
@@ -19,6 +21,8 @@ use rowifi_models::{
     roblox::id::GroupId,
 };
 use std::{io::Cursor, time::Duration};
+
+pub use register::{analytics_register, analytics_unregister};
 
 #[derive(Debug)]
 pub struct ViewDuration(pub Duration);

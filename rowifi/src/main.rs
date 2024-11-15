@@ -39,7 +39,7 @@ use twilight_http::Client as TwilightClient;
 use twilight_standby::Standby;
 
 use crate::commands::{
-    analytics::analytics_view,
+    analytics::{analytics_register, analytics_unregister, analytics_view},
     assetbinds::{delete_assetbind, new_assetbind, view_assetbinds},
     backups::{backup_delete, backup_new, backup_restore, backup_view},
     custombinds::{delete_custombind, new_custombind, view_custombinds},
@@ -139,6 +139,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/update-all", post(update_all))
         .route("/update-role", post(update_role))
         .route("/analytics/view", post(analytics_view))
+        .route("/analytics/register", post(analytics_register))
+        .route("/analytics/unregister", post(analytics_unregister))
         .route("/serverinfo", post(serverinfo))
         .route("/debug/update", post(debug_update))
         .route("/standby", post(standby_route));
