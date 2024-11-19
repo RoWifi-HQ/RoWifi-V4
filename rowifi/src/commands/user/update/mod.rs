@@ -194,6 +194,20 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                     DenyListActionType::None => {}
                     DenyListActionType::Kick => {
                         tracing::trace!("kicking them");
+                        if let Ok(private_channel) =
+                            bot.http.create_private_channel(member.id.0).await
+                        {
+                            if let Ok(private_channel) = private_channel.model().await {
+                                let _ = bot
+                                    .http
+                                    .create_message(private_channel.id)
+                                    .content(&format!(
+                                        "You have been kicked from {}. Reason: {}",
+                                        server.name, deny_list.reason
+                                    ))
+                                    .await;
+                            }
+                        }
                         let _ = bot
                             .http
                             .remove_guild_member(ctx.guild_id.0, member.id.0)
@@ -201,6 +215,20 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                     }
                     DenyListActionType::Ban => {
                         tracing::trace!("banning them");
+                        if let Ok(private_channel) =
+                            bot.http.create_private_channel(member.id.0).await
+                        {
+                            if let Ok(private_channel) = private_channel.model().await {
+                                let _ = bot
+                                    .http
+                                    .create_message(private_channel.id)
+                                    .content(&format!(
+                                        "You have been banned from {}. Reason: {}",
+                                        server.name, deny_list.reason
+                                    ))
+                                    .await;
+                            }
+                        }
                         let _ = bot.http.create_ban(ctx.guild_id.0, member.id.0).await;
                     }
                 }
