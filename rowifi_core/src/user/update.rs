@@ -5,10 +5,10 @@ use rowifi_models::{
     discord::cache::{CachedGuild, CachedMember},
     guild::{BypassRoleKind, PartialRoGuild},
     id::{RoleId, UserId},
-    roblox::inventory::InventoryItem,
+    roblox::{inventory::InventoryItem, id::UserId as RobloxUserId},
     user::RoUser,
 };
-use rowifi_roblox::{error::RobloxError, filter::AssetFilterBuilder, RobloxClient};
+use rowifi_roblox::{error::{ErrorKind, RobloxError}, filter::AssetFilterBuilder, RobloxClient};
 use std::collections::{HashMap, HashSet};
 use twilight_http::Client as DiscordClient;
 
@@ -41,6 +41,7 @@ pub enum UpdateUserError {
     CustombindEvaluation { id: u32, err: EvaluationError },
     CustomDenylistParsing { id: u32, err: String },
     CustomDenylistEvaluation { id: u32, err: String },
+    BannedAccount(RobloxUserId)
 }
 
 impl UpdateUser<'_> {
@@ -67,7 +68,17 @@ impl UpdateUser<'_> {
             .map(|r| (r.group.id, r.role.rank))
             .collect::<HashMap<_, _>>();
 
-        let roblox_user = self.roblox.get_user(*user_id).await?;
+        let roblox_user = match self.roblox.get_user(*user_id).await {
+            Ok(u) => u,
+            Err(err) => {
+                if let ErrorKind::Response { route: _, status, bytes: _ } = err.kind() {
+                    if status.as_u16() == 404 {
+                        return Err(UpdateUserError::BannedAccount(*user_id));
+                    }
+                }
+                return Err(err.into());
+            }
+        };
 
         let mut asset_filter = AssetFilterBuilder::new();
         for assetbind in &self.guild.assetbinds {

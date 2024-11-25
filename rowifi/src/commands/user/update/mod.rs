@@ -311,6 +311,14 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cann
                 ctx.respond(&bot).content(&message).unwrap().await?;
                 return Ok(());
             }
+            UpdateUserError::BannedAccount(user_id) => {
+                let message = format!(
+                    "Your selected Roblox account for this server is {}. It is believed to be a banned or suspected account. If this is not the case, please contact the RoWifi support server.",
+                    user_id
+                );
+                ctx.respond(&bot).content(&message).unwrap().await?;
+                return Ok(());
+            }
         },
     };
     tracing::trace!(added_roles = ?added_roles, removed_roles = ?removed_roles, nickname = ?nickname);
