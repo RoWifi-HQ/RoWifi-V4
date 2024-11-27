@@ -316,7 +316,7 @@ impl UpdateUser<'_> {
         };
 
         if !has_nickname_bypass && (original_nickname != new_nickname) {
-            if new_nickname.len() > 32 {
+            if new_nickname.len() > 32 || new_nickname.is_empty() {
                 return Err(UpdateUserError::InvalidNickname(new_nickname));
             }
 

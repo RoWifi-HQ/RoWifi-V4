@@ -236,20 +236,37 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                 return Ok(());
             }
             UpdateUserError::InvalidNickname(nickname) => {
-                tracing::debug!("nickname({nickname}) more than 32 characters");
+                tracing::trace!("nickname({nickname}) more than 32 characters");
                 let message = if args.user_id.is_some() {
-                    format!(
-                        r#"
-<@{}>'s supposed nickname ({nickname}) is greater than 32 characters. Hence, I cannot update them.
+                    if nickname.is_empty() {
+                        format!(
+                            r#"
+<@{}>'s supposed nickname is empty. Hence, they cannot be updated.
+                        "#,
+                            member.id
+                        )
+                    } else {
+                        format!(
+                            r#"
+<@{}>'s supposed nickname ({nickname}) is greater than 32 characters. Hence, they cannot be updated.
                     "#,
-                        member.id
-                    )
+                            member.id
+                        )
+                    }
                 } else {
-                    format!(
-                        r#"
-Your supposed nickname ({nickname}) is greater than 32 characters. Hence, I cannot update you.
+                    if nickname.is_empty() {
+                        format!(
+                            r#"
+Your supposed nickname is empty. Hence, you cannot be updated.
                     "#,
-                    )
+                        )
+                    } else {
+                        format!(
+                            r#"
+Your supposed nickname ({nickname}) is greater than 32 characters. Hence, you cannot be updated.
+                    "#,
+                        )
+                    }
                 };
                 ctx.respond(&bot).content(&message).unwrap().await?;
 
