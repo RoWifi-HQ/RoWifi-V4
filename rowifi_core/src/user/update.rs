@@ -249,7 +249,7 @@ impl UpdateUser<'_> {
                         added_roles.push(*bind_role);
                     }
                 } else {
-                    if self.member.roles.contains(bind_role) {
+                    if self.member.roles.contains(bind_role) && !self.guild.sticky_roles.contains(bind_role) {
                         removed_roles.push(*bind_role);
                     }
                 }
