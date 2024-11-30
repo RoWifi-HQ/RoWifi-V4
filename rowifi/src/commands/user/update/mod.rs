@@ -4,13 +4,7 @@ use itertools::Itertools;
 use rowifi_core::user::update::{UpdateUser, UpdateUserError};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
-    deny_list::DenyListActionType,
-    discord::{
-        http::interaction::{InteractionResponse, InteractionResponseType},
-        util::Timestamp,
-    },
-    guild::BypassRoleKind,
-    id::UserId,
+    deny_list::DenyListActionType, discord::util::Timestamp, guild::BypassRoleKind, id::UserId,
     user::RoUser,
 };
 use std::{error::Error, fmt::Write};
@@ -27,16 +21,12 @@ pub async fn update_route(
     bot: Extension<BotContext>,
     command: Command<UpdateArguments>,
 ) -> impl IntoResponse {
-    tokio::spawn(async move {
+    let _ = tokio::spawn(async move {
         if let Err(err) = update_func(&bot, &command.ctx, command.args).await {
             handle_error(bot.0, command.ctx, err).await;
         }
-    });
-
-    Json(InteractionResponse {
-        kind: InteractionResponseType::DeferredChannelMessageWithSource,
-        data: None,
     })
+    .await;
 }
 
 #[allow(clippy::too_many_lines)]
@@ -46,6 +36,7 @@ pub async fn update_func(
     ctx: &CommandContext,
     args: UpdateArguments,
 ) -> CommandResult {
+    ctx.defer_response(bot, DeferredResponse::Normal).await?;
     tracing::debug!("update command invoked");
     let server = bot.server(ctx.guild_id).await?;
 
