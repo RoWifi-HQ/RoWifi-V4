@@ -36,8 +36,7 @@ pub enum AuditLogKind {
     EventLog = 10,
     SettingModify = 11,
     EventTypeCreate = 12,
-    EventTypeDelete = 13,
-    EventTypeModify = 14,
+    EventTypeModify = 13,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -87,15 +86,12 @@ pub enum AuditLogData {
     },
     EventTypeCreate {
         id: u32,
-        name: String,
     },
     EventTypeDelete {
         id: u32,
-        name: String,
     },
     EventTypeModify {
         id: u32,
-        name: String,
     },
 }
 

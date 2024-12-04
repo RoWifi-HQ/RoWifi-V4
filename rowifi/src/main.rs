@@ -46,7 +46,7 @@ use crate::commands::{
     denylists::{
         add_custom_denylist, add_group_denylist, add_user_denylist, delete_denylist, view_denylists,
     },
-    events::{new_event, view_attendee_events, view_event, view_host_events},
+    events::{new_event, view_attendee_events, view_event, view_host_events, new_event_type, view_event_types},
     groupbinds::{delete_groupbind, new_groupbind, view_groupbinds},
     rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
     server::{serverinfo, update_all, update_role},
@@ -132,6 +132,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/event/attendee", post(view_attendee_events))
         .route("/event/host", post(view_host_events))
         .route("/event/view", post(view_event))
+        .route("/event-types/new", post(new_event_type))
+        .route("/event-types/view", post(view_event_types))
         .route("/backup/new", post(backup_new))
         .route("/backup/restore", post(backup_restore))
         .route("/backup/view", post(backup_view))
