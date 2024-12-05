@@ -150,6 +150,8 @@ pub async fn debug_update_func(
             .iter()
             .flat_map(|b| b.discord_roles.clone()),
     );
+    all_roles.extend(&guild.unverified_roles);
+    all_roles.extend(&guild.verified_roles);
     all_roles = all_roles.into_iter().unique().collect();
 
     let user_id = user
@@ -280,17 +282,10 @@ pub async fn debug_update_func(
         .collect::<HashSet<_>>();
 
     let mut roles_to_add = HashSet::<RoleId>::new();
-    let mut roles_to_remove = HashSet::<RoleId>::new();
     let mut nickname_bind: Option<Bind> = None;
 
-    for unverified_role in &guild.unverified_roles {
-        if server.roles.contains(unverified_role) && member.roles.contains(unverified_role) {
-            roles_to_remove.insert(*unverified_role);
-        }
-    }
-
     for verified_role in &guild.verified_roles {
-        if server.roles.contains(verified_role) && member.roles.contains(verified_role) {
+        if server.roles.contains(verified_role) {
             roles_to_add.insert(*verified_role);
         }
     }
@@ -387,7 +382,7 @@ pub async fn debug_update_func(
 :white_check_mark: You are not the server owner.
 :white_check_mark: You do not have a role which has been marked as bypass.
 :white_check_mark: You have a valid linked Roblox account.
-:white_check_mark: You are not a denylist.
+:white_check_mark: You are not on a denylist.
 "
         .to_string();
         if !evaluation_failed.is_empty() {
@@ -408,18 +403,46 @@ pub async fn debug_update_func(
         return Ok(());
     }
 
+    let all_guild_roles = bot
+        .cache
+        .guild_roles(all_roles.clone().into_iter())
+        .await?
+        .into_iter()
+        .map(|r| (r.id, r.position))
+        .collect::<HashMap<_, _>>();
+    let Some(bot_member) = bot
+        .member(ctx.guild_id, UserId::new(bot.application_id.get()))
+        .await?
+    else {
+        return Ok(());
+    };
+    let highest_bot_position = bot_member
+        .roles
+        .iter()
+        .map(|r| all_guild_roles.get(r).copied().unwrap_or_default())
+        .max()
+        .unwrap_or_default();
+
     let mut added_roles = Vec::new();
     let mut removed_roles = Vec::new();
+    let mut warning_roles = Vec::new();
     for bind_role in all_roles {
         if server.roles.contains(&bind_role) {
+            let role_position = all_guild_roles.get(&bind_role).copied().unwrap_or_default();
             if roles_to_add.contains(&bind_role) {
                 if !member.roles.contains(&bind_role) {
                     added_roles.push(bind_role);
+                    if role_position > highest_bot_position {
+                        warning_roles.push(bind_role);
+                    }
                 }
-            } else if (member.roles.contains(&bind_role) || roles_to_remove.contains(&bind_role))
-                && !guild.sticky_roles.contains(&bind_role)
-            {
-                removed_roles.push(bind_role);
+            } else {
+                if member.roles.contains(&bind_role) && !guild.sticky_roles.contains(&bind_role) {
+                    removed_roles.push(bind_role);
+                    if role_position > highest_bot_position {
+                        warning_roles.push(bind_role);
+                    }
+                }
             }
         }
     }
@@ -453,7 +476,7 @@ pub async fn debug_update_func(
 :white_check_mark: You are not the server owner.
 :white_check_mark: You do not have a role which has been marked as bypass.
 :white_check_mark: You have a valid linked Roblox account.
-:white_check_mark: You are not a denylist.
+:white_check_mark: You are not on a denylist.
 "
     .to_string();
 
@@ -482,6 +505,15 @@ pub async fn debug_update_func(
         "\n\n**Roles to add**:\n{}\n**Roles to remove**:\n{}",
         added_str, removed_str
     ));
+
+    if !warning_roles.is_empty() {
+        message.push_str(&format!(
+            "\n\nThe bot will attempt to add/remove ({}) which will result in an error. These roles are higher than the bot's highest role. To resolve this, make sure the bot's highest role is higher than these roles or unbind these roles",
+            warning_roles.iter().map(|r| format!("<@&{}>", r)).join(",")
+        ));
+    }
+
+    message.push_str("\n\n⚠️ This list of checks is not exhaustive. Despite these checks, if you’re unable to resolve your issue, please contact the support server for assistance.");
 
     ctx.respond(&bot).content(&message).unwrap().await?;
 
