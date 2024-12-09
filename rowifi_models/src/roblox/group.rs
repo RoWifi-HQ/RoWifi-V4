@@ -7,7 +7,7 @@ pub struct PartialGroup {
     pub id: GroupId,
     pub name: String,
     #[serde(rename = "memberCount")]
-    pub member_count: u64,
+    pub member_count: i64,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -17,7 +17,7 @@ pub struct PartialRank {
     pub name: Option<String>,
     pub rank: u32,
     #[serde(rename = "memberCount")]
-    pub member_count: Option<u64>,
+    pub member_count: Option<i64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -40,5 +40,5 @@ pub struct GroupRole {
     #[serde(rename = "displayName")]
     pub display_name: String,
     #[serde(rename = "memberCount")]
-    pub member_count: Option<u64>,
+    pub member_count: Option<i64>,
 }
