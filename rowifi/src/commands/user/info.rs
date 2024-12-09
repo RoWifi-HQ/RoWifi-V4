@@ -136,7 +136,10 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         .title(discord_user.nickname.unwrap_or(discord_user.username))
         .field(EmbedFieldBuilder::new("Roblox Account", roblox_account).build())
         .field(EmbedFieldBuilder::new("Ranks", ranks_info))
-        .field(EmbedFieldBuilder::new("Badges", badges.into_iter().join(" ")))
+        .field(EmbedFieldBuilder::new(
+            "Badges",
+            badges.into_iter().join(" "),
+        ))
         .thumbnail(ImageSource::url(thumbnail).unwrap())
         .build();
     ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
