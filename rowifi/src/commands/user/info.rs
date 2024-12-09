@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use rowifi_framework::prelude::*;
 use rowifi_models::{
     discord::{
@@ -5,7 +6,7 @@ use rowifi_models::{
         util::Timestamp,
     },
     id::UserId,
-    user::RoUser,
+    user::{RoUser, UserFlags},
 };
 use std::collections::HashSet;
 
@@ -120,6 +121,14 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         roblox_user.create_time.unwrap().timestamp()
     );
 
+    let mut badges = Vec::new();
+    if database_user.flags.contains(UserFlags::STAFF) {
+        badges.push("<:rowifi_staff:1315831471172485161>");
+    }
+    if database_user.flags.contains(UserFlags::PARTNER) {
+        badges.push("<:rowifi_partner:1315831440121794590>");
+    }
+
     let embed = EmbedBuilder::new()
         .color(BLUE)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
@@ -127,6 +136,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         .title(discord_user.nickname.unwrap_or(discord_user.username))
         .field(EmbedFieldBuilder::new("Roblox Account", roblox_account).build())
         .field(EmbedFieldBuilder::new("Ranks", ranks_info))
+        .field(EmbedFieldBuilder::new("Badges", badges.into_iter().join(" ")))
         .thumbnail(ImageSource::url(thumbnail).unwrap())
         .build();
     ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
