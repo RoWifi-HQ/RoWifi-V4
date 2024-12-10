@@ -155,7 +155,7 @@ pub async fn view_attendee_events_func(
             .description(format!("Page {}", page_count + 1));
 
         for event in events {
-            let name = format!("Id: {}", event.guild_event_id);
+            let name = format!("Event Id: {}", event.guild_event_id);
 
             #[allow(clippy::cast_sign_loss)]
             let event_type = guild
@@ -263,7 +263,7 @@ pub async fn view_host_events_func(
             .description(format!("Page {}", page_count + 1));
 
         for event in events {
-            let name = format!("Id: {}", event.guild_event_id);
+            let name = format!("Event Id: {}", event.guild_event_id);
 
             #[allow(clippy::cast_sign_loss)]
             let event_type = guild
