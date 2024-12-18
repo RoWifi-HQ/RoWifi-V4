@@ -35,6 +35,7 @@ pub struct GroupUserRole {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct GroupRole {
+    pub path: String,
     pub id: String,
     pub rank: u32,
     #[serde(rename = "displayName")]
