@@ -117,6 +117,9 @@ impl Cache {
             .into_iter()
             .map(CachedRole::key)
             .collect::<Vec<_>>();
+        if keys.is_empty() {
+            return Ok(Vec::new());
+        }
         let res: Vec<Vec<u8>> = conn.get(keys).await?;
 
         let mut roles = Vec::new();
