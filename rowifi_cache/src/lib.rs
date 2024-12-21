@@ -124,8 +124,9 @@ impl Cache {
 
         let mut roles = Vec::new();
         for r in res {
-            let role = rmp_serde::from_slice::<CachedRole>(&r)?;
-            roles.push(role);
+            if let Ok(role) = rmp_serde::from_slice::<CachedRole>(&r) {
+                roles.push(role);
+            }
         }
 
         Ok(roles)
