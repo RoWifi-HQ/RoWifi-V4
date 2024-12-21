@@ -38,6 +38,7 @@ pub enum AuditLogKind {
     EventTypeCreate = 12,
     EventTypeModify = 13,
     GroupAccept = 14,
+    GroupDecline = 15
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -95,6 +96,10 @@ pub enum AuditLogData {
         id: u32,
     },
     GroupAccept {
+        group_id: GroupId,
+        target_roblox_user: RobloxUserId,
+    },
+    GroupDecline {
         group_id: GroupId,
         target_roblox_user: RobloxUserId,
     },
