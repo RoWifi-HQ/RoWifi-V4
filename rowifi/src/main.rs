@@ -46,7 +46,10 @@ use crate::commands::{
     denylists::{
         add_custom_denylist, add_group_denylist, add_user_denylist, delete_denylist, view_denylists,
     },
-    events::{new_event, view_attendee_events, view_event, view_host_events, new_event_type, view_event_types},
+    events::{
+        new_event, new_event_type, view_attendee_events, view_event, view_event_types,
+        view_host_events,
+    },
     groupbinds::{delete_groupbind, new_groupbind, view_groupbinds},
     rankbinds::{delete_rankbind, new_rankbind, view_rankbinds},
     server::{serverinfo, update_all, update_role},
@@ -150,7 +153,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     #[cfg(feature = "tower")]
     {
         use rowifi_tower::{
-            commands::{set_rank, xp_add, xp_remove, xp_set, xp_view, xp_bind_add, xp_bind_delete, xp_binds_view},
+            commands::{
+                group_accept, group_decline, set_rank, xp_add, xp_bind_add, xp_bind_delete,
+                xp_binds_view, xp_remove, xp_set, xp_view,
+            },
             init_tower,
         };
         router = router
@@ -161,7 +167,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             .route("/view/xp", post(xp_view))
             .route("/xpbinds/add", post(xp_bind_add))
             .route("/xpbinds/delete", post(xp_bind_delete))
-            .route("/xpbinds/view", post(xp_binds_view));
+            .route("/xpbinds/view", post(xp_binds_view))
+            .route("/group/accept", post(group_accept))
+            .route("/group/decline", post(group_decline));
         router = init_tower(router);
     }
 
