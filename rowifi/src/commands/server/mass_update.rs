@@ -1,3 +1,4 @@
+use dashmap::DashMap;
 use itertools::Itertools;
 use redis::AsyncCommands;
 use rowifi_cache::error::CacheError;
@@ -17,7 +18,12 @@ use rowifi_models::{
     user::RoUser,
 };
 use serde::Serialize;
-use std::{collections::HashSet, fmt::Write, time::Duration};
+use std::{collections::HashSet, fmt::Write, sync::Arc, time::Duration};
+
+#[derive(Clone, Default)]
+pub struct MassUpdateQueues {
+    pub handles: Arc<DashMap<GuildId, tokio::task::Id>>,
+}
 
 #[derive(Debug, Serialize)]
 pub struct MassUpdateQueueArguments {
@@ -25,9 +31,13 @@ pub struct MassUpdateQueueArguments {
     pub role_id: Option<RoleId>,
 }
 
-pub async fn update_all(bot: Extension<BotContext>, command: Command<()>) -> impl IntoResponse {
+pub async fn update_all(
+    bot: Extension<BotContext>,
+    queues: Extension<MassUpdateQueues>,
+    command: Command<()>,
+) -> impl IntoResponse {
     tokio::spawn(async move {
-        if let Err(err) = update_all_func(&bot, &command.ctx).await {
+        if let Err(err) = update_all_func(&bot, &command.ctx, &queues).await {
             handle_error(bot.0, command.ctx, err).await;
         }
     });
@@ -42,11 +52,22 @@ pub async fn update_all(bot: Extension<BotContext>, command: Command<()>) -> imp
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn update_all_func(bot: &BotContext, ctx: &CommandContext) -> CommandResult {
+pub async fn update_all_func(
+    bot: &BotContext,
+    ctx: &CommandContext,
+    queues: &MassUpdateQueues,
+) -> CommandResult {
     let guild = bot.database.query_opt::<PartialRoGuild>("SELECT guild_id, kind, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, custombinds, assetbinds, deny_lists, default_template, log_channel FROM guilds WHERE guild_id = $1", &[&ctx.guild_id]).await?.unwrap_or_else(|| PartialRoGuild::new(ctx.guild_id));
     if guild.kind.unwrap() == GuildType::Free {
         let message = "Mass Update commands are only available to Premium servers";
         ctx.respond(&bot).content(message).unwrap().await?;
+        return Ok(());
+    }
+
+    if queues.handles.get(&ctx.guild_id).is_some() {
+        let message = "You must wait for the previous mass update queue to end";
+        ctx.respond(&bot).content(message).unwrap().await?;
+        return Ok(());
     }
 
     let mut conn = bot.cache.get();
@@ -63,37 +84,63 @@ pub async fn update_all_func(bot: &BotContext, ctx: &CommandContext) -> CommandR
         .map_err(|err| CacheError::from(err))?;
 
     tokio::time::sleep(Duration::from_secs(30)).await;
-    let server = bot.server(ctx.guild_id).await?;
-    let members = bot.cache.guild_members(ctx.guild_id).await?;
 
-    for member in members {
-        if let Some(member) = bot.member(ctx.guild_id, member).await? {
-            if let Err(err) = update_member(bot, &server, &guild, member).await {
-                tracing::error!(err = ?err);
+    async fn update_all_inner(
+        bot: &BotContext,
+        ctx: &CommandContext,
+        guild: PartialRoGuild,
+    ) -> Result<(), RoError> {
+        let server = bot.server(ctx.guild_id).await?;
+        let members = bot.cache.guild_members(ctx.guild_id).await?;
+
+        for member in members {
+            if let Some(member) = bot.member(ctx.guild_id, member).await? {
+                if let Err(err) = update_member(bot, &server, &guild, member).await {
+                    tracing::error!(err = ?err);
+                }
             }
         }
+
+        bot.http
+            .create_message(ctx.channel_id.0)
+            .content("`update-all` is complete")
+            .await?;
+
+        Ok(())
     }
 
-    bot.http
-        .create_message(ctx.channel_id.0)
-        .content("`update-all` is complete")
-        .await?;
+    let bot = bot.clone();
+    let ctx = ctx.clone();
+    let guild_id = ctx.guild_id;
+    let handle = tokio::spawn(async move {
+        let _ = (&bot, &ctx);
+        if let Err(err) = update_all_inner(&bot, &ctx, guild).await {
+            handle_error(bot, ctx, err).await;
+        }
+    });
+    queues.handles.insert(guild_id, handle.id());
+
+    let queues = queues.clone();
+    tokio::spawn(async move {
+        let _ = handle.await;
+        queues.handles.remove(&guild_id);
+    });
 
     Ok(())
 }
 
 #[derive(Arguments, Debug)]
 pub struct UpdateRoleArguments {
-    // TODO: Change this to RoleId
     pub role: u64,
 }
 
 pub async fn update_role(
     bot: Extension<BotContext>,
+    queues: Extension<MassUpdateQueues>,
     command: Command<UpdateRoleArguments>,
 ) -> impl IntoResponse {
     tokio::spawn(async move {
-        if let Err(err) = update_role_func(&bot, &command.ctx, command.args).await {
+        if let Err(err) = update_role_func(&bot, &command.ctx, command.args, &queues).await {
             handle_error(bot.0, command.ctx, err).await;
         }
     });
@@ -112,12 +159,21 @@ pub async fn update_role_func(
     bot: &BotContext,
     ctx: &CommandContext,
     args: UpdateRoleArguments,
+    queues: &MassUpdateQueues,
 ) -> CommandResult {
     let guild = bot.database.query_opt::<PartialRoGuild>("SELECT guild_id, kind, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, custombinds, assetbinds, deny_lists, default_template, log_channel FROM guilds WHERE guild_id = $1", &[&ctx.guild_id]).await?.unwrap_or_else(|| PartialRoGuild::new(ctx.guild_id));
     if guild.kind.unwrap() == GuildType::Free {
         let message = "Mass Update commands are only available to Premium servers";
         ctx.respond(&bot).content(message).unwrap().await?;
+        return Ok(());
     }
+
+    if queues.handles.get(&ctx.guild_id).is_some() {
+        let message = "You must wait for the previous mass update queue to end";
+        ctx.respond(&bot).content(message).unwrap().await?;
+        return Ok(());
+    }
+
     let mut conn = bot.cache.get();
     let _: () = conn
         .publish(
@@ -132,23 +188,50 @@ pub async fn update_role_func(
         .map_err(|err| CacheError::from(err))?;
 
     tokio::time::sleep(Duration::from_secs(30)).await;
-    let server = bot.server(ctx.guild_id).await?;
-    let members = bot.cache.guild_members(ctx.guild_id).await?;
 
-    for member in members {
-        if let Some(member) = bot.member(ctx.guild_id, member).await? {
-            if member.roles.contains(&RoleId::new(args.role)) {
-                if let Err(err) = update_member(bot, &server, &guild, member).await {
-                    tracing::error!(err = ?err);
+    async fn update_role_inner(
+        bot: &BotContext,
+        ctx: &CommandContext,
+        guild: PartialRoGuild,
+        role: RoleId,
+    ) -> Result<(), RoError> {
+        let server = bot.server(ctx.guild_id).await?;
+        let members = bot.cache.guild_members(ctx.guild_id).await?;
+
+        for member in members {
+            if let Some(member) = bot.member(ctx.guild_id, member).await? {
+                if member.roles.contains(&role) {
+                    if let Err(err) = update_member(bot, &server, &guild, member).await {
+                        tracing::error!(err = ?err);
+                    }
                 }
             }
         }
+
+        bot.http
+            .create_message(ctx.channel_id.0)
+            .content("`update-role` is complete")
+            .await?;
+
+        Ok(())
     }
 
-    bot.http
-        .create_message(ctx.channel_id.0)
-        .content("`update-role` is complete")
-        .await?;
+    let bot = bot.clone();
+    let ctx = ctx.clone();
+    let guild_id = ctx.guild_id;
+    let handle = tokio::spawn(async move {
+        let _ = (&bot, &ctx);
+        if let Err(err) = update_role_inner(&bot, &ctx, guild, RoleId::new(args.role)).await {
+            handle_error(bot, ctx, err).await;
+        }
+    });
+    queues.handles.insert(guild_id, handle.id());
+
+    let queues = queues.clone();
+    tokio::spawn(async move {
+        let _ = handle.await;
+        queues.handles.remove(&guild_id);
+    });
     Ok(())
 }
 

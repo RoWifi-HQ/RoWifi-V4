@@ -51,6 +51,7 @@ pub struct BotContextInner {
 #[derive(Clone)]
 pub struct BotContext(Arc<BotContextInner>);
 
+#[derive(Clone)]
 pub struct CommandContext {
     pub name: String,
     pub guild_id: GuildId,
@@ -59,7 +60,7 @@ pub struct CommandContext {
     pub interaction_id: Id<InteractionMarker>,
     pub interaction_token: String,
     pub resolved: Option<InteractionDataResolved>,
-    pub callback_invoked: AtomicBool,
+    pub callback_invoked: Arc<AtomicBool>,
 }
 
 pub enum DeferredResponse {

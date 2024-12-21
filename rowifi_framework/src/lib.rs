@@ -6,7 +6,7 @@ pub mod context;
 pub mod prelude;
 pub mod utils;
 
-use std::sync::atomic::AtomicBool;
+use std::sync::{atomic::AtomicBool, Arc};
 
 use axum::{
     async_trait,
@@ -62,7 +62,7 @@ where
                 interaction_id: interaction.id,
                 interaction_token: interaction.token,
                 resolved: data.resolved.clone(),
-                callback_invoked: AtomicBool::new(false),
+                callback_invoked: Arc::new(AtomicBool::new(false)),
             };
             let data = recurse_skip_subcommands(&data.options);
             let args = A::from_interaction(data).unwrap();

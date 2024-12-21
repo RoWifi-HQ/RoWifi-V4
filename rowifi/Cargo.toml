@@ -9,6 +9,7 @@ tower = ["dep:rowifi_tower"]
 
 [dependencies]
 axum = { workspace = true }
+dashmap = { version = "6" }
 ed25519-dalek = { version = "2" }
 hex = { version = "0.4" }
 image = { version = "0.25", default-features = false, features = ["png"] }

@@ -1758,6 +1758,7 @@ name = "rowifi"
 version = "4.1.0"
 dependencies = [
  "axum",
+ "dashmap",
  "ed25519-dalek",
  "hex",
  "image",
