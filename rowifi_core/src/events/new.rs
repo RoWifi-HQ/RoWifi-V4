@@ -4,7 +4,7 @@ use rowifi_database::{
     Database,
 };
 use rowifi_models::{
-    audit_log::{AuditLog, AuditLogData, AuditLogKind},
+    audit_log::{AuditLog, AuditLogData, AuditLogKind, EventLog as AuditEventLog},
     events::{EventLog, EventType},
     id::{GuildId, UserId},
     roblox::id::UserId as RobloxUserId,
@@ -69,9 +69,9 @@ pub async fn log_event(
         guild_id: Some(guild_id),
         user_id: Some(author_id),
         timestamp: Utc::now(),
-        metadata: AuditLogData::EventLog {
+        metadata: AuditLogData::EventLog(AuditEventLog {
             guild_event_id: new_event.guild_event_id,
-        },
+        }),
     };
 
     database

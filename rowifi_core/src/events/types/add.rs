@@ -1,7 +1,7 @@
 use chrono::Utc;
 use rowifi_database::{postgres::types::Json, Database};
 use rowifi_models::{
-    audit_log::{AuditLog, AuditLogData, AuditLogKind},
+    audit_log::{AuditLog, AuditLogData, AuditLogKind, EventTypeCreate},
     events::EventType,
     id::{GuildId, UserId},
 };
@@ -66,9 +66,7 @@ pub async fn add_event_type(
         guild_id: Some(guild_id),
         user_id: Some(author_id),
         timestamp: Utc::now(),
-        metadata: AuditLogData::EventTypeCreate {
-            id: args.id,
-        },
+        metadata: AuditLogData::EventTypeCreate(EventTypeCreate { id: args.id }),
     };
 
     database

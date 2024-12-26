@@ -15,3 +15,4 @@ twilight-model = { workspace = true }
 regex = { version = "1.10" }
 serde = { workspace = true }
 serde_repr = { version = "0.1" }
+serde_json = { workspace = true, features = ["raw_value"] }

@@ -2,7 +2,7 @@ use crate::error::RoError;
 use chrono::Utc;
 use rowifi_database::{postgres::types::Json, Database};
 use rowifi_models::{
-    audit_log::{AuditLog, AuditLogData, AuditLogKind},
+    audit_log::{AuditLog, AuditLogData, AuditLogKind, BindCreate},
     bind::{AssetType, Assetbind, BindType, Template},
     discord::cache::CachedRole,
     id::{GuildId, RoleId, UserId},
@@ -94,10 +94,10 @@ pub async fn add_assetbind(
         guild_id: Some(guild_id),
         user_id: Some(author_id),
         timestamp: Utc::now(),
-        metadata: AuditLogData::BindCreate {
+        metadata: AuditLogData::BindCreate(BindCreate {
             count: 1,
             kind: BindType::Asset,
-        },
+        }),
     };
 
     database

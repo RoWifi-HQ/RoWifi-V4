@@ -2,6 +2,7 @@
 #![allow(clippy::module_name_repetitions)]
 
 use deadpool_postgres::{Manager, Object, Pool, Runtime};
+use std::error::Error;
 use std::{str::FromStr, time::Duration};
 use tokio_postgres::types::ToSql;
 use tokio_postgres::{Config as TokioPostgresConfig, NoTls, Row};
@@ -63,7 +64,7 @@ impl Database {
     ) -> Result<Vec<T>, DatabaseError>
     where
         T: TryFrom<Row>,
-        DatabaseError: From<<T as TryFrom<Row>>::Error>,
+        T::Error: Error + Send + Sync + 'static
     {
         let conn = self.get().await?;
         let statement = conn.prepare_cached(statement).await?;
@@ -71,7 +72,8 @@ impl Database {
         let items = rows
             .into_iter()
             .map(|r| T::try_from(r))
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|err| DatabaseError(Box::new(err)))?;
         Ok(items)
     }
 

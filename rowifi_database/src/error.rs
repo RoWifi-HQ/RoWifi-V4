@@ -6,65 +6,36 @@ use std::{
 use tokio_postgres::Error as PostgresError;
 
 #[derive(Debug)]
-pub struct DatabaseError {
-    pub(crate) source: Option<Box<dyn StdError + Send + Sync>>,
-    pub(crate) kind: ErrorKind,
-}
-
-#[derive(Debug)]
-pub enum ErrorKind {
-    Pool,
-    Postgres,
-}
+pub struct DatabaseError(pub(crate) Box<dyn StdError + Send + Sync>);
 
 impl DatabaseError {
     #[must_use]
-    pub const fn kind(&self) -> &ErrorKind {
-        &self.kind
-    }
-
-    #[must_use]
-    pub fn into_source(self) -> Option<Box<dyn StdError + Send + Sync>> {
-        self.source
-    }
-
-    #[must_use]
-    pub fn into_parts(self) -> (ErrorKind, Option<Box<dyn StdError + Send + Sync>>) {
-        (self.kind, self.source)
-    }
-}
-
-impl From<PoolError> for DatabaseError {
-    fn from(value: PoolError) -> Self {
-        DatabaseError {
-            source: Some(Box::new(value)),
-            kind: ErrorKind::Pool,
-        }
+    pub fn into_source(self) -> Box<dyn StdError + Send + Sync> {
+        self.0
     }
 }
 
 impl From<PostgresError> for DatabaseError {
-    fn from(value: PostgresError) -> Self {
-        DatabaseError {
-            source: Some(Box::new(value)),
-            kind: ErrorKind::Postgres,
-        }
+    fn from(err: PostgresError) -> Self {
+        Self(Box::new(err))
+    }
+}
+
+impl From<PoolError> for DatabaseError {
+    fn from(err: PoolError) -> Self {
+        Self(Box::new(err))
     }
 }
 
 impl Display for DatabaseError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match &self.kind {
-            ErrorKind::Postgres => write!(f, "postgres error - {:?}", self.source),
-            ErrorKind::Pool => write!(f, "pool error - {:?}", self.source),
-        }
+        write!(f, "database error: {}", self.0)
     }
 }
 
 impl StdError for DatabaseError {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        self.source
-            .as_ref()
-            .map(|source| &**source as &(dyn StdError + 'static))
+        Some(self.0
+            .as_ref())
     }
 }

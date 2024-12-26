@@ -1,7 +1,7 @@
 use chrono::Utc;
 use rowifi_database::{postgres::types::Json, Database};
 use rowifi_models::{
-    audit_log::{AuditLog, AuditLogData, AuditLogKind},
+    audit_log::{AuditLog, AuditLogData, AuditLogKind, DenylistDelete},
     deny_list::DenyList,
     id::{GuildId, UserId},
 };
@@ -68,9 +68,9 @@ pub async fn delete_denylists(
         guild_id: Some(guild_id),
         user_id: Some(author_id),
         timestamp: Utc::now(),
-        metadata: AuditLogData::DenylistDelete {
+        metadata: AuditLogData::DenylistDelete(DenylistDelete {
             count: denylists_to_delete.len() as i32,
-        },
+        }),
     };
 
     database

@@ -1878,6 +1878,7 @@ dependencies = [
  "lazy_static",
  "regex",
  "serde",
+ "serde_json",
  "serde_repr",
  "tokio-postgres",
  "twilight-model",

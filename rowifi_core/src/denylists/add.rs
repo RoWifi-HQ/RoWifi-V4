@@ -1,7 +1,7 @@
 use chrono::Utc;
 use rowifi_database::{postgres::types::Json, Database};
 use rowifi_models::{
-    audit_log::{AuditLog, AuditLogData, AuditLogKind},
+    audit_log::{AuditLog, AuditLogData, AuditLogKind, DenylistCreate},
     deny_list::{DenyList, DenyListActionType, DenyListData, DenyListType},
     id::{GuildId, UserId},
     roblox::id::{GroupId, UserId as RobloxUserId},
@@ -99,7 +99,7 @@ pub async fn add_denylist(
         guild_id: Some(guild_id),
         user_id: Some(author_id),
         timestamp: Utc::now(),
-        metadata: AuditLogData::DenylistCreate { kind: args.kind },
+        metadata: AuditLogData::DenylistCreate(DenylistCreate { kind: args.kind }),
     };
 
     database

@@ -1,7 +1,7 @@
 use chrono::Utc;
 use rowifi_database::{postgres::types::Json, Database};
 use rowifi_models::{
-    audit_log::{AuditLog, AuditLogData, AuditLogKind},
+    audit_log::{AuditLog, AuditLogData, AuditLogKind, BindDelete},
     bind::{Assetbind, BindType},
     id::{GuildId, UserId},
     roblox::id::AssetId,
@@ -69,10 +69,10 @@ pub async fn delete_assetbinds(
         guild_id: Some(guild_id),
         user_id: Some(author_id),
         timestamp: Utc::now(),
-        metadata: AuditLogData::BindDelete {
+        metadata: AuditLogData::BindDelete(BindDelete {
             count: binds_to_delete.len() as i32,
             kind: BindType::Asset,
-        },
+        }),
     };
 
     database

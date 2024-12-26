@@ -1,7 +1,9 @@
 use bytes::BytesMut;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::value::RawValue;
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::error::Error;
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, Json, ToSql, Type};
 
 use crate::{
@@ -11,10 +13,9 @@ use crate::{
     roblox::id::{GroupId, UserId as RobloxUserId},
 };
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct AuditLog {
     pub kind: AuditLogKind,
-    // TODO: Write custom deserializer for this
     pub metadata: AuditLogData,
     pub guild_id: Option<GuildId>,
     pub user_id: Option<UserId>,
@@ -38,82 +39,174 @@ pub enum AuditLogKind {
     EventTypeCreate = 12,
     EventTypeModify = 13,
     GroupAccept = 14,
-    GroupDecline = 15
+    GroupDecline = 15,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(untagged)]
+pub enum AuditLogData {
+    BindCreate(BindCreate),
+    BindModify(BindModify),
+    BindDelete(BindDelete),
+    XPAdd(XPAdd),
+    XPRemove(XPRemove),
+    SetRank(SetRank),
+    XPSet(XPSet),
+    DenylistCreate(DenylistCreate),
+    DenylistDelete(DenylistDelete),
+    EventLog(EventLog),
+    SettingModify(SettingModify),
+    EventTypeCreate(EventTypeCreate),
+    EventTypeDelete(EventTypeDelete),
+    EventTypeModify(EventTypeModify),
+    GroupAccept(GroupAccept),
+    GroupDecline(GroupDecline),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(untagged)]
-pub enum AuditLogData {
-    BindCreate {
-        count: i32,
-        kind: BindType,
-    },
-    BindModify {
-        count: i32,
-        kind: BindType,
-    },
-    BindDelete {
-        count: i32,
-        kind: BindType,
-    },
-    XPAdd {
-        xp: i32,
-        target_roblox_user: RobloxUserId,
-    },
-    XPRemove {
-        xp: i32,
-        target_roblox_user: RobloxUserId,
-    },
-    SetRank {
-        target_roblox_user: RobloxUserId,
-        group_id: GroupId,
-        group_rank_id: u32,
-    },
-    XPSet {
-        xp: i32,
-        target_roblox_user: RobloxUserId,
-    },
-    DenylistCreate {
-        kind: DenyListType,
-    },
-    DenylistDelete {
-        count: i32,
-    },
-    EventLog {
-        guild_event_id: i64,
-    },
-    SettingModify {
-        setting: String,
-        value: String,
-    },
-    EventTypeCreate {
-        id: u32,
-    },
-    EventTypeDelete {
-        id: u32,
-    },
-    EventTypeModify {
-        id: u32,
-    },
-    GroupAccept {
-        group_id: GroupId,
-        target_roblox_user: RobloxUserId,
-    },
-    GroupDecline {
-        group_id: GroupId,
-        target_roblox_user: RobloxUserId,
-    },
+pub struct BindCreate {
+    pub count: i32,
+    pub kind: BindType,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct BindModify {
+    pub count: i32,
+    pub kind: BindType,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct BindDelete {
+    pub count: i32,
+    pub kind: BindType,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct XPAdd {
+    pub xp: i32,
+    pub target_roblox_user: RobloxUserId,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct XPRemove {
+    pub xp: i32,
+    pub target_roblox_user: RobloxUserId,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SetRank {
+    pub target_roblox_user: RobloxUserId,
+    pub group_id: GroupId,
+    pub group_rank_id: u32,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct XPSet {
+    pub xp: i32,
+    pub target_roblox_user: RobloxUserId,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct DenylistCreate {
+    pub kind: DenyListType,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct DenylistDelete {
+    pub count: i32,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct EventLog {
+    pub guild_event_id: i64,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SettingModify {
+    pub setting: String,
+    pub value: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct EventTypeCreate {
+    pub id: u32,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct EventTypeModify {
+    pub id: u32,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct EventTypeDelete {
+    pub id: u32,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct GroupAccept {
+    pub group_id: GroupId,
+    pub target_roblox_user: RobloxUserId,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct GroupDecline {
+    pub group_id: GroupId,
+    pub target_roblox_user: RobloxUserId,
 }
 
 impl TryFrom<tokio_postgres::Row> for AuditLog {
-    type Error = tokio_postgres::Error;
+    type Error = Box<dyn Error>;
 
-    fn try_from(row: tokio_postgres::Row) -> Result<Self, tokio_postgres::Error> {
-        let guild_id = row.try_get("guild_id")?;
-        let kind = row.try_get("kind")?;
-        let Json(metadata) = row.try_get("metadata")?;
-        let user_id = row.try_get("user_id")?;
-        let timestamp = row.try_get("timestamp")?;
+    fn try_from(row: tokio_postgres::Row) -> Result<Self, Self::Error> {
+        let guild_id: Option<GuildId> = row.try_get("guild_id")?;
+        let kind: AuditLogKind = row.try_get("kind")?;
+        let metadata: Json<Box<RawValue>> = row.try_get("metadata")?;
+        let user_id: Option<UserId> = row.try_get("user_id")?;
+        let timestamp: DateTime<Utc> = row.try_get("timestamp")?;
+
+        let metadata: AuditLogData = match kind {
+            AuditLogKind::BindCreate => {
+                AuditLogData::BindCreate(BindCreate::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::BindModify => {
+                AuditLogData::BindModify(BindModify::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::BindDelete => {
+                AuditLogData::BindDelete(BindDelete::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::XPAdd => AuditLogData::XPAdd(XPAdd::deserialize(metadata.0.as_ref())?),
+            AuditLogKind::XPRemove => {
+                AuditLogData::XPRemove(XPRemove::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::SetRank => {
+                AuditLogData::SetRank(SetRank::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::XPSet => AuditLogData::XPSet(XPSet::deserialize(metadata.0.as_ref())?),
+            AuditLogKind::DenylistCreate => {
+                AuditLogData::DenylistCreate(DenylistCreate::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::DenylistDelete => {
+                AuditLogData::DenylistDelete(DenylistDelete::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::EventLog => {
+                AuditLogData::EventLog(EventLog::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::SettingModify => {
+                AuditLogData::SettingModify(SettingModify::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::EventTypeCreate => {
+                AuditLogData::EventTypeCreate(EventTypeCreate::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::EventTypeModify => {
+                AuditLogData::EventTypeModify(EventTypeModify::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::GroupAccept => {
+                AuditLogData::GroupAccept(GroupAccept::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::GroupDecline => {
+                AuditLogData::GroupDecline(GroupDecline::deserialize(metadata.0.as_ref())?)
+            }
+        };
 
         Ok(Self {
             kind,
@@ -139,6 +232,14 @@ impl<'a> FromSql<'a> for AuditLogKind {
             5 => Ok(Self::XPRemove),
             6 => Ok(Self::SetRank),
             7 => Ok(Self::XPSet),
+            8 => Ok(Self::DenylistCreate),
+            9 => Ok(Self::DenylistDelete),
+            10 => Ok(Self::EventLog),
+            11 => Ok(Self::SettingModify),
+            12 => Ok(Self::EventTypeCreate),
+            13 => Ok(Self::EventTypeModify),
+            14 => Ok(Self::GroupAccept),
+            15 => Ok(Self::GroupDecline),
             _ => unreachable!(),
         }
     }
