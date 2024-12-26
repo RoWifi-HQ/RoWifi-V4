@@ -88,7 +88,7 @@ pub async fn add_rankbind(
     let mut modified = false;
     if let Some(bind) = existing_rankbinds
         .iter_mut()
-        .find(|r| r.roblox_rank_id == new_bind.roblox_rank_id)
+        .find(|r| r.group_id == new_bind.group_id && r.group_rank_id == new_bind.group_rank_id)
     {
         bind.priority = new_bind.priority;
         bind.template = new_bind.template.clone();
