@@ -3,6 +3,10 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::{
+    error::Error as StdError,
+    fmt::{Display, Formatter, Result as FmtResult},
+};
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, Json, ToSql, Type};
 
 use crate::{
@@ -153,6 +157,7 @@ pub struct GroupDecline {
     pub target_roblox_user: RobloxUserId,
 }
 
+#[derive(Debug)]
 pub enum AuditLogDeserializeError {
     Serde(serde_json::Error),
     Postgres(tokio_postgres::Error),
@@ -280,3 +285,14 @@ impl From<tokio_postgres::Error> for AuditLogDeserializeError {
         Self::Postgres(err)
     }
 }
+
+impl Display for AuditLogDeserializeError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            Self::Serde(err) => write!(f, "serde: {}", err),
+            Self::Postgres(err) => write!(f, "postgres: {}", err),
+        }
+    }
+}
+
+impl StdError for AuditLogDeserializeError {}
