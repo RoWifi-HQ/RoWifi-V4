@@ -3,7 +3,6 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::error::Error;
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, Json, ToSql, Type};
 
 use crate::{
@@ -154,8 +153,13 @@ pub struct GroupDecline {
     pub target_roblox_user: RobloxUserId,
 }
 
+pub enum AuditLogDeserializeError {
+    Serde(serde_json::Error),
+    Postgres(tokio_postgres::Error),
+}
+
 impl TryFrom<tokio_postgres::Row> for AuditLog {
-    type Error = Box<dyn Error>;
+    type Error = AuditLogDeserializeError;
 
     fn try_from(row: tokio_postgres::Row) -> Result<Self, Self::Error> {
         let guild_id: Option<GuildId> = row.try_get("guild_id")?;
@@ -263,4 +267,16 @@ impl ToSql for AuditLogKind {
     }
 
     to_sql_checked!();
+}
+
+impl From<serde_json::Error> for AuditLogDeserializeError {
+    fn from(err: serde_json::Error) -> Self {
+        Self::Serde(err)
+    }
+}
+
+impl From<tokio_postgres::Error> for AuditLogDeserializeError {
+    fn from(err: tokio_postgres::Error) -> Self {
+        Self::Postgres(err)
+    }
 }
