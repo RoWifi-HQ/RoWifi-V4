@@ -6,6 +6,7 @@ mod template;
 mod xp;
 
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::fmt::{Display, Formatter, Result as FmtResult};
 
 pub use asset::{AssetType, Assetbind};
 pub use custom::Custombind;
@@ -51,6 +52,18 @@ impl Bind {
             Self::Group(g) => g.priority,
             Self::Asset(a) => a.priority,
             Self::Custom(c) => c.priority,
+        }
+    }
+}
+
+impl Display for BindType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            Self::Asset => f.write_str("Asset"),
+            Self::Custom => f.write_str("Custom"),
+            Self::Group => f.write_str("Group"),
+            Self::Rank => f.write_str("Rank"),
+            Self::XP => f.write_str("XP"),
         }
     }
 }

@@ -91,12 +91,43 @@ impl Cache {
         }
     }
 
+    /// Returns a member from the cache.
+    ///
+    /// # Errors
+    ///
+    /// See [`CacheError`] for details.
+    pub async fn guild_members(
+        &self,
+        guild_id: GuildId,
+        user_ids: impl Iterator<Item = UserId>,
+    ) -> Result<Vec<CachedMember>, CacheError> {
+        let mut conn = self.get();
+        let keys = user_ids
+            .into_iter()
+            .map(|u| CachedMember::key(guild_id, u))
+            .collect::<Vec<_>>();
+
+        if keys.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let res: Vec<Vec<u8>> = conn.get(keys).await?;
+        let mut members = Vec::new();
+        for r in res {
+            if let Ok(member) = rmp_serde::from_slice::<CachedMember>(&r) {
+                members.push(member);
+            }
+        }
+
+        Ok(members)
+    }
+
     /// Returns all the cached members for a particular guild.
     ///
     /// # Errors
     ///
     /// See [`CacheError`] for details.
-    pub async fn guild_members(&self, id: GuildId) -> Result<HashSet<UserId>, CacheError> {
+    pub async fn guild_members_set(&self, id: GuildId) -> Result<HashSet<UserId>, CacheError> {
         let mut conn = self.get();
         let res: Vec<u64> = conn.smembers(format!("discord:m:{id}")).await?;
 

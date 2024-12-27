@@ -91,7 +91,7 @@ pub async fn update_all_func(
         guild: PartialRoGuild,
     ) -> Result<(), RoError> {
         let server = bot.server(ctx.guild_id).await?;
-        let members = bot.cache.guild_members(ctx.guild_id).await?;
+        let members = bot.cache.guild_members_set(ctx.guild_id).await?;
 
         for member in members {
             if let Some(member) = bot.member(ctx.guild_id, member).await? {
@@ -196,7 +196,7 @@ pub async fn update_role_func(
         role: RoleId,
     ) -> Result<(), RoError> {
         let server = bot.server(ctx.guild_id).await?;
-        let members = bot.cache.guild_members(ctx.guild_id).await?;
+        let members = bot.cache.guild_members_set(ctx.guild_id).await?;
 
         for member in members {
             if let Some(member) = bot.member(ctx.guild_id, member).await? {

@@ -1,4 +1,5 @@
 use rowifi_models::{
+    audit_log::AuditLogKind,
     bind::AssetType,
     deny_list::DenyListActionType,
     discord::{
@@ -187,6 +188,15 @@ impl Argument for bool {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match option.value {
             CommandOptionValue::Boolean(bool) => Ok(bool),
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl Argument for AuditLogKind {
+    fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
+        match option.value {
+            CommandOptionValue::Integer(kind) => Ok(AuditLogKind::try_from(kind as u32).unwrap()),
             _ => unreachable!(),
         }
     }

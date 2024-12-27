@@ -60,7 +60,6 @@ pub enum AuditLogData {
     EventLog(EventLog),
     SettingModify(SettingModify),
     EventTypeCreate(EventTypeCreate),
-    EventTypeDelete(EventTypeDelete),
     EventTypeModify(EventTypeModify),
     GroupAccept(GroupAccept),
     GroupDecline(GroupDecline),
@@ -141,11 +140,6 @@ pub struct EventTypeModify {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct EventTypeDelete {
-    pub id: u32,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct GroupAccept {
     pub group_id: GroupId,
     pub target_roblox_user: RobloxUserId,
@@ -173,7 +167,7 @@ impl TryFrom<tokio_postgres::Row> for AuditLog {
         let user_id: Option<UserId> = row.try_get("user_id")?;
         let timestamp: DateTime<Utc> = row.try_get("timestamp")?;
 
-        let metadata: AuditLogData = match kind {
+        let metadata = match kind {
             AuditLogKind::BindCreate => {
                 AuditLogData::BindCreate(BindCreate::deserialize(metadata.0.as_ref())?)
             }
@@ -227,13 +221,11 @@ impl TryFrom<tokio_postgres::Row> for AuditLog {
     }
 }
 
-impl<'a> FromSql<'a> for AuditLogKind {
-    fn from_sql(
-        ty: &Type,
-        raw: &'a [u8],
-    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-        let log_type = i32::from_sql(ty, raw)?;
-        match log_type {
+impl TryFrom<u32> for AuditLogKind {
+    type Error = ();
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        match value {
             1 => Ok(Self::BindCreate),
             2 => Ok(Self::BindModify),
             3 => Ok(Self::BindDelete),
@@ -249,8 +241,18 @@ impl<'a> FromSql<'a> for AuditLogKind {
             13 => Ok(Self::EventTypeModify),
             14 => Ok(Self::GroupAccept),
             15 => Ok(Self::GroupDecline),
-            _ => unreachable!(),
+            _ => Err(())
         }
+    }
+}
+
+impl<'a> FromSql<'a> for AuditLogKind {
+    fn from_sql(
+        ty: &Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        let log_type = i32::from_sql(ty, raw)? as u32;
+        Ok(AuditLogKind::try_from(log_type).unwrap())
     }
 
     fn accepts(ty: &Type) -> bool {

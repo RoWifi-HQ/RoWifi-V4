@@ -42,6 +42,7 @@ use twilight_standby::Standby;
 use crate::commands::{
     analytics::{analytics_register, analytics_unregister, analytics_view},
     assetbinds::{delete_assetbind, new_assetbind, view_assetbinds},
+    audit_log::audit_logs,
     backups::{backup_delete, backup_new, backup_restore, backup_view},
     custombinds::{delete_custombind, new_custombind, view_custombinds},
     denylists::{
@@ -149,6 +150,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .route("/analytics/unregister", post(analytics_unregister))
         .route("/serverinfo", post(serverinfo))
         .route("/debug/update", post(debug_update))
+        .route("/audit-logs", post(audit_logs))
         .route("/standby", post(standby_route));
 
     #[cfg(feature = "tower")]

@@ -1,5 +1,6 @@
 pub mod analytics;
 pub mod assetbinds;
+pub mod audit_log;
 pub mod backups;
 pub mod custombinds;
 pub mod denylists;

@@ -4,6 +4,7 @@ pub enum Route {
     GetGroup { group_id: u64 },
     GetUserGroupRoles { user_id: u64 },
     GetUser { user_id: u64 },
+    GetUsers,
     GetUserByUsernames,
     GetUserThumbail { user_id: u64 },
     ListInventoryItems { user_id: u64, filter: String },
@@ -20,6 +21,7 @@ impl Display for Route {
                 "https://groups.roblox.com/v2/users/{user_id}/groups/roles"
             ),
             Route::GetUser { user_id } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}"),
+            Route::GetUsers => write!(f, "https://users.roblox.com/v1/users"),
             Route::GetUserByUsernames => write!(f, "https://users.roblox.com/v1/usernames/users"),
             Route::GetUserThumbail { user_id } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}:generateThumbnail?size=420&format=PNG"),
             Route::ListInventoryItems { user_id, filter } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}/inventory-items?maxPageSize=100&{filter}"),

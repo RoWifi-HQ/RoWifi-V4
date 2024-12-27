@@ -183,6 +183,62 @@ impl RobloxClient {
         Ok(json)
     }
 
+    /// Get multiple users.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn get_users(
+        &self,
+        user_ids: impl Iterator<Item = UserId>,
+    ) -> Result<Vec<PartialUser>, RobloxError> {
+        let route = Route::GetUsers;
+
+        let user_ids = user_ids.collect::<Vec<_>>();
+        let json = serde_json::json!({"userIds": user_ids});
+        let body = serde_json::to_vec(&json).map_err(|source| RobloxError {
+            source: Some(Box::new(source)),
+            kind: ErrorKind::BuildingRequest,
+        })?;
+
+        let request = Request::new()
+            .uri(route.to_string())
+            .method(Method::POST)
+            .header(CONTENT_TYPE, HeaderValue::from_static("application/json"))
+            .header(CONTENT_LENGTH, body.len())
+            .proxy_uri(self.proxy_url.clone())
+            .body(Full::new(Bytes::from(body)))
+            .build()
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json = serde_json::from_slice::<VecWrapper<PartialUser>>(&bytes).map_err(|source| {
+            RobloxError {
+                source: Some(Box::new(DeserializeBodyError {
+                    source: Some(Box::new(source)),
+                    bytes,
+                })),
+                kind: ErrorKind::Deserialize,
+            }
+        })?;
+        Ok(json.data)
+    }
+
     /// Get a user from their username.
     ///
     /// # Errors
