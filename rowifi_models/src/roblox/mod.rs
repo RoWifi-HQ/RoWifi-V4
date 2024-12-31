@@ -2,6 +2,7 @@ pub mod group;
 pub mod id;
 pub mod inventory;
 pub mod user;
+pub mod universe;
 
 use serde::Deserialize;
 
