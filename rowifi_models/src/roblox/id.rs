@@ -6,6 +6,7 @@ use serde::{
 use std::{
     error::Error as StdError,
     fmt::{Display, Formatter, Result as FmtResult},
+    marker::PhantomData,
 };
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
 
@@ -23,9 +24,7 @@ pub struct RoleId(pub u64);
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize)]
 pub struct UserId(pub u64);
 
-#[derive(
-    Clone, Copy, Debug, Default, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize,
-)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct UniverseId(pub u64);
 
 impl Display for AssetId {
@@ -55,6 +54,18 @@ impl Display for UserId {
 impl Display for UniverseId {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         Display::fmt(&self.0, f)
+    }
+}
+
+impl From<u64> for UserId {
+    fn from(value: u64) -> Self {
+        Self(value)
+    }
+}
+
+impl From<u64> for UniverseId {
+    fn from(value: u64) -> Self {
+        Self(value)
     }
 }
 
@@ -116,17 +127,22 @@ impl<'a> FromSql<'a> for GroupId {
     }
 }
 
-struct IdVisitor;
+struct IdVisitor<V> {
+    _p: PhantomData<V>,
+}
 
-impl<'de> Visitor<'de> for IdVisitor {
-    type Value = UserId;
+impl<'de, V> Visitor<'de> for IdVisitor<V>
+where
+    V: From<u64>,
+{
+    type Value = V;
 
     fn expecting(&self, f: &mut Formatter) -> FmtResult {
         f.write_str("a roblox id")
     }
 
     fn visit_u64<E: DeError>(self, v: u64) -> Result<Self::Value, E> {
-        Ok(UserId(v))
+        Ok(Self::Value::from(v))
     }
 
     fn visit_i64<E: DeError>(self, v: i64) -> Result<Self::Value, E> {
@@ -139,7 +155,7 @@ impl<'de> Visitor<'de> for IdVisitor {
         self,
         deserializer: D,
     ) -> Result<Self::Value, D::Error> {
-        deserializer.deserialize_any(IdVisitor)
+        deserializer.deserialize_any(IdVisitor { _p: PhantomData })
     }
 
     fn visit_str<E: DeError>(self, v: &str) -> Result<Self::Value, E> {
@@ -154,6 +170,12 @@ impl<'de> Visitor<'de> for IdVisitor {
 
 impl<'de> Deserialize<'de> for UserId {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        deserializer.deserialize_any(IdVisitor)
+        deserializer.deserialize_any(IdVisitor { _p: PhantomData })
+    }
+}
+
+impl<'de> Deserialize<'de> for UniverseId {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        deserializer.deserialize_any(IdVisitor { _p: PhantomData })
     }
 }
