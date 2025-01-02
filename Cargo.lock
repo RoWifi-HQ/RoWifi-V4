@@ -1920,6 +1920,7 @@ dependencies = [
  "chrono",
  "postgres-types",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
