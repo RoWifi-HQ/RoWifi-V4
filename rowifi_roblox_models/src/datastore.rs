@@ -48,6 +48,7 @@ pub struct DatastoreEntry {
     /// The resource ID of the entry.
     pub id: String,
     /// Users associated with the entry.
+    #[serde(default)]
     pub users: Vec<UserId>,
     /// An arbitrary set of attributes associated with the entry.
     pub attributes: Value,
