@@ -73,6 +73,14 @@ pub struct ThumbnailResponse {
     pub image_uri: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct DatastoresResponse {
+    #[serde(rename = "dataStores")]
+    pub datastores: Vec<Datastore>,
+    #[serde(rename = "nextPageToken")]
+    pub next_page_token: String,
+}
+
 impl RobloxClient {
     #[must_use]
     pub fn new(open_cloud_auth: &str, proxy_url: Option<String>) -> Self {
@@ -679,7 +687,7 @@ impl RobloxClient {
             });
         }
 
-        let json = serde_json::from_slice(&bytes).map_err(|source| RobloxError {
+        let json = serde_json::from_slice::<DatastoresResponse>(&bytes).map_err(|source| RobloxError {
             source: Some(Box::new(DeserializeBodyError {
                 source: Some(Box::new(source)),
                 bytes,
@@ -687,7 +695,7 @@ impl RobloxClient {
             kind: ErrorKind::Deserialize,
         })?;
 
-        Ok(json)
+        Ok(json.datastores)
     }
 
     /// Make a request to the Roblox API.
