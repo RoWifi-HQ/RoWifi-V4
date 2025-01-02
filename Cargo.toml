@@ -36,4 +36,5 @@ rowifi_cache = { path = "rowifi_cache" }
 rowifi_database = { path = "rowifi_database" }
 rowifi_framework = { path = "rowifi_framework" }
 rowifi_models = { path = "rowifi_models" }
+rowifi_roblox_models = { path = "rowifi_roblox_models" }
 rowifi_roblox = { path = "rowifi_roblox" }
