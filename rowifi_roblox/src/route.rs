@@ -1,6 +1,12 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
 pub enum Route<'a> {
+    GetDatastoreEntry {
+        universe_id: u64,
+        datastore_id: &'a str,
+        entry_id: &'a str,
+        revision_id: Option<&'a str>
+    },
     GetGroup {
         group_id: u64,
     },
@@ -41,6 +47,11 @@ pub enum Route<'a> {
 impl<'a> Display for Route<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
+            Route::GetDatastoreEntry { universe_id, datastore_id, entry_id, revision_id } => write!(
+                f,
+                "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries/{entry_id}@{}",
+                revision_id.unwrap_or("latest")
+            ),
             Route::GetGroup { group_id } => write!(f, "https://apis.roblox.com/cloud/v2/groups/{group_id}"),
             Route::GetUniverse { universe_id } => write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}"),
             Route::GetUserGroupRoles { user_id } => write!(
