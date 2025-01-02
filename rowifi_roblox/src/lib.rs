@@ -20,6 +20,7 @@ use hyper_util::{
     rt::TokioExecutor,
 };
 use rowifi_models::roblox::{
+    datastore::Datastore,
     group::{Group, GroupRole, GroupUserRole},
     id::{GroupId, UniverseId, UserId},
     inventory::InventoryItem,
@@ -593,7 +594,62 @@ impl RobloxClient {
     ///
     /// See [`RobloxError`] for details.
     pub async fn get_universe(&self, universe_id: UniverseId) -> Result<Universe, RobloxError> {
-        let route = Route::GetUniverse { universe_id: universe_id.0 };
+        let route = Route::GetUniverse {
+            universe_id: universe_id.0,
+        };
+
+        let request = Request::new()
+            .uri(route.to_string())
+            .method(Method::GET)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
+            .proxy_uri(self.proxy_url.clone())
+            .body(Full::default())
+            .build()
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json = serde_json::from_slice(&bytes).map_err(|source| RobloxError {
+            source: Some(Box::new(DeserializeBodyError {
+                source: Some(Box::new(source)),
+                bytes,
+            })),
+            kind: ErrorKind::Deserialize,
+        })?;
+
+        Ok(json)
+    }
+
+    /// Get a list of datastores of an universe.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn list_data_stores(
+        &self,
+        universe_id: UniverseId,
+    ) -> Result<Vec<Datastore>, RobloxError> {
+        let route = Route::ListDatastores {
+            universe_id: universe_id.0,
+            query: String::new()
+        };
 
         let request = Request::new()
             .uri(route.to_string())
