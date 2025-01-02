@@ -671,7 +671,7 @@ impl RobloxClient {
     ) -> Result<Vec<Datastore>, RobloxError> {
         let route = Route::ListDatastores {
             universe_id: universe_id.0,
-            query: ""
+            query: "",
         };
 
         let request = Request::new()
@@ -702,13 +702,14 @@ impl RobloxClient {
             });
         }
 
-        let json = serde_json::from_slice::<DatastoresResponse>(&bytes).map_err(|source| RobloxError {
-            source: Some(Box::new(DeserializeBodyError {
-                source: Some(Box::new(source)),
-                bytes,
-            })),
-            kind: ErrorKind::Deserialize,
-        })?;
+        let json =
+            serde_json::from_slice::<DatastoresResponse>(&bytes).map_err(|source| RobloxError {
+                source: Some(Box::new(DeserializeBodyError {
+                    source: Some(Box::new(source)),
+                    bytes,
+                })),
+                kind: ErrorKind::Deserialize,
+            })?;
 
         Ok(json.datastores)
     }
@@ -722,9 +723,15 @@ impl RobloxClient {
         &self,
         universe_id: UniverseId,
         datastore_id: &str,
-        page_token: &str
+        page_token: &str,
+        page_size: u32,
     ) -> Result<Vec<PartialDatastoreEntry>, RobloxError> {
-        let route = Route::ListDatastoreEntries { universe_id: universe_id.0, datastore_id, page_token };
+        let route = Route::ListDatastoreEntries {
+            universe_id: universe_id.0,
+            datastore_id,
+            page_token,
+            page_size,
+        };
 
         let request = Request::new()
             .uri(route.to_string())
@@ -755,12 +762,14 @@ impl RobloxClient {
         }
 
         let json =
-            serde_json::from_slice::<DatastoreEntriesResponse>(&bytes).map_err(|source| RobloxError {
-                source: Some(Box::new(DeserializeBodyError {
-                    source: Some(Box::new(source)),
-                    bytes,
-                })),
-                kind: ErrorKind::Deserialize,
+            serde_json::from_slice::<DatastoreEntriesResponse>(&bytes).map_err(|source| {
+                RobloxError {
+                    source: Some(Box::new(DeserializeBodyError {
+                        source: Some(Box::new(source)),
+                        bytes,
+                    })),
+                    kind: ErrorKind::Deserialize,
+                }
             })?;
 
         Ok(json.datastore_entries)
