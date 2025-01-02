@@ -20,7 +20,7 @@ use hyper_util::{
     rt::TokioExecutor,
 };
 use rowifi_models::roblox::{
-    datastore::Datastore,
+    datastore::{Datastore, PartialDatastoreEntry},
     group::{Group, GroupRole, GroupUserRole},
     id::{GroupId, UniverseId, UserId},
     inventory::InventoryItem,
@@ -77,6 +77,14 @@ pub struct ThumbnailResponse {
 pub struct DatastoresResponse {
     #[serde(rename = "dataStores")]
     pub datastores: Vec<Datastore>,
+    #[serde(rename = "nextPageToken")]
+    pub next_page_token: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DatastoreEntriesResponse {
+    #[serde(rename = "dataStoreEntries")]
+    pub datastore_entries: Vec<PartialDatastoreEntry>,
     #[serde(rename = "nextPageToken")]
     pub next_page_token: String,
 }
@@ -325,7 +333,7 @@ impl RobloxClient {
 
         let route = Route::ListInventoryItems {
             user_id: user_id.0,
-            filter: asset_filter.build(),
+            filter: &asset_filter.build(),
         };
 
         let request = Request::new()
@@ -656,7 +664,7 @@ impl RobloxClient {
     ) -> Result<Vec<Datastore>, RobloxError> {
         let route = Route::ListDatastores {
             universe_id: universe_id.0,
-            query: String::new()
+            query: ""
         };
 
         let request = Request::new()
@@ -696,6 +704,59 @@ impl RobloxClient {
         })?;
 
         Ok(json.datastores)
+    }
+
+    /// Lists the data store entries of a datastore.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn list_data_store_entries(
+        &self,
+        universe_id: UniverseId,
+        datastore_id: &str,
+        page_token: &str
+    ) -> Result<Vec<PartialDatastoreEntry>, RobloxError> {
+        let route = Route::ListDatastoreEntries { universe_id: universe_id.0, datastore_id, page_token };
+
+        let request = Request::new()
+            .uri(route.to_string())
+            .method(Method::GET)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
+            .proxy_uri(self.proxy_url.clone())
+            .body(Full::default())
+            .build()
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json =
+            serde_json::from_slice::<DatastoreEntriesResponse>(&bytes).map_err(|source| RobloxError {
+                source: Some(Box::new(DeserializeBodyError {
+                    source: Some(Box::new(source)),
+                    bytes,
+                })),
+                kind: ErrorKind::Deserialize,
+            })?;
+
+        Ok(json.datastore_entries)
     }
 
     /// Make a request to the Roblox API.
