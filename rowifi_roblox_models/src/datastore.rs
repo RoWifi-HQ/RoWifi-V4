@@ -16,8 +16,11 @@ pub struct PartialDatastoreEntry {
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum DatastoreEntryState {
+    #[serde(rename = "STATE_UNSPECIFIED")]
     Unspecified,
+    #[serde(rename = "ACTIVE")]
     Active,
+    #[serde(rename = "DELETED")]
     Deleted,
 }
 
