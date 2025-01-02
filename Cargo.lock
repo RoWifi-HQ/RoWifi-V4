@@ -1877,6 +1877,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "regex",
+ "rowifi_roblox_models",
  "serde",
  "serde_json",
  "serde_repr",
@@ -1893,11 +1894,21 @@ dependencies = [
  "hyper-rustls",
  "hyper-util",
  "itertools",
- "rowifi_models",
+ "rowifi_roblox_models",
  "serde",
  "serde_json",
  "tracing",
  "urlencoding",
+]
+
+[[package]]
+name = "rowifi_roblox_models"
+version = "4.2.0"
+dependencies = [
+ "bytes",
+ "chrono",
+ "postgres-types",
+ "serde",
 ]
 
 [[package]]

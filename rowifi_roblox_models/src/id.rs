@@ -1,14 +1,18 @@
-use bytes::BytesMut;
 use serde::{
-    de::{Deserializer, Error as DeError, Unexpected, Visitor},
     Deserialize, Serialize,
+    de::{Deserializer, Error as DeError, Unexpected, Visitor},
 };
 use std::{
-    error::Error as StdError,
     fmt::{Display, Formatter, Result as FmtResult},
     marker::PhantomData,
 };
-use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
+
+#[cfg(feature = "postgres")]
+use bytes::BytesMut;
+#[cfg(feature = "postgres")]
+use postgres_types::{ToSql, to_sql_checked, IsNull, Type, FromSql};
+#[cfg(feature = "postgres")]
+use std::error::Error as StdError;
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct AssetId(pub u64);
@@ -69,64 +73,6 @@ impl From<u64> for UniverseId {
     }
 }
 
-impl ToSql for UserId {
-    fn to_sql(
-        &self,
-        ty: &Type,
-        out: &mut BytesMut,
-    ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
-        #[allow(clippy::cast_possible_wrap)]
-        i64::to_sql(&(self.0 as i64), ty, out)
-    }
-
-    fn accepts(ty: &Type) -> bool {
-        <i64 as ToSql>::accepts(ty)
-    }
-
-    to_sql_checked!();
-}
-
-impl<'a> FromSql<'a> for UserId {
-    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
-        let id = i64::from_sql(ty, raw)?;
-        #[allow(clippy::cast_sign_loss)]
-        Ok(Self(id as u64))
-    }
-
-    fn accepts(ty: &Type) -> bool {
-        <i64 as FromSql>::accepts(ty)
-    }
-}
-
-impl ToSql for GroupId {
-    fn to_sql(
-        &self,
-        ty: &Type,
-        out: &mut BytesMut,
-    ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
-        #[allow(clippy::cast_possible_wrap)]
-        i64::to_sql(&(self.0 as i64), ty, out)
-    }
-
-    fn accepts(ty: &Type) -> bool {
-        <i64 as ToSql>::accepts(ty)
-    }
-
-    to_sql_checked!();
-}
-
-impl<'a> FromSql<'a> for GroupId {
-    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
-        let id = i64::from_sql(ty, raw)?;
-        #[allow(clippy::cast_sign_loss)]
-        Ok(Self(id as u64))
-    }
-
-    fn accepts(ty: &Type) -> bool {
-        <i64 as FromSql>::accepts(ty)
-    }
-}
-
 struct IdVisitor<V> {
     _p: PhantomData<V>,
 }
@@ -177,5 +123,67 @@ impl<'de> Deserialize<'de> for UserId {
 impl<'de> Deserialize<'de> for UniverseId {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         deserializer.deserialize_any(IdVisitor { _p: PhantomData })
+    }
+}
+
+#[cfg(feature = "postgres")]
+impl ToSql for UserId {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        #[allow(clippy::cast_possible_wrap)]
+        i64::to_sql(&(self.0 as i64), ty, out)
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+#[cfg(feature = "postgres")]
+impl<'a> FromSql<'a> for UserId {
+    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
+        let id = i64::from_sql(ty, raw)?;
+        #[allow(clippy::cast_sign_loss)]
+        Ok(Self(id as u64))
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as FromSql>::accepts(ty)
+    }
+}
+
+#[cfg(feature = "postgres")]
+impl ToSql for GroupId {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> Result<IsNull, Box<dyn StdError + Sync + Send>> {
+        #[allow(clippy::cast_possible_wrap)]
+        i64::to_sql(&(self.0 as i64), ty, out)
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+#[cfg(feature = "postgres")]
+impl<'a> FromSql<'a> for GroupId {
+    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn StdError + Sync + Send>> {
+        let id = i64::from_sql(ty, raw)?;
+        #[allow(clippy::cast_sign_loss)]
+        Ok(Self(id as u64))
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <i64 as FromSql>::accepts(ty)
     }
 }
