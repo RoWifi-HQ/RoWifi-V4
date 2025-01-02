@@ -11,7 +11,7 @@ hyper-rustls = { version = "0.27", default-features = false, features = ["ring",
 hyper-util = { version = "0", features = ["client"] }
 http-body-util = "0.1"
 itertools = { workspace = true }
-rowifi_models = { path = "../rowifi_models" }
+rowifi_roblox_models = { path = "../rowifi_roblox_models" }
 serde = { version = "1.0" }
 serde_json = { workspace = true }
 tracing = { workspace = true }

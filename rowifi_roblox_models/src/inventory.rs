@@ -1,7 +1,5 @@
 use serde::{de::Error as DeError, Deserialize, Deserializer};
 
-use crate::bind::AssetType;
-
 #[derive(Debug)]
 pub enum InventoryItem {
     Asset(AssetDetails),
@@ -36,17 +34,6 @@ struct InventoryItemIntermediary {
     pub badge_details: Option<BadgeDetails>,
     #[serde(rename = "gamePassDetails", default)]
     pub gamepass_details: Option<GamepassDetails>,
-}
-
-impl InventoryItem {
-    #[must_use]
-    pub const fn kind(&self) -> AssetType {
-        match self {
-            InventoryItem::Asset(_) => AssetType::Asset,
-            InventoryItem::Badge(_) => AssetType::Badge,
-            InventoryItem::Gamepass(_) => AssetType::Gamepass,
-        }
-    }
 }
 
 impl<'de> Deserialize<'de> for InventoryItem {

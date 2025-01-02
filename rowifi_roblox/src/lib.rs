@@ -19,14 +19,13 @@ use hyper_util::{
     client::legacy::{connect::HttpConnector, Client as HyperClient},
     rt::TokioExecutor,
 };
-use rowifi_models::roblox::{
+use rowifi_roblox_models::{
     datastore::{Datastore, PartialDatastoreEntry},
     group::{Group, GroupRole, GroupUserRole},
     id::{GroupId, UniverseId, UserId},
     inventory::InventoryItem,
     universe::Universe,
     user::{OAuthUser, PartialUser},
-    Operation,
 };
 use serde::{Deserialize, Serialize};
 use std::fmt::Write;
@@ -44,6 +43,14 @@ pub struct RobloxClient {
     client: HyperClient<HttpsConnector<HttpConnector>, Full<Bytes>>,
     open_cloud_auth: String,
     proxy_url: Option<String>,
+}
+
+/// Represents a long-running operation
+///
+/// See [`Operation`](https://create.roblox.com/docs/reference/cloud/assets/v1#Operation) for details.
+#[derive(Deserialize)]
+pub struct Operation<T> {
+    pub response: T,
 }
 
 #[derive(Serialize, Deserialize)]

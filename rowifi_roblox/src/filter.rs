@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use rowifi_models::roblox::id::AssetId;
+use rowifi_roblox_models::id::AssetId;
 
 #[derive(Default)]
 pub struct AssetFilterBuilder {
