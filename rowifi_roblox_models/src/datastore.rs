@@ -14,7 +14,7 @@ pub struct PartialDatastoreEntry {
     pub id: String,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum DatastoreEntryState {
     #[serde(rename = "STATE_UNSPECIFIED")]
     Unspecified,
@@ -52,4 +52,40 @@ pub struct DatastoreEntry {
     pub users: Vec<UserId>,
     /// An arbitrary set of attributes associated with the entry.
     pub attributes: Value,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json;
+
+    #[test]
+    fn test_datastore_entry_state_serialization() {
+        let active_state = DatastoreEntryState::Active;
+        let serialized = serde_json::to_string(&active_state).expect("Serialization failed");
+        assert_eq!(serialized, "\"ACTIVE\"");
+
+        let deleted_state = DatastoreEntryState::Deleted;
+        let serialized = serde_json::to_string(&deleted_state).expect("Serialization failed");
+        assert_eq!(serialized, "\"DELETED\"");
+
+        let unspecified_state = DatastoreEntryState::Unspecified;
+        let serialized = serde_json::to_string(&unspecified_state).expect("Serialization failed");
+        assert_eq!(serialized, "\"STATE_UNSPECIFIED\"");
+    }
+
+    #[test]
+    fn test_datastore_entry_state_deserialization() {
+        let json = "\"ACTIVE\"";
+        let deserialized: DatastoreEntryState = serde_json::from_str(json).expect("Deserialization failed");
+        assert_eq!(deserialized, DatastoreEntryState::Active);
+
+        let json = "\"DELETED\"";
+        let deserialized: DatastoreEntryState = serde_json::from_str(json).expect("Deserialization failed");
+        assert_eq!(deserialized, DatastoreEntryState::Deleted);
+
+        let json = "\"STATE_UNSPECIFIED\"";
+        let deserialized: DatastoreEntryState = serde_json::from_str(json).expect("Deserialization failed");
+        assert_eq!(deserialized, DatastoreEntryState::Unspecified);
+    }
 }
