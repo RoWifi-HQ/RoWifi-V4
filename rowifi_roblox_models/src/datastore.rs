@@ -11,7 +11,36 @@ pub struct Datastore {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PartialDatastoreEntry {
+    /// The timestamp when the data store entry was created.
+    #[serde(rename = "createTime", default)]
+    pub create_time: Option<DateTime<Utc>>,
+    /// The revision ID of the data store entry.
+    ///
+    /// A new revision is committed whenever the data store entry is changed in any way.
+    ///
+    /// The format is an arbitrary string. Example: "foo".
+    #[serde(rename = "revisionId", default)]
+    pub revision_id: Option<String>,
+    /// The timestamp when the revision was created.
+    #[serde(rename = "revisionCreateTime", default)]
+    pub revision_create_time: Option<DateTime<Utc>>,
+    /// The state of the data store entry.
+    #[serde(default)]
+    pub state: Option<DatastoreEntryState>,
+    /// This checksum is computed by the server based on the value of other fields, and may be sent on update and delete requests (and potentially on certain custom methods) to ensure the client has an up-to-date value before proceeding.
+    #[serde(default)]
+    pub etag: Option<String>,
+    /// The value of the entry.
+    #[serde(default)]
+    pub value: Option<Value>,
+    /// The resource ID of the entry.
     pub id: String,
+    /// Users associated with the entry.
+    #[serde(default)]
+    pub users: Option<Vec<UserId>>,
+    /// An arbitrary set of attributes associated with the entry.
+    #[serde(default)]
+    pub attributes: Option<Value>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
