@@ -62,8 +62,8 @@ pub struct VecWrapper<T> {
 pub struct InventoryItems {
     #[serde(rename = "inventoryItems")]
     pub inventory_items: Vec<InventoryItem>,
-    #[serde(rename = "nextPageToken")]
-    pub next_page_token: String,
+    #[serde(rename = "nextPageToken", default)]
+    pub next_page_token: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -84,16 +84,22 @@ pub struct ThumbnailResponse {
 pub struct DatastoresResponse {
     #[serde(rename = "dataStores")]
     pub datastores: Vec<Datastore>,
-    #[serde(rename = "nextPageToken")]
-    pub next_page_token: String,
+    #[serde(rename = "nextPageToken", default)]
+    pub next_page_token: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct DatastoreEntriesResponse {
     #[serde(rename = "dataStoreEntries")]
     pub datastore_entries: Vec<PartialDatastoreEntry>,
-    #[serde(rename = "nextPageToken")]
-    pub next_page_token: String,
+    #[serde(rename = "nextPageToken", default)]
+    pub next_page_token: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct PaginatedResponse<T> {
+    pub data: Vec<T>,
+    pub next_page_token: Option<String>,
 }
 
 impl RobloxClient {
@@ -668,7 +674,7 @@ impl RobloxClient {
     pub async fn list_data_stores(
         &self,
         universe_id: UniverseId,
-    ) -> Result<Vec<Datastore>, RobloxError> {
+    ) -> Result<PaginatedResponse<Datastore>, RobloxError> {
         let route = Route::ListDatastores {
             universe_id: universe_id.0,
             query: "",
@@ -711,7 +717,10 @@ impl RobloxClient {
                 kind: ErrorKind::Deserialize,
             })?;
 
-        Ok(json.datastores)
+        Ok(PaginatedResponse {
+            data: json.datastores,
+            next_page_token: json.next_page_token,
+        })
     }
 
     /// Lists the data store entries of a datastore.
@@ -725,7 +734,7 @@ impl RobloxClient {
         datastore_id: &str,
         page_token: &str,
         page_size: u32,
-    ) -> Result<Vec<PartialDatastoreEntry>, RobloxError> {
+    ) -> Result<PaginatedResponse<PartialDatastoreEntry>, RobloxError> {
         let route = Route::ListDatastoreEntries {
             universe_id: universe_id.0,
             datastore_id,
@@ -772,7 +781,10 @@ impl RobloxClient {
                 }
             })?;
 
-        Ok(json.datastore_entries)
+        Ok(PaginatedResponse {
+            data: json.datastore_entries,
+            next_page_token: json.next_page_token,
+        })
     }
 
     /// Lists the data store entries of a datastore.
