@@ -1,11 +1,16 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
 pub enum Route<'a> {
+    DeleteDatastoreEntry {
+        universe_id: u64,
+        datastore_id: &'a str,
+        entry_id: &'a str,
+    },
     GetDatastoreEntry {
         universe_id: u64,
         datastore_id: &'a str,
         entry_id: &'a str,
-        revision_id: Option<&'a str>
+        revision_id: Option<&'a str>,
     },
     GetGroup {
         group_id: u64,
@@ -42,11 +47,17 @@ pub enum Route<'a> {
         group_id: u64,
     },
     OAuthUserInfo,
+    UpdateDatastoreEntry {
+        universe_id: u64,
+        datastore_id: &'a str,
+        entry_id: &'a str,
+    },
 }
 
 impl<'a> Display for Route<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
+            Route::DeleteDatastoreEntry { universe_id, datastore_id, entry_id } => write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries/{entry_id}"), 
             Route::GetDatastoreEntry { universe_id, datastore_id, entry_id, revision_id } => write!(
                 f,
                 "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries/{entry_id}@{}",
@@ -67,6 +78,7 @@ impl<'a> Display for Route<'a> {
             Route::ListInventoryItems { user_id, filter } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}/inventory-items?maxPageSize=100&{filter}"),
             Route::ListGroupRanks { group_id } => write!(f, "https://apis.roblox.com/cloud/v2/groups/{group_id}/roles?maxPageSize=20"),
             Route::OAuthUserInfo => write!(f, "https://apis.roblox.com/oauth/v1/userinfo"),
+            Route::UpdateDatastoreEntry { universe_id, datastore_id, entry_id } => write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries/{entry_id}")
         }
     }
 }
