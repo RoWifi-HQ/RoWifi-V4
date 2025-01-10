@@ -32,6 +32,7 @@ use std::fmt::Write;
 
 use error::DeserializeBodyError;
 use request::Request;
+use serde_json::Value;
 
 use crate::{
     error::{ErrorKind, RobloxError},
@@ -100,6 +101,13 @@ pub struct DatastoreEntriesResponse {
 pub struct PaginatedResponse<T> {
     pub data: Vec<T>,
     pub next_page_token: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct UpdateDatastoreEntryArgs {
+    pub value: Value,
+    pub users: Vec<UserId>,
+    pub attributes: Option<Value>,
 }
 
 impl RobloxClient {
@@ -671,7 +679,7 @@ impl RobloxClient {
     /// # Errors
     ///
     /// See [`RobloxError`] for details.
-    pub async fn list_data_stores(
+    pub async fn list_datastores(
         &self,
         universe_id: UniverseId,
     ) -> Result<PaginatedResponse<Datastore>, RobloxError> {
@@ -723,12 +731,12 @@ impl RobloxClient {
         })
     }
 
-    /// Lists the data store entries of a datastore.
+    /// Lists the datastore entries of a datastore.
     ///
     /// # Errors
     ///
     /// See [`RobloxError`] for details.
-    pub async fn list_data_store_entries(
+    pub async fn list_datastore_entries(
         &self,
         universe_id: UniverseId,
         datastore_id: &str,
@@ -787,12 +795,12 @@ impl RobloxClient {
         })
     }
 
-    /// Lists the data store entries of a datastore.
+    /// Get a datastore entry.
     ///
     /// # Errors
     ///
     /// See [`RobloxError`] for details.
-    pub async fn get_data_store_entry(
+    pub async fn get_datastore_entry(
         &self,
         universe_id: UniverseId,
         datastore_id: &str,
@@ -843,6 +851,119 @@ impl RobloxClient {
         })?;
 
         Ok(json)
+    }
+
+    /// Update a datastore entry.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn update_datastore_entry(
+        &self,
+        universe_id: UniverseId,
+        datastore_id: &str,
+        entry_id: &str,
+        args: UpdateDatastoreEntryArgs,
+    ) -> Result<DatastoreEntry, RobloxError> {
+        let route = Route::UpdateDatastoreEntry {
+            universe_id: universe_id.0,
+            datastore_id,
+            entry_id,
+        };
+
+        let json = serde_json::json!({"value": args.value, "users": args.users, "attributes": args.attributes});
+        let body = serde_json::to_vec(&json).map_err(|source| RobloxError {
+            source: Some(Box::new(source)),
+            kind: ErrorKind::BuildingRequest,
+        })?;
+
+        let request = Request::new()
+            .uri(route.to_string())
+            .method(Method::PATCH)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
+            .header(CONTENT_TYPE, HeaderValue::from_static("application/json"))
+            .header(CONTENT_LENGTH, body.len())
+            .proxy_uri(self.proxy_url.clone())
+            .body(Full::new(Bytes::from(body)))
+            .build()
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json = serde_json::from_slice(&bytes).map_err(|source| RobloxError {
+            source: Some(Box::new(DeserializeBodyError {
+                source: Some(Box::new(source)),
+                bytes,
+            })),
+            kind: ErrorKind::Deserialize,
+        })?;
+
+        Ok(json)
+    }
+
+    /// Delete a datastore entry.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn delete_datastore_entry(
+        &self,
+        universe_id: UniverseId,
+        datastore_id: &str,
+        entry_id: &str,
+    ) -> Result<(), RobloxError> {
+        let route = Route::DeleteDatastoreEntry {
+            universe_id: universe_id.0,
+            datastore_id,
+            entry_id,
+        };
+
+        let request = Request::new()
+            .uri(route.to_string())
+            .method(Method::DELETE)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
+            .proxy_uri(self.proxy_url.clone())
+            .body(Full::default())
+            .build()
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        Ok(())
     }
 
     /// Make a request to the Roblox API.
