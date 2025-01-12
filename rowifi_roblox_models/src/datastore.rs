@@ -2,8 +2,6 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::id::UserId;
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Datastore {
     pub id: String,
@@ -37,7 +35,7 @@ pub struct PartialDatastoreEntry {
     pub id: String,
     /// Users associated with the entry.
     #[serde(default)]
-    pub users: Option<Vec<UserId>>,
+    pub users: Option<Vec<String>>,
     /// An arbitrary set of attributes associated with the entry.
     #[serde(default)]
     pub attributes: Option<Value>,
@@ -78,7 +76,7 @@ pub struct DatastoreEntry {
     pub id: String,
     /// Users associated with the entry.
     #[serde(default)]
-    pub users: Vec<UserId>,
+    pub users: Vec<String>,
     /// An arbitrary set of attributes associated with the entry.
     pub attributes: Value,
 }
