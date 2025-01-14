@@ -14,7 +14,7 @@ resolver = "2"
 [workspace.dependencies]
 axum = { version = "0.7" }
 chrono = { version = "0.4", default-features = false, features = ["std"] }
-itertools = { version = "0.13" }
+itertools = { version = "0.14" }
 hyper = { version = "1.0", default-features = false, features = ["client", "http2"] }
 serde = { version = "1.0" }
 serde_json = { version = "1" }
