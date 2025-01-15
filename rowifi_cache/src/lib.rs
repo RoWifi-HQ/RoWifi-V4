@@ -110,7 +110,7 @@ impl Cache {
         }
     }
 
-    /// Returns a member from the cache.
+    /// Returns a list of members of a particular guild from the cache.
     ///
     /// # Errors
     ///
@@ -180,6 +180,36 @@ impl Cache {
         }
 
         Ok(roles)
+    }
+
+    /// Returns a list of users from the cache.
+    ///
+    /// # Errors
+    ///
+    /// See [`CacheError`] for details.
+    pub async fn users(
+        &self,
+        user_ids: impl Iterator<Item = UserId>,
+    ) -> Result<Vec<CachedUser>, CacheError> {
+        let mut conn = self.get();
+        let keys = user_ids
+            .into_iter()
+            .map(|u| CachedUser::key(u))
+            .collect::<Vec<_>>();
+
+        if keys.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let res: Vec<Vec<u8>> = conn.get(keys).await?;
+        let mut users = Vec::new();
+        for r in res {
+            if let Ok(user) = rmp_serde::from_slice::<CachedUser>(&r) {
+                users.push(user);
+            }
+        }
+
+        Ok(users)
     }
 
     /// Add a member to the cache. Replaces if the member already exists.

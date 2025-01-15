@@ -38,7 +38,7 @@ pub async fn userinfo_func(
     args: UserInfoArguments,
 ) -> CommandResult {
     let user_id = args.user.unwrap_or(ctx.author_id);
-    let Some(discord_user) = bot.member(ctx.guild_id, user_id).await? else {
+    let Some((discord_member, discord_user)) = bot.member(ctx.guild_id, user_id).await? else {
         tracing::trace!("could not find user");
         // Should not ever happen since slash command guarantees that the user exists.
         // But handling this nonetheless is useful.
@@ -133,7 +133,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         .color(BLUE)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
         .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
-        .title(discord_user.nickname.unwrap_or(discord_user.username))
+        .title(discord_member.nickname.unwrap_or(discord_user.username))
         .field(EmbedFieldBuilder::new("Roblox Account", roblox_account).build())
         .field(EmbedFieldBuilder::new("Ranks", ranks_info))
         .field(EmbedFieldBuilder::new(

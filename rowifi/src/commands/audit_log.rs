@@ -72,13 +72,14 @@ pub async fn audit_logs_func(
     let audit_logs = bot.database.query::<AuditLog>(&statement, &params).await?;
 
     let user_ids = audit_logs.iter().filter_map(|a| a.user_id);
-    let users = bot
+    let members = bot
         .cache
-        .guild_members(ctx.guild_id, user_ids)
+        .guild_members(ctx.guild_id, user_ids.clone())
         .await?
         .into_iter()
         .map(|u| (u.id, u))
         .collect::<HashMap<_, _>>();
+    let users = bot.cache.users(user_ids).await?.into_iter().map(|u| (u.id, u)).collect::<HashMap<_, _>>();
 
     let roblox_user_ids = audit_logs.iter().filter_map(|a| match &a.metadata {
         AuditLogData::XPAdd(xp) => Some(xp.target_roblox_user),
@@ -97,11 +98,25 @@ pub async fn audit_logs_func(
 
     let mut description = String::new();
     for audit_log in audit_logs {
-        let user = audit_log
-            .user_id
-            .and_then(|u| users.get(&u))
-            .map(|u| u.nickname.clone().unwrap_or_else(|| u.username.clone()))
-            .unwrap_or_else(|| audit_log.user_id.map(|u| u.to_string()).unwrap_or_default());
+        let user = if let Some(user_id) = audit_log.user_id {
+            if let Some(member) = members.get(&user_id) {
+                if let Some(nickname) = &member.nickname {
+                    nickname.clone()
+                } else {
+                    if let Some(user) = users.get(&user_id) {
+                        user.username.clone()
+                    } else {
+                        user_id.to_string()
+                    }
+                }
+            } else if let Some(user) = users.get(&user_id) {
+                user.username.clone()
+            } else {
+                user_id.to_string()
+            }
+        } else {
+            String::new()
+        };
         match audit_log.metadata {
             AuditLogData::BindCreate(bind) => {
                 description.push_str(&format!(

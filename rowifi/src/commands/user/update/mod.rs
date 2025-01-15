@@ -61,7 +61,7 @@ pub async fn update_func(
         return Ok(());
     };
 
-    if server.owner_id == member.id {
+    if server.owner_id == discord_member.id {
         tracing::debug!("update running on server owner. aborting...");
         let message = r"
         👋 Hey there Server Owner, Discord prevents bots from modifying a server owner's nickname. Hence, RoWifi does not allow running the `/update` command on server owners.
@@ -80,7 +80,9 @@ pub async fn update_func(
 
     // Check if the user has a bypass role for both (roles & nickname)
     for bypass_role in &guild.bypass_roles {
-        if bypass_role.kind == BypassRoleKind::All && member.roles.contains(&bypass_role.role_id) {
+        if bypass_role.kind == BypassRoleKind::All
+            && discord_member.roles.contains(&bypass_role.role_id)
+        {
             tracing::debug!("detected bypass role({}). aborting...", bypass_role.role_id);
             let message = format!(
                 r#"
@@ -99,7 +101,7 @@ You have a role (<@&{}>) which has been marked as a bypass role.
         .database
         .query_opt::<RoUser>(
             "SELECT * FROM roblox_users WHERE user_id = $1",
-            &[&member.id],
+            &[&discord_member.id],
         )
         .await?
     else {
@@ -109,7 +111,7 @@ You have a role (<@&{}>) which has been marked as a bypass role.
                 r#"
 Oops, I did not find <@{}> in my database. They are not verified with RoWifi.
             "#,
-                member.id
+                discord_member.id
             )
         } else {
             format!(
@@ -170,7 +172,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                         r#"
     <@{}> is not allowed to be updated since they were found on a deny list. Reason: {}
                     "#,
-                        member.id, deny_list.reason
+                        discord_member.id, deny_list.reason
                     )
                 } else {
                     format!(
@@ -187,7 +189,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                     DenyListActionType::Kick => {
                         tracing::trace!("kicking them");
                         if let Ok(private_channel) =
-                            bot.http.create_private_channel(member.id.0).await
+                            bot.http.create_private_channel(discord_member.id.0).await
                         {
                             if let Ok(private_channel) = private_channel.model().await {
                                 let _ = bot
@@ -202,13 +204,13 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                         }
                         let _ = bot
                             .http
-                            .remove_guild_member(ctx.guild_id.0, member.id.0)
+                            .remove_guild_member(ctx.guild_id.0, discord_member.id.0)
                             .await;
                     }
                     DenyListActionType::Ban => {
                         tracing::trace!("banning them");
                         if let Ok(private_channel) =
-                            bot.http.create_private_channel(member.id.0).await
+                            bot.http.create_private_channel(discord_member.id.0).await
                         {
                             if let Ok(private_channel) = private_channel.model().await {
                                 let _ = bot
@@ -221,7 +223,10 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                                     .await;
                             }
                         }
-                        let _ = bot.http.create_ban(ctx.guild_id.0, member.id.0).await;
+                        let _ = bot
+                            .http
+                            .create_ban(ctx.guild_id.0, discord_member.id.0)
+                            .await;
                     }
                 }
 
@@ -235,14 +240,14 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                             r#"
 <@{}>'s supposed nickname is empty. Hence, they cannot be updated.
                         "#,
-                            member.id
+                            discord_member.id
                         )
                     } else {
                         format!(
                             r#"
 <@{}>'s supposed nickname ({nickname}) is greater than 32 characters. Hence, they cannot be updated.
                     "#,
-                            member.id
+                            discord_member.id
                         )
                     }
                 } else {
@@ -364,7 +369,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, you ca
             .footer(EmbedFooterBuilder::new("RoWifi").build())
             .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
             .title(format!("Action by <@{}>", ctx.author_id))
-            .description(format!("Update: <@{}>", member.id))
+            .description(format!("Update: <@{}>", discord_member.id))
             .field(EmbedFieldBuilder::new("Nickname", &nickname))
             .field(EmbedFieldBuilder::new("Added Roles", &added_str))
             .field(EmbedFieldBuilder::new("Removed Roles", &removed_str))

@@ -246,14 +246,14 @@ async fn update_member(
     discord_member: CachedMember,
     discord_user: CachedUser,
 ) -> Result<(), RoError> {
-    tracing::debug!(user_id = ?member.id);
-    if server.owner_id == member.id {
+    tracing::debug!(user_id = ?discord_member.id);
+    if server.owner_id == discord_member.id {
         return Ok(());
     }
 
     // Check for a full bypass
     for bypass_role in &guild.bypass_roles {
-        if bypass_role.kind == BypassRoleKind::All && member.roles.contains(&bypass_role.role_id) {
+        if bypass_role.kind == BypassRoleKind::All && discord_member.roles.contains(&bypass_role.role_id) {
             return Ok(());
         }
     }
@@ -262,7 +262,7 @@ async fn update_member(
         .database
         .query_opt::<RoUser>(
             "SELECT * FROM roblox_users WHERE user_id = $1",
-            &[&member.id],
+            &[&discord_member.id],
         )
         .await?
     else {
@@ -317,12 +317,12 @@ async fn update_member(
                         tracing::debug!("kicking them");
                         let _ = bot
                             .http
-                            .remove_guild_member(guild.guild_id.0, member.id.0)
+                            .remove_guild_member(guild.guild_id.0, discord_member.id.0)
                             .await;
                     }
                     DenyListActionType::Ban => {
                         tracing::debug!("banning them");
-                        let _ = bot.http.create_ban(guild.guild_id.0, member.id.0).await;
+                        let _ = bot.http.create_ban(guild.guild_id.0, discord_member.id.0).await;
                     }
                 }
                 return Ok(());
@@ -350,14 +350,14 @@ async fn update_member(
     if let Some(log_channel) = guild.log_channel {
         if !added_roles.is_empty()
             || !removed_roles.is_empty()
-            || member.nickname.unwrap_or(member.username) != nickname
+            || discord_member.nickname.unwrap_or(discord_user.username) != nickname
         {
             let log_embed = EmbedBuilder::new()
                 .color(0x0034_98DB)
                 .footer(EmbedFooterBuilder::new("RoWifi").build())
                 .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
                 .title("Mass Update")
-                .description(format!("Update: <@{}>", member.id))
+                .description(format!("Update: <@{}>", discord_member.id))
                 .field(EmbedFieldBuilder::new("Nickname", nickname))
                 .field(EmbedFieldBuilder::new("Added Roles", added_str))
                 .field(EmbedFieldBuilder::new("Removed Roles", removed_str))

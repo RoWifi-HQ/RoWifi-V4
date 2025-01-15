@@ -53,7 +53,7 @@ pub async fn debug_update_func(
         None => ctx.author_id,
     };
 
-    let Some(member) = bot.member(server.id, user_id).await? else {
+    let Some((discord_member, discord_user)) = bot.member(server.id, user_id).await? else {
         // Should not ever happen since slash command guarantees that the user exists.
         // But handling this nonetheless is useful.
         let message = format!(
@@ -67,7 +67,7 @@ pub async fn debug_update_func(
         return Ok(());
     };
 
-    if server.owner_id == member.id {
+    if server.owner_id == discord_member.id {
         let message = r"
 **Checks**:
 :white_check_mark: Discord User Exists.
@@ -85,7 +85,7 @@ pub async fn debug_update_func(
         .await?;
 
     for bypass_role in &guild.bypass_roles {
-        if bypass_role.kind == BypassRoleKind::All && member.roles.contains(&bypass_role.role_id) {
+        if bypass_role.kind == BypassRoleKind::All && discord_member.roles.contains(&bypass_role.role_id) {
             let message = format!(
                 r"
 **Checks**:
@@ -104,7 +104,7 @@ pub async fn debug_update_func(
         .database
         .query_opt::<RoUser>(
             "SELECT * FROM roblox_users WHERE user_id = $1",
-            &[&member.id],
+            &[&discord_member.id],
         )
         .await?
     else {
@@ -184,7 +184,7 @@ pub async fn debug_update_func(
                         let res = match evaluate(
                             &exp,
                             &EvaluationContext {
-                                roles: &member.roles,
+                                roles: &discord_member.roles,
                                 ranks: &user_ranks,
                                 username: &roblox_user.name,
                             },
@@ -335,7 +335,7 @@ pub async fn debug_update_func(
         let res = match evaluate(
             &exp,
             &EvaluationContext {
-                roles: &member.roles,
+                roles: &discord_member.roles,
                 ranks: &user_ranks,
                 username: &roblox_user.name,
             },
@@ -410,7 +410,7 @@ pub async fn debug_update_func(
         .into_iter()
         .map(|r| (r.id, r.position))
         .collect::<HashMap<_, _>>();
-    let Some(bot_member) = bot
+    let Some((bot_member, _bot_user)) = bot
         .member(ctx.guild_id, UserId::new(bot.application_id.get()))
         .await?
     else {
@@ -430,14 +430,14 @@ pub async fn debug_update_func(
         if server.roles.contains(&bind_role) {
             let role_position = all_guild_roles.get(&bind_role).copied().unwrap_or_default();
             if roles_to_add.contains(&bind_role) {
-                if !member.roles.contains(&bind_role) {
+                if !discord_member.roles.contains(&bind_role) {
                     added_roles.push(bind_role);
                     if role_position > highest_bot_position {
                         warning_roles.push(bind_role);
                     }
                 }
             } else {
-                if member.roles.contains(&bind_role) && !guild.sticky_roles.contains(&bind_role) {
+                if discord_member.roles.contains(&bind_role) && !guild.sticky_roles.contains(&bind_role) {
                     removed_roles.push(bind_role);
                     if role_position > highest_bot_position {
                         warning_roles.push(bind_role);
@@ -451,22 +451,22 @@ pub async fn debug_update_func(
         match nickname_bind {
             Bind::Rank(r) => r
                 .template
-                .nickname(&roblox_user, user.user_id, &member.username),
+                .nickname(&roblox_user, user.user_id, &discord_user.username),
             Bind::Group(g) => g
                 .template
-                .nickname(&roblox_user, user.user_id, &member.username),
+                .nickname(&roblox_user, user.user_id, &discord_user.username),
             Bind::Asset(a) => a
                 .template
-                .nickname(&roblox_user, user.user_id, &member.username),
+                .nickname(&roblox_user, user.user_id, &discord_user.username),
             Bind::Custom(c) => c
                 .template
-                .nickname(&roblox_user, user.user_id, &member.username),
+                .nickname(&roblox_user, user.user_id, &discord_user.username),
         }
     } else {
         guild.default_template.as_ref().unwrap().nickname(
             &roblox_user,
             user.user_id,
-            &member.username,
+            &discord_user.username,
         )
     };
 
