@@ -4,7 +4,7 @@ use rowifi_database::Database;
 use rowifi_models::{
     discord::{
         application::interaction::InteractionDataResolved,
-        cache::{CachedGuild, CachedMember},
+        cache::{CachedGuild, CachedMember, CachedUser},
         channel::{
             message::{Component, Embed, MessageFlags},
             Message,
@@ -98,9 +98,9 @@ impl BotContext {
         &self,
         guild_id: GuildId,
         user_id: UserId,
-    ) -> Result<Option<CachedMember>, RoError> {
-        if let Some(member) = self.cache.guild_member(guild_id, user_id).await? {
-            return Ok(Some(member));
+    ) -> Result<Option<(CachedMember, CachedUser)>, RoError> {
+        if let (Some(member), Some(user)) = (self.cache.guild_member(guild_id, user_id).await?, self.cache.user(user_id).await?) {
+            return Ok(Some((member, user)));
         }
         let res = self.http.guild_member(guild_id.0, user_id.0).await;
         match res {

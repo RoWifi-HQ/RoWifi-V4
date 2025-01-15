@@ -45,7 +45,7 @@ pub async fn update_func(
         None => ctx.author_id,
     };
 
-    let Some(member) = bot.member(server.id, user_id).await? else {
+    let Some((discord_member, discord_user)) = bot.member(server.id, user_id).await? else {
         tracing::trace!("could not find user");
         // Should not ever happen since slash command guarantees that the user exists.
         // But handling this nonetheless is useful.
@@ -153,7 +153,8 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
     let update_user = UpdateUser {
         http: &bot.http,
         roblox: &bot.roblox,
-        member: &member,
+        discord_member: &discord_member,
+        discord_user: &discord_user,
         user: &user,
         server: &server,
         guild: &guild,

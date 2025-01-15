@@ -2,7 +2,7 @@ use itertools::Itertools;
 use rowifi_models::{
     bind::{AssetType, Bind},
     deny_list::{DenyList, DenyListData},
-    discord::cache::{CachedGuild, CachedMember},
+    discord::cache::{CachedGuild, CachedMember, CachedUser},
     guild::{BypassRoleKind, PartialRoGuild},
     id::{RoleId, UserId},
     roblox::{id::UserId as RobloxUserId, inventory::InventoryItem},
@@ -28,7 +28,8 @@ use crate::{
 pub struct UpdateUser<'u> {
     pub http: &'u DiscordClient,
     pub roblox: &'u RobloxClient,
-    pub member: &'u CachedMember,
+    pub discord_member: &'u CachedMember,
+    pub discord_user: &'u CachedUser,
     pub user: &'u RoUser,
     pub server: &'u CachedGuild,
     pub guild: &'u PartialRoGuild,
@@ -122,7 +123,7 @@ impl UpdateUser<'_> {
                             let res = match evaluate(
                                 &exp,
                                 &EvaluationContext {
-                                    roles: &self.member.roles,
+                                    roles: &self.discord_member.roles,
                                     ranks: &user_ranks,
                                     username: &roblox_user.name,
                                 },
@@ -160,7 +161,7 @@ impl UpdateUser<'_> {
             .last();
         if let Some(deny_list) = active_deny_list {
             return Err(UpdateUserError::DenyList((
-                self.member.id,
+                self.discord_member.id,
                 (*deny_list).clone(),
             )));
         }
@@ -211,7 +212,7 @@ impl UpdateUser<'_> {
             let res = custombinds::evaluate::evaluate(
                 &exp,
                 &EvaluationContext {
-                    roles: &self.member.roles,
+                    roles: &self.discord_member.roles,
                     ranks: &user_ranks,
                     username: &roblox_user.name,
                 },
@@ -254,11 +255,11 @@ impl UpdateUser<'_> {
         for bind_role in self.all_roles {
             if self.server.roles.contains(bind_role) {
                 if roles_to_add.contains(bind_role) {
-                    if !self.member.roles.contains(bind_role) {
+                    if !self.discord_member.roles.contains(bind_role) {
                         added_roles.push(*bind_role);
                     }
                 } else {
-                    if self.member.roles.contains(bind_role)
+                    if self.discord_member.roles.contains(bind_role)
                         && !self.guild.sticky_roles.contains(bind_role)
                     {
                         removed_roles.push(*bind_role);
@@ -269,14 +270,14 @@ impl UpdateUser<'_> {
 
         let mut update = self
             .http
-            .update_guild_member(self.server.id.0, self.member.id.0);
+            .update_guild_member(self.server.id.0, self.discord_member.id.0);
 
         let has_role_bypass = self
             .guild
             .bypass_roles
             .iter()
-            .any(|b| b.kind == BypassRoleKind::Roles && self.member.roles.contains(&b.role_id));
-        let mut new_roles = self.member.roles.clone();
+            .any(|b| b.kind == BypassRoleKind::Roles && self.discord_member.roles.contains(&b.role_id));
+        let mut new_roles = self.discord_member.roles.clone();
         new_roles.extend_from_slice(&added_roles);
         new_roles.retain(|r| !removed_roles.contains(r));
         let new_roles = new_roles
@@ -290,31 +291,31 @@ impl UpdateUser<'_> {
         }
 
         let original_nickname = self
-            .member
+            .discord_member
             .nickname
             .as_ref()
-            .map_or_else(|| self.member.username.as_str(), String::as_str);
+            .map_or_else(|| self.discord_user.username.as_str(), String::as_str);
         let has_nickname_bypass =
             self.guild.bypass_roles.iter().any(|b| {
-                b.kind == BypassRoleKind::Nickname && self.member.roles.contains(&b.role_id)
+                b.kind == BypassRoleKind::Nickname && self.discord_member.roles.contains(&b.role_id)
             });
         let new_nickname = if let Some(nickname_bind) = nickname_bind {
             match nickname_bind {
                 Bind::Rank(r) => {
                     r.template
-                        .nickname(&roblox_user, self.user.user_id, &self.member.username)
+                        .nickname(&roblox_user, self.user.user_id, &self.discord_user.username)
                 }
                 Bind::Group(g) => {
                     g.template
-                        .nickname(&roblox_user, self.user.user_id, &self.member.username)
+                        .nickname(&roblox_user, self.user.user_id, &self.discord_user.username)
                 }
                 Bind::Asset(a) => {
                     a.template
-                        .nickname(&roblox_user, self.user.user_id, &self.member.username)
+                        .nickname(&roblox_user, self.user.user_id, &self.discord_user.username)
                 }
                 Bind::Custom(c) => {
                     c.template
-                        .nickname(&roblox_user, self.user.user_id, &self.member.username)
+                        .nickname(&roblox_user, self.user.user_id, &self.discord_user.username)
                 }
             }
         } else {
@@ -323,7 +324,7 @@ impl UpdateUser<'_> {
                 .as_ref()
                 .cloned()
                 .unwrap_or_default()
-                .nickname(&roblox_user, self.user.user_id, &self.member.username)
+                .nickname(&roblox_user, self.user.user_id, &self.discord_user.username)
         };
 
         if !has_nickname_bypass && (original_nickname != new_nickname) {

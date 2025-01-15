@@ -3,7 +3,7 @@ use redis::{self, AsyncCommands};
 use rowifi_models::{
     discord::{
         application::interaction::InteractionType,
-        cache::{CachedChannel, CachedGuild, CachedMember, CachedRole},
+        cache::{CachedChannel, CachedGuild, CachedMember, CachedRole, CachedUser},
         gateway::{
             event::Event,
             payload::incoming::{
@@ -18,7 +18,7 @@ use rowifi_models::{
 
 use crate::{
     error::CacheError,
-    process::{cache_guild, cache_guild_channel, cache_member, cache_partial_member, cache_role},
+    process::{cache_guild, cache_guild_channel, cache_member, cache_partial_member, cache_role, cache_user},
     Cache,
 };
 
@@ -184,6 +184,7 @@ impl UpdateCache for MemberAdd {
 
         let guild_id = GuildId(self.guild_id);
         cache_member(&mut pipeline, guild_id, &self.member)?;
+        cache_user(&mut pipeline, &self.member.user)?;
 
         pipeline.sadd(format!("discord:m:{guild_id}"), self.user.id.get());
 
@@ -206,6 +207,9 @@ impl UpdateCache for MemberChunk {
 
         for member in &self.members {
             if let Err(err) = cache_member(&mut pipeline, guild_id, member) {
+                tracing::error!(err = ?err);
+            }
+            if let Err(err) = cache_user(&mut pipeline, &member.user) {
                 tracing::error!(err = ?err);
             }
             pipeline.sadd(format!("discord:m:{guild_id}"), member.user.id.get());
@@ -242,14 +246,24 @@ impl UpdateCache for MemberUpdate {
         let guild_id = GuildId(self.guild_id);
         let user_id = UserId(self.user.id);
 
+        let mut conn = c.get();
         if let Some(mut member) = c.guild_member(guild_id, user_id).await? {
             member.nickname.clone_from(&self.nick);
             member.roles = self.roles.iter().map(|r| RoleId(*r)).collect();
 
-            let mut conn = c.get();
             conn.set(
                 CachedMember::key(guild_id, user_id),
                 rmp_serde::to_vec(&member)?,
+            )
+            .await?;
+        }
+        if let Some(mut user) = c.user(user_id).await? {
+            user.username.clone_from(&self.user.name);
+            user.avatar.clone_from(&self.user.avatar);
+
+            conn.set(
+                CachedUser::key(user_id),
+                rmp_serde::to_vec(&user)?,
             )
             .await?;
         }

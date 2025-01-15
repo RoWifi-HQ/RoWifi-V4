@@ -1,7 +1,7 @@
 use redis::Pipeline;
 use rowifi_models::{
     discord::{
-        cache::{CachedChannel, CachedGuild, CachedMember, CachedRole, CachedTextChannel},
+        cache::{CachedChannel, CachedGuild, CachedMember, CachedRole, CachedTextChannel, CachedUser},
         channel::{Channel, ChannelType},
         guild::{Guild, Member, PartialMember, Role},
         user::User,
@@ -80,13 +80,12 @@ pub(crate) fn cache_member(
     pipeline: &mut Pipeline,
     guild_id: GuildId,
     member: &Member,
-) -> Result<(), CacheError> {
+) -> Result<CachedMember, CacheError> {
     let cached = CachedMember {
         id: UserId(member.user.id),
         roles: member.roles.iter().map(|r| RoleId(*r)).collect(),
         nickname: member.nick.clone(),
-        username: member.user.name.clone(),
-        discriminator: member.user.discriminator,
+        avatar: member.avatar,
     };
 
     pipeline.set(
@@ -94,7 +93,7 @@ pub(crate) fn cache_member(
         rmp_serde::to_vec(&cached)?,
     );
 
-    Ok(())
+    Ok(cached)
 }
 
 pub(crate) fn cache_partial_member(
@@ -107,8 +106,7 @@ pub(crate) fn cache_partial_member(
         id: UserId(user.id),
         roles: member.roles.iter().map(|r| RoleId(*r)).collect(),
         nickname: member.nick.clone(),
-        username: user.name.clone(),
-        discriminator: user.discriminator,
+        avatar: member.avatar,
     };
 
     pipeline.set(
@@ -117,4 +115,22 @@ pub(crate) fn cache_partial_member(
     );
 
     Ok(())
+}
+
+pub(crate) fn cache_user(
+    pipeline: &mut Pipeline,
+    user: &User,
+) -> Result<CachedUser, CacheError> {
+    let cached = CachedUser {
+        id: UserId(user.id),
+        username: user.name.clone(),
+        avatar: user.avatar.clone(),
+    };
+
+    pipeline.set(
+        CachedUser::key(cached.id),
+        rmp_serde::to_vec(&cached)?,
+    );
+
+    Ok(cached)
 }

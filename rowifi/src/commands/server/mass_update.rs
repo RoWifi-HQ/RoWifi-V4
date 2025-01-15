@@ -7,7 +7,7 @@ use rowifi_framework::prelude::*;
 use rowifi_models::{
     deny_list::DenyListActionType,
     discord::{
-        cache::{CachedGuild, CachedMember},
+        cache::{CachedGuild, CachedMember, CachedUser},
         http::interaction::{
             InteractionResponse, InteractionResponseData, InteractionResponseType,
         },
@@ -94,8 +94,10 @@ pub async fn update_all_func(
         let members = bot.cache.guild_members_set(ctx.guild_id).await?;
 
         for member in members {
-            if let Some(member) = bot.member(ctx.guild_id, member).await? {
-                if let Err(err) = update_member(bot, &server, &guild, member).await {
+            if let Some((discord_member, discord_user)) = bot.member(ctx.guild_id, member).await? {
+                if let Err(err) =
+                    update_member(bot, &server, &guild, discord_member, discord_user).await
+                {
                     tracing::error!(err = ?err);
                 }
             }
@@ -199,9 +201,11 @@ pub async fn update_role_func(
         let members = bot.cache.guild_members_set(ctx.guild_id).await?;
 
         for member in members {
-            if let Some(member) = bot.member(ctx.guild_id, member).await? {
-                if member.roles.contains(&role) {
-                    if let Err(err) = update_member(bot, &server, &guild, member).await {
+            if let Some((discord_member, discord_user)) = bot.member(ctx.guild_id, member).await? {
+                if discord_member.roles.contains(&role) {
+                    if let Err(err) =
+                        update_member(bot, &server, &guild, discord_member, discord_user).await
+                    {
                         tracing::error!(err = ?err);
                     }
                 }
@@ -239,7 +243,8 @@ async fn update_member(
     bot: &BotContext,
     server: &CachedGuild,
     guild: &PartialRoGuild,
-    member: CachedMember,
+    discord_member: CachedMember,
+    discord_user: CachedUser,
 ) -> Result<(), RoError> {
     tracing::debug!(user_id = ?member.id);
     if server.owner_id == member.id {
@@ -294,7 +299,8 @@ async fn update_member(
     let update_user = UpdateUser {
         http: &bot.http,
         roblox: &bot.roblox,
-        member: &member,
+        discord_member: &discord_member,
+        discord_user: &discord_user,
         user: &user,
         server: &server,
         guild: &guild,

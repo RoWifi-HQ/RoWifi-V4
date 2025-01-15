@@ -41,8 +41,16 @@ pub mod cache {
         pub roles: Vec<RoleId>,
         pub nickname: Option<String>,
         pub id: UserId,
+        /// The guild specific avatar
+        pub avatar: Option<ImageHash>,
+    }
+
+    #[derive(Clone, Debug, Deserialize, Serialize)]
+    pub struct CachedUser {
+        pub id: UserId,
         pub username: String,
-        pub discriminator: u16,
+        /// The global user avatar
+        pub avatar: Option<ImageHash>,
     }
 
     #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -100,6 +108,13 @@ pub mod cache {
         #[must_use]
         pub fn key(id: RoleId) -> String {
             format!("discord:roles:{id}")
+        }
+    }
+
+    impl CachedUser {
+        #[must_use]
+        pub fn key(id: UserId) -> String {
+            format!("discord:users:{id}")
         }
     }
 }

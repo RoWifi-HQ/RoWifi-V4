@@ -9,11 +9,11 @@ mod process;
 
 pub mod error;
 
-use process::cache_guild;
+use process::{cache_guild, cache_member, cache_user};
 use redis::{aio::ConnectionManager, AsyncCommands, Client as RedisClient};
 use rowifi_models::{
     discord::{
-        cache::{CachedGuild, CachedMember, CachedRole},
+        cache::{CachedGuild, CachedMember, CachedRole, CachedUser},
         guild::{Guild, Member},
     },
     id::{GuildId, RoleId, UserId},
@@ -55,6 +55,25 @@ impl Cache {
         self.0.conn.clone()
     }
 
+    /// Returns a user from the cache.
+    ///
+    /// # Errors
+    ///
+    /// See [`CacheError`] for details.
+    pub async fn user(
+        &self,
+        user_id: UserId,
+    ) -> Result<Option<CachedUser>, CacheError> {
+        let mut conn = self.get();
+        let res: Option<Vec<u8>> = conn.get(CachedUser::key(user_id)).await?;
+
+        if let Some(res) = res {
+            Ok(rmp_serde::from_slice(&res)?)
+        } else {
+            Ok(None)
+        }
+    }
+
     /// Returns the server from the cache.
     ///
     /// # Errors
@@ -71,7 +90,7 @@ impl Cache {
         }
     }
 
-    /// Returns a member from the cache.
+    /// Returns a member for a particular guild from the cache.
     ///
     /// # Errors
     ///
@@ -172,23 +191,15 @@ impl Cache {
         &self,
         guild_id: GuildId,
         member: &Member,
-    ) -> Result<CachedMember, CacheError> {
-        let cached = CachedMember {
-            id: UserId(member.user.id),
-            roles: member.roles.iter().map(|r| RoleId(*r)).collect(),
-            nickname: member.nick.clone(),
-            username: member.user.name.clone(),
-            discriminator: member.user.discriminator,
-        };
+    ) -> Result<(CachedMember, CachedUser), CacheError> {
+        let mut pipeline = redis::pipe();
+        let cached_member = cache_member(&mut pipeline, guild_id, member)?;
+        let cached_user = cache_user(&mut pipeline, &member.user)?;
 
         let mut conn = self.get();
-        conn.set(
-            CachedMember::key(guild_id, cached.id),
-            rmp_serde::to_vec(&cached)?,
-        )
-        .await?;
+        pipeline.query_async(&mut conn).await?;
 
-        Ok(cached)
+        Ok((cached_member, cached_user))
     }
 
     /// Add a guild to the cache. Replaces if the guild already exists.
