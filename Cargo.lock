@@ -1177,7 +1177,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -1912,7 +1912,7 @@ dependencies = [
 [[package]]
 name = "rowifi_tower"
 version = "4.2.0"
-source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#9a89eae2406b419d7b4ba5a42d5b57d9cc762e40"
+source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#71831277cfb88bc5ab579452d22624579b1c3d3f"
 dependencies = [
  "axum",
  "bytes",
