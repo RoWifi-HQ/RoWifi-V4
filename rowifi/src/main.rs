@@ -12,7 +12,6 @@ use axum::{
     routing::post,
     Extension, Json, Router, ServiceExt,
 };
-use commands::server::MassUpdateQueues;
 use ed25519_dalek::{Verifier, VerifyingKey, PUBLIC_KEY_LENGTH};
 use hex::FromHex;
 use rowifi_cache::Cache;
@@ -177,7 +176,6 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     }
 
     let app = router
-        .layer(Extension(MassUpdateQueues::default()))
         .layer(Extension(Arc::new(standby)))
         .layer(AsyncRequireAuthorizationLayer::new(WebhookAuth))
         .layer(Extension(Arc::new(verifying_key)))
