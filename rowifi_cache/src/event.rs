@@ -259,7 +259,7 @@ impl UpdateCache for MemberUpdate {
         }
         if let Some(mut user) = c.user(user_id).await? {
             user.username.clone_from(&self.user.name);
-            user.avatar.clone_from(&self.user.avatar);
+            user.avatar = self.avatar.map(|a| a.to_string());
 
             conn.set(
                 CachedUser::key(user_id),

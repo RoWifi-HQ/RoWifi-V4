@@ -85,7 +85,7 @@ pub(crate) fn cache_member(
         id: UserId(member.user.id),
         roles: member.roles.iter().map(|r| RoleId(*r)).collect(),
         nickname: member.nick.clone(),
-        avatar: member.avatar,
+        avatar: member.avatar.map(|a| a.to_string()),
     };
 
     pipeline.set(
@@ -106,7 +106,7 @@ pub(crate) fn cache_partial_member(
         id: UserId(user.id),
         roles: member.roles.iter().map(|r| RoleId(*r)).collect(),
         nickname: member.nick.clone(),
-        avatar: member.avatar,
+        avatar: member.avatar.map(|a| a.to_string()),
     };
 
     pipeline.set(
@@ -124,7 +124,7 @@ pub(crate) fn cache_user(
     let cached = CachedUser {
         id: UserId(user.id),
         username: user.name.clone(),
-        avatar: user.avatar.clone(),
+        avatar: user.avatar.map(|a| a.to_string()),
     };
 
     pipeline.set(

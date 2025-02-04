@@ -41,18 +41,18 @@ pub mod cache {
         pub roles: Vec<RoleId>,
         pub nickname: Option<String>,
         pub id: UserId,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
+        #[serde(default)]
         /// The guild specific avatar
-        pub avatar: Option<ImageHash>,
+        pub avatar: Option<String>,
     }
 
     #[derive(Clone, Debug, Deserialize, Serialize)]
     pub struct CachedUser {
         pub id: UserId,
         pub username: String,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
+        #[serde(default)]
         /// The global user avatar
-        pub avatar: Option<ImageHash>,
+        pub avatar: Option<String>,
     }
 
     #[derive(Clone, Debug, Deserialize, Serialize)]
