@@ -731,7 +731,7 @@ impl RobloxClient {
         })
     }
 
-    /// Lists the datastore entries of a datastore.
+    /// Lists the datastore entries of a datastore. Supports filtering based on entries.
     ///
     /// # Errors
     ///
@@ -742,12 +742,14 @@ impl RobloxClient {
         datastore_id: &str,
         page_token: &str,
         page_size: u32,
+        filter: Option<&str>,
     ) -> Result<PaginatedResponse<PartialDatastoreEntry>, RobloxError> {
         let route = Route::ListDatastoreEntries {
             universe_id: universe_id.0,
             datastore_id,
             page_token,
             page_size,
+            filter,
         };
 
         let request = Request::new()
