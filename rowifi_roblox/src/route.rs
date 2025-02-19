@@ -76,7 +76,7 @@ impl<'a> Display for Route<'a> {
             Route::GetUserThumbail { user_id } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}:generateThumbnail?size=420&format=PNG"),
             Route::ListDatastores { universe_id, query } => write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores?maxPageSize=100&{query}"),
             Route::ListDatastoreEntries { universe_id, datastore_id, page_token, page_size,filter } => {
-                let filter = filter.map(|f| format!("&filter=id.startsWith(\"{f}\"")).unwrap_or_default();
+                let filter = filter.map(|f| urlencoding::encode(&format!("&filter=id.startsWith(\"{f}\"")).into_owned()).unwrap_or_default();
                 write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries?maxPageSize={page_size}&pageToken={page_token}{filter}")
             },
             Route::ListInventoryItems { user_id, filter } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}/inventory-items?maxPageSize=100&{filter}"),
