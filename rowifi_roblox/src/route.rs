@@ -38,6 +38,7 @@ pub enum Route<'a> {
         datastore_id: &'a str,
         page_token: &'a str,
         page_size: u32,
+        filter: Option<&'a str>,
     },
     ListInventoryItems {
         user_id: u64,
@@ -74,7 +75,10 @@ impl<'a> Display for Route<'a> {
             Route::GetUserByUsernames => write!(f, "https://users.roblox.com/v1/usernames/users"),
             Route::GetUserThumbail { user_id } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}:generateThumbnail?size=420&format=PNG"),
             Route::ListDatastores { universe_id, query } => write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores?maxPageSize=100&{query}"),
-            Route::ListDatastoreEntries { universe_id, datastore_id, page_token, page_size } => write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries?maxPageSize={page_size}&pageToken={page_token}"),
+            Route::ListDatastoreEntries { universe_id, datastore_id, page_token, page_size,filter } => {
+                let filter = filter.map(|f| format!("&filter=id.startsWith(\"{f}\"")).unwrap_or_default();
+                write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries?maxPageSize={page_size}&pageToken={page_token}{filter}")
+            },
             Route::ListInventoryItems { user_id, filter } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}/inventory-items?maxPageSize=100&{filter}"),
             Route::ListGroupRanks { group_id } => write!(f, "https://apis.roblox.com/cloud/v2/groups/{group_id}/roles?maxPageSize=20"),
             Route::OAuthUserInfo => write!(f, "https://apis.roblox.com/oauth/v1/userinfo"),
