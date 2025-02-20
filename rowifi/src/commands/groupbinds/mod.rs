@@ -48,7 +48,7 @@ pub async fn view_groupbinds_func(
         let message = r"
 This server has no groupbinds configured. Looking to add one? Use the command `/groupbinds new`.
         ";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -79,7 +79,7 @@ This server has no groupbinds configured. Looking to add one? Use the command `/
         page_count += 1;
     }
 
-    paginate_embeds(&ctx, &bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
 
     Ok(())
 }

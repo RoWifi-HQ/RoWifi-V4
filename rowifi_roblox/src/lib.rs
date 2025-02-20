@@ -1,5 +1,5 @@
 #![deny(clippy::all, clippy::pedantic)]
-#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::module_name_repetitions, clippy::missing_panics_doc)]
 
 pub mod error;
 pub mod filter;
@@ -27,6 +27,7 @@ use rowifi_models::roblox::{
     Operation,
 };
 use serde::{Deserialize, Serialize};
+use std::fmt::Write;
 
 use error::DeserializeBodyError;
 use request::Request;
@@ -86,8 +87,9 @@ impl RobloxClient {
         }
     }
 
+    #[must_use]
     pub fn proxy_uri(&self) -> Option<&str> {
-        self.proxy_url.as_ref().map(|x| x.as_str())
+        self.proxy_url.as_deref()
     }
 
     /// Get the ranks of the user of all the groups they are part of.
@@ -377,7 +379,7 @@ impl RobloxClient {
         loop {
             let mut route = route.to_string();
             if let Some(next_page_token) = next_page_token {
-                route.push_str(&format!("&pageToken={next_page_token}"));
+                let _ = write!(route, "&pageToken={next_page_token}");
             }
             let request = Request::new()
                 .uri(&route)

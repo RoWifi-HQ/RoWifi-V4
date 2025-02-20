@@ -48,7 +48,7 @@ pub async fn view_custombinds_func(
         let message = r"
 This server has no custombinds configured. Looking to add one? Use the command `/custombinds new`.
         ";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
     }
 
     let mut pages = Vec::new();
@@ -79,7 +79,7 @@ This server has no custombinds configured. Looking to add one? Use the command `
         page_count += 1;
     }
 
-    paginate_embeds(&ctx, &bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
 
     Ok(())
 }

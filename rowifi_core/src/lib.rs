@@ -1,5 +1,11 @@
 #![deny(clippy::all, clippy::pedantic)]
-#![allow(clippy::module_name_repetitions, clippy::implicit_hasher)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::implicit_hasher,
+    clippy::similar_names,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc
+)]
 
 pub mod assetbinds;
 pub mod backups;

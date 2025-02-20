@@ -1,5 +1,9 @@
 #![deny(clippy::all, clippy::pedantic)]
-#![allow(clippy::similar_names, clippy::module_name_repetitions)]
+#![allow(
+    clippy::similar_names,
+    clippy::module_name_repetitions,
+    clippy::missing_panics_doc
+)]
 
 pub mod arguments;
 pub mod context;
@@ -54,7 +58,7 @@ where
                 name: parts
                     .uri
                     .path_and_query()
-                    .map(|s| s.to_string())
+                    .map(std::string::ToString::to_string)
                     .unwrap_or_default(),
                 guild_id: GuildId(interaction.guild_id.unwrap()),
                 channel_id: ChannelId(interaction.channel.as_ref().unwrap().id),

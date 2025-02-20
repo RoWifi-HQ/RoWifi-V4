@@ -45,7 +45,7 @@ pub async fn account_delete_func(
         let message = r"
 Hey there, it looks like you're not verified with us. Please run `/verify` to register with RoWifi.
         ";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     };
 
@@ -57,23 +57,23 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         .next()
     else {
         let message = format!(
-            r#"
+            r"
 Oh no! An account with the name `{}` does not seem to exist. Ensure you have spelled the username correctly and try again.
-        "#,
+        ",
             args.username
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
     if !user.other_accounts.contains(&roblox_user.id) && user.default_account_id != roblox_user.id {
         let message = format!(
-            r#"
+            r"
 `{}` is not linked to your discord account.
-        "#,
+        ",
             roblox_user.name
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
@@ -81,7 +81,7 @@ Oh no! An account with the name `{}` does not seem to exist. Ensure you have spe
         let message = r"
 You cannot delete your default linked account.
         ";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -101,12 +101,12 @@ You cannot delete your default linked account.
         .await?;
 
     let message = format!(
-        r#"
+        r"
 **{}** was successfully unlinked from your Discord account.
-    "#,
+    ",
         roblox_user.name
     );
-    ctx.respond(&bot).content(&message).unwrap().await?;
+    ctx.respond(bot).content(&message).unwrap().await?;
 
     Ok(())
 }

@@ -56,7 +56,7 @@ pub async fn backup_view_func(bot: &BotContext, ctx: &CommandContext) -> Command
         );
     }
 
-    ctx.respond(&bot).embeds(&[embed.build()]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed.build()]).unwrap().await?;
     Ok(())
 }
 

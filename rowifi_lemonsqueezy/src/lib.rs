@@ -1,3 +1,10 @@
+#![deny(clippy::all, clippy::pedantic)]
+#![allow(
+    clippy::similar_names,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc
+)]
+
 mod error;
 pub mod model;
 
@@ -25,6 +32,7 @@ pub struct Client {
 }
 
 impl Client {
+    #[must_use]
     pub fn new(lemon_key: &str) -> Self {
         let connector = HttpsConnectorBuilder::new()
             .with_webpki_roots()

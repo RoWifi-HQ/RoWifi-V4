@@ -80,7 +80,7 @@ pub async fn add_denylist(
         .iter_mut()
         .find(|d| d.data == new_denylist.data)
     {
-        denylist.reason = new_denylist.reason.clone();
+        denylist.reason.clone_from(&new_denylist.reason);
         denylist.action_type = new_denylist.action_type;
     } else {
         existing_denylists.push(new_denylist.clone());

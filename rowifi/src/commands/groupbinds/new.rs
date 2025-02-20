@@ -76,12 +76,12 @@ pub async fn new_groupbind_func(
         Ok(res) => res,
         Err(AddGroupbindError::InvalidGroup) => {
             let message = format!(
-                r#"
+                r"
     Oh no! There does not seem to be a group with ID {}
-            "#,
+            ",
                 args.group_id
             );
-            ctx.respond(&bot).content(&message).unwrap().await?;
+            ctx.respond(bot).content(&message).unwrap().await?;
             return Ok(());
         }
         Err(AddGroupbindError::Generic(err)) => return Err(err),
@@ -109,7 +109,7 @@ pub async fn new_groupbind_func(
             .iter()
             .map(|r| r.0.mention().to_string())
             .collect::<String>();
-        description.push_str(&format!("\n\n🚫 Invalid Roles: {}", ignored_roles_str));
+        description.push_str(&format!("\n\n🚫 Invalid Roles: {ignored_roles_str}"));
     }
 
     let embed = EmbedBuilder::new()
@@ -119,7 +119,7 @@ pub async fn new_groupbind_func(
         .title("Bind Addition Successful")
         .description(description)
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     if let Some(log_channel) = guild.log_channel {
         let embed = EmbedBuilder::new()

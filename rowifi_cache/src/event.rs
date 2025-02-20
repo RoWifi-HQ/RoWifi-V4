@@ -18,7 +18,10 @@ use rowifi_models::{
 
 use crate::{
     error::CacheError,
-    process::{cache_guild, cache_guild_channel, cache_member, cache_partial_member, cache_role, cache_user},
+    process::{
+        cache_guild, cache_guild_channel, cache_member, cache_partial_member, cache_role,
+        cache_user,
+    },
     Cache,
 };
 
@@ -261,11 +264,8 @@ impl UpdateCache for MemberUpdate {
             user.username.clone_from(&self.user.name);
             user.avatar = self.avatar.map(|a| a.to_string());
 
-            conn.set(
-                CachedUser::key(user_id),
-                rmp_serde::to_vec(&user)?,
-            )
-            .await?;
+            conn.set(CachedUser::key(user_id), rmp_serde::to_vec(&user)?)
+                .await?;
         }
 
         Ok(())

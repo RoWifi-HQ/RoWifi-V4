@@ -52,12 +52,12 @@ pub async fn add_user_denylist_func(
         .next()
     else {
         let message = format!(
-            r#"
+            r"
 Oh no! A user with the name `{}` does not exist.
-        "#,
+        ",
             args.username
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -105,7 +105,7 @@ Oh no! A user with the name `{}` does not exist.
         .title("Denylist Addition Successful")
         .field(EmbedFieldBuilder::new(&name, &desc))
         .build();
-    ctx.respond(&bot).embeds(&[embed])?.await?;
+    ctx.respond(bot).embeds(&[embed])?.await?;
 
     if let Some(log_channel) = guild.log_channel {
         let embed = EmbedBuilder::new()

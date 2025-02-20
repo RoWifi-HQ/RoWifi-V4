@@ -46,7 +46,7 @@ pub async fn new_event_type_func(
     let kind = guild.kind.unwrap_or_default();
     if kind != GuildType::Gamma {
         let message = "The Events module is only available for Gamma Tier servers. You can upgrade the server on the dashboard.";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -65,12 +65,12 @@ pub async fn new_event_type_func(
         Ok(e) => e,
         Err(AddEventTypeError::IdAlreadyExists) => {
             let message = format!(
-                r#"
+                r"
     An Event Type with ID {} already exists.
-            "#,
+            ",
                 args.id
             );
-            ctx.respond(&bot).content(&message).unwrap().await?;
+            ctx.respond(bot).content(&message).unwrap().await?;
             return Ok(());
         }
         Err(AddEventTypeError::Generic(err)) => return Err(err),
@@ -82,7 +82,7 @@ pub async fn new_event_type_func(
         .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Event Type Creation Successful")
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     if let Some(log_channel) = guild.log_channel {
         let embed = EmbedBuilder::new()

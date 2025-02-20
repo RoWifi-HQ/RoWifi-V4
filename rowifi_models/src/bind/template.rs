@@ -1,15 +1,15 @@
 use bytes::BytesMut;
-use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::{
+    fmt::{Display, Formatter, Result as FmtResult},
+    sync::LazyLock,
+};
 use tokio_postgres::types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
 
 use crate::{id::UserId, roblox::user::PartialUser};
 
-lazy_static! {
-    static ref TEMPLATE_REGEX: Regex = Regex::new(r"\{(.*?)\}").unwrap();
-}
+static TEMPLATE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\{(.*?)\}").unwrap());
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Template(pub String);

@@ -48,7 +48,7 @@ pub async fn view_rankbinds_func(
         let message = r"
 This server has no rankbinds configured. Looking to add one? Use the command `/rankbinds new`.
         ";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -86,7 +86,7 @@ This server has no rankbinds configured. Looking to add one? Use the command `/r
         }
     }
 
-    paginate_embeds(&ctx, &bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
 
     Ok(())
 }

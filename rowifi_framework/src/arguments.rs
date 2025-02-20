@@ -178,6 +178,7 @@ impl Argument for RoleId {
 impl Argument for GroupId {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match option.value {
+            #[allow(clippy::cast_sign_loss)]
             CommandOptionValue::Integer(group) => Ok(GroupId(group as u64)),
             _ => unreachable!(),
         }
@@ -196,6 +197,7 @@ impl Argument for bool {
 impl Argument for AuditLogKind {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match option.value {
+            #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
             CommandOptionValue::Integer(kind) => Ok(AuditLogKind::try_from(kind as u32).unwrap()),
             _ => unreachable!(),
         }

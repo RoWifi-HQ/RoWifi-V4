@@ -57,13 +57,12 @@ pub async fn debug_update_func(
         // Should not ever happen since slash command guarantees that the user exists.
         // But handling this nonetheless is useful.
         let message = format!(
-            r#"
+            r"
 **Checks**:
-:x: Discord User with id {}  does not exist
-        "#,
-            user_id
+:x: Discord User with id {user_id}  does not exist
+        "
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -73,7 +72,7 @@ pub async fn debug_update_func(
 :white_check_mark: Discord User Exists.
 :x: The command is being run on the server owner. Discord has significant limitations around server owners.
         ";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -85,7 +84,9 @@ pub async fn debug_update_func(
         .await?;
 
     for bypass_role in &guild.bypass_roles {
-        if bypass_role.kind == BypassRoleKind::All && discord_member.roles.contains(&bypass_role.role_id) {
+        if bypass_role.kind == BypassRoleKind::All
+            && discord_member.roles.contains(&bypass_role.role_id)
+        {
             let message = format!(
                 r"
 **Checks**:
@@ -95,7 +96,7 @@ pub async fn debug_update_func(
     ",
                 bypass_role.role_id
             );
-            ctx.respond(&bot).content(&message).unwrap().await?;
+            ctx.respond(bot).content(&message).unwrap().await?;
             return Ok(());
         }
     }
@@ -119,11 +120,10 @@ pub async fn debug_update_func(
 :white_check_mark: Discord User Exists.
 :white_check_mark: You are not the server owner.
 :white_check_mark: You do not have a role which has been marked as bypass.
-:x: {}
-",
-            verify_message
+:x: {verify_message}
+"
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -179,7 +179,7 @@ pub async fn debug_update_func(
             DenyListData::Custom(c) => {
                 // TODO: Figure out a better way to hold the expression of custom
                 // denylists in memory
-                match parser(&c) {
+                match parser(c) {
                     Ok(exp) => {
                         let res = match evaluate(
                             &exp,
@@ -225,7 +225,7 @@ pub async fn debug_update_func(
             let mut eval_message =
                 "\n:x: Following Custom Denylists failed to evaluate:\n".to_string();
             for (id, err) in &evaluation_failed {
-                eval_message.push_str(&format!("- ID: {} -> Error: {}", id, err));
+                eval_message.push_str(&format!("- ID: {id} -> Error: {err}"));
             }
             message.push_str(&eval_message);
         }
@@ -233,18 +233,18 @@ pub async fn debug_update_func(
             let mut eval_message =
                 "\n:x: Following Custom Denylists failed to parse:\n".to_string();
             for (id, err) in &evaluation_failed {
-                eval_message.push_str(&format!("- ID: {} -> Error: {}", id, err));
+                eval_message.push_str(&format!("- ID: {id} -> Error: {err}"));
             }
             message.push_str(&eval_message);
         }
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
     let active_deny_list = active_deny_lists
         .iter()
         .sorted_by_key(|d| d.action_type)
-        .last();
+        .next_back();
     if let Some(deny_list) = active_deny_list {
         let message = format!(
             "
@@ -257,7 +257,7 @@ pub async fn debug_update_func(
 ",
             deny_list.id
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
@@ -388,18 +388,18 @@ pub async fn debug_update_func(
         if !evaluation_failed.is_empty() {
             let mut eval_message = "\n:x: Following Custombinds failed to evaluate:\n".to_string();
             for (id, err) in &evaluation_failed {
-                eval_message.push_str(&format!("- ID: {} -> Error: {}", id, err));
+                eval_message.push_str(&format!("- ID: {id} -> Error: {err}"));
             }
             message.push_str(&eval_message);
         }
         if !parsing_failed.is_empty() {
             let mut eval_message = "\n:x: Following Custombinds failed to parse:\n".to_string();
             for (id, err) in &evaluation_failed {
-                eval_message.push_str(&format!("- ID: {} -> Error: {}", id, err));
+                eval_message.push_str(&format!("- ID: {id} -> Error: {err}"));
             }
             message.push_str(&eval_message);
         }
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
@@ -436,12 +436,12 @@ pub async fn debug_update_func(
                         warning_roles.push(bind_role);
                     }
                 }
-            } else {
-                if discord_member.roles.contains(&bind_role) && !guild.sticky_roles.contains(&bind_role) {
-                    removed_roles.push(bind_role);
-                    if role_position > highest_bot_position {
-                        warning_roles.push(bind_role);
-                    }
+            } else if discord_member.roles.contains(&bind_role)
+                && !guild.sticky_roles.contains(&bind_role)
+            {
+                removed_roles.push(bind_role);
+                if role_position > highest_bot_position {
+                    warning_roles.push(bind_role);
                 }
             }
         }
@@ -449,18 +449,22 @@ pub async fn debug_update_func(
 
     let new_nickname = if let Some(nickname_bind) = nickname_bind {
         match nickname_bind {
-            Bind::Rank(r) => r
-                .template
-                .nickname(&roblox_user, user.user_id, &discord_user.username),
-            Bind::Group(g) => g
-                .template
-                .nickname(&roblox_user, user.user_id, &discord_user.username),
-            Bind::Asset(a) => a
-                .template
-                .nickname(&roblox_user, user.user_id, &discord_user.username),
-            Bind::Custom(c) => c
-                .template
-                .nickname(&roblox_user, user.user_id, &discord_user.username),
+            Bind::Rank(r) => {
+                r.template
+                    .nickname(&roblox_user, user.user_id, &discord_user.username)
+            }
+            Bind::Group(g) => {
+                g.template
+                    .nickname(&roblox_user, user.user_id, &discord_user.username)
+            }
+            Bind::Asset(a) => {
+                a.template
+                    .nickname(&roblox_user, user.user_id, &discord_user.username)
+            }
+            Bind::Custom(c) => {
+                c.template
+                    .nickname(&roblox_user, user.user_id, &discord_user.username)
+            }
         }
     } else {
         guild.default_template.as_ref().unwrap().nickname(
@@ -484,14 +488,14 @@ pub async fn debug_update_func(
         message.push_str("\n:exclamation: Supposed nickname is greater than 32 characters");
     }
 
-    message.push_str(&format!("\n\nNickname: {}", new_nickname));
+    message.push_str(&format!("\n\nNickname: {new_nickname}"));
 
     let mut added_str = added_roles.iter().fold(String::new(), |mut s, a| {
-        let _ = write!(s, "- <@&{}>\n", a.0);
+        let _ = writeln!(s, "- <@&{}>", a.0);
         s
     });
     let mut removed_str = removed_roles.iter().fold(String::new(), |mut s, a| {
-        let _ = write!(s, "- <@&{}>\n", a.0);
+        let _ = writeln!(s, "- <@&{}>", a.0);
         s
     });
     if added_str.is_empty() {
@@ -502,20 +506,19 @@ pub async fn debug_update_func(
     }
 
     message.push_str(&format!(
-        "\n\n**Roles to add**:\n{}\n**Roles to remove**:\n{}",
-        added_str, removed_str
+        "\n\n**Roles to add**:\n{added_str}\n**Roles to remove**:\n{removed_str}"
     ));
 
     if !warning_roles.is_empty() {
         message.push_str(&format!(
             "\n\nThe bot will attempt to add/remove ({}) which will result in an error. These roles are higher than the bot's highest role. To resolve this, make sure the bot's highest role is higher than these roles or unbind these roles",
-            warning_roles.iter().map(|r| format!("<@&{}>", r)).join(",")
+            warning_roles.iter().map(|r| format!("<@&{r}>")).join(",")
         ));
     }
 
     message.push_str("\n\n⚠️ This list of checks is not exhaustive. Despite these checks, if you’re unable to resolve your issue, please contact the support server for assistance.");
 
-    ctx.respond(&bot).content(&message).unwrap().await?;
+    ctx.respond(bot).content(&message).unwrap().await?;
 
     Ok(())
 }

@@ -102,7 +102,7 @@ pub async fn new_assetbind_func(
             .iter()
             .map(|r| r.0.mention().to_string())
             .collect::<String>();
-        description.push_str(&format!("\n\n🚫 Invalid Roles: {}", ignored_roles_str));
+        description.push_str(&format!("\n\n🚫 Invalid Roles: {ignored_roles_str}"));
     }
 
     let embed = EmbedBuilder::new()
@@ -112,7 +112,7 @@ pub async fn new_assetbind_func(
         .title("Bind Addition Successful")
         .description(description)
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     if let Some(log_channel) = guild.log_channel {
         let embed = EmbedBuilder::new()

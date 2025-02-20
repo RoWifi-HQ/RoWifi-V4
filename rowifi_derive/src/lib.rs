@@ -1,4 +1,4 @@
-#![deny(clippy::all)]
+#![deny(clippy::all, clippy::pedantic)]
 
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};

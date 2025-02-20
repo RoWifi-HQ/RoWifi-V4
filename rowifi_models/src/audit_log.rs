@@ -241,7 +241,7 @@ impl TryFrom<u32> for AuditLogKind {
             13 => Ok(Self::EventTypeModify),
             14 => Ok(Self::GroupAccept),
             15 => Ok(Self::GroupDecline),
-            _ => Err(())
+            _ => Err(()),
         }
     }
 }
@@ -251,6 +251,7 @@ impl<'a> FromSql<'a> for AuditLogKind {
         ty: &Type,
         raw: &'a [u8],
     ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        #[allow(clippy::cast_sign_loss)]
         let log_type = i32::from_sql(ty, raw)? as u32;
         Ok(AuditLogKind::try_from(log_type).unwrap())
     }
@@ -291,8 +292,8 @@ impl From<tokio_postgres::Error> for AuditLogDeserializeError {
 impl Display for AuditLogDeserializeError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
-            Self::Serde(err) => write!(f, "serde: {}", err),
-            Self::Postgres(err) => write!(f, "postgres: {}", err),
+            Self::Serde(err) => write!(f, "serde: {err}"),
+            Self::Postgres(err) => write!(f, "postgres: {err}"),
         }
     }
 }

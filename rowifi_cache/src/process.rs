@@ -1,7 +1,9 @@
 use redis::Pipeline;
 use rowifi_models::{
     discord::{
-        cache::{CachedChannel, CachedGuild, CachedMember, CachedRole, CachedTextChannel, CachedUser},
+        cache::{
+            CachedChannel, CachedGuild, CachedMember, CachedRole, CachedTextChannel, CachedUser,
+        },
         channel::{Channel, ChannelType},
         guild::{Guild, Member, PartialMember, Role},
         user::User,
@@ -117,20 +119,14 @@ pub(crate) fn cache_partial_member(
     Ok(())
 }
 
-pub(crate) fn cache_user(
-    pipeline: &mut Pipeline,
-    user: &User,
-) -> Result<CachedUser, CacheError> {
+pub(crate) fn cache_user(pipeline: &mut Pipeline, user: &User) -> Result<CachedUser, CacheError> {
     let cached = CachedUser {
         id: UserId(user.id),
         username: user.name.clone(),
         avatar: user.avatar.map(|a| a.to_string()),
     };
 
-    pipeline.set(
-        CachedUser::key(cached.id),
-        rmp_serde::to_vec(&cached)?,
-    );
+    pipeline.set(CachedUser::key(cached.id), rmp_serde::to_vec(&cached)?);
 
     Ok(cached)
 }

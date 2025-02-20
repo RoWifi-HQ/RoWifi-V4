@@ -48,7 +48,7 @@ pub async fn new_event_func(
     let kind = guild.kind.unwrap_or_default();
     if kind != GuildType::Gamma {
         let message = "Event Logging is only available for Gamma Tier servers. You can upgrade the server on the dashboard.";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -61,7 +61,7 @@ pub async fn new_event_func(
         .await?
     else {
         let message = "Only verified users may log events.";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     };
 
@@ -72,7 +72,7 @@ pub async fn new_event_func(
 
     let attendee_ids = bot
         .roblox
-        .get_users_from_usernames(args.attendees.split(|c| c == ' ' || c == ','))
+        .get_users_from_usernames(args.attendees.split([' ', ',']))
         .await?
         .into_iter()
         .map(|u| u.id)
@@ -96,7 +96,7 @@ pub async fn new_event_func(
         Err(EventLogError::InvalidEventType) => {
             // Should not happen since the argument comes from slash commands
             let message = format!("There is no event type with the ID {}", args.id);
-            ctx.respond(&bot).content(&message).unwrap().await?;
+            ctx.respond(bot).content(&message).unwrap().await?;
             return Ok(());
         }
         Err(EventLogError::Other(err)) => return Err(err),
@@ -119,7 +119,7 @@ pub async fn new_event_func(
             &value,
         ))
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     if let Some(log_channel) = guild.log_channel {
         let embed = EmbedBuilder::new()

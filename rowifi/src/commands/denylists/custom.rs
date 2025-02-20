@@ -72,7 +72,7 @@ pub async fn add_custom_denylist_func(
             return Ok(());
         }
         Err(AddDenylistError::IncorrectCode(err)) => {
-            ctx.respond(&bot).content(&err).unwrap().await?;
+            ctx.respond(bot).content(&err).unwrap().await?;
             return Ok(());
         }
         Err(AddDenylistError::Generic(err)) => return Err(err),
@@ -91,7 +91,7 @@ pub async fn add_custom_denylist_func(
         .title("Denylist Addition Successful")
         .field(EmbedFieldBuilder::new(&name, &desc))
         .build();
-    ctx.respond(&bot).embeds(&[embed])?.await?;
+    ctx.respond(bot).embeds(&[embed])?.await?;
 
     if let Some(log_channel) = guild.log_channel {
         let embed = EmbedBuilder::new()

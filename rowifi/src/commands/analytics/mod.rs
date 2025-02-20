@@ -50,6 +50,7 @@ pub async fn analytics_view(
     })
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn analytics_view_func(
     bot: &BotContext,
     ctx: &CommandContext,
@@ -65,7 +66,7 @@ pub async fn analytics_view_func(
     let kind = guild.kind.unwrap_or_default();
     if kind != GuildType::Gamma {
         let message = "The `analytics` module is only available for Gamma Tier servers";
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -74,7 +75,7 @@ pub async fn analytics_view_func(
             "Group with ID {} is not registered for analytics.",
             args.group_id
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
@@ -96,7 +97,7 @@ pub async fn analytics_view_func(
 
     if group_data.len() <= 2 {
         let message = "There is not enough usable data for the given timeframe. Please give the bot 24 hours to collect enough data or use another timeframe";
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -186,7 +187,7 @@ pub async fn analytics_view_func(
     img.write_image(&buffer, 1024, 768, ExtendedColorType::Rgb8)
         .unwrap();
 
-    ctx.respond(&bot)
+    ctx.respond(bot)
         .files(&[Attachment::from_bytes(
             "analytics.png".to_string(),
             bytes,

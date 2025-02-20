@@ -38,12 +38,12 @@ pub async fn backup_delete_func(
     .await?;
 
     if success {
-        ctx.respond(&bot)
+        ctx.respond(bot)
             .content(&format!("Backup {} has been deleted.", args.name))
             .unwrap()
             .await?;
     } else {
-        ctx.respond(&bot)
+        ctx.respond(bot)
             .content(&format!(
                 "There is no backup named {} linked to your account.",
                 args.name

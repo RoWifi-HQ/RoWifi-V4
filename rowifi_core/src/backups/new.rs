@@ -17,6 +17,7 @@ pub struct BackupArguments {
     pub author: UserId,
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn create_backup(
     database: &Database,
     cache: &Cache,

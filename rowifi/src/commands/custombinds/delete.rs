@@ -50,7 +50,15 @@ pub async fn delete_custombind_func(
     )
     .await?;
 
-    if res.invalid.first().is_some() {
+    if res.invalid.is_empty() {
+        let embed = EmbedBuilder::new()
+            .color(DARK_GREEN)
+            .footer(EmbedFooterBuilder::new("RoWifi").build())
+            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
+            .title("Deletion Successful")
+            .build();
+        ctx.respond(bot).embeds(&[embed]).unwrap().await?;
+    } else {
         let embed = EmbedBuilder::new()
             .color(RED)
             .footer(EmbedFooterBuilder::new("RoWifi").build())
@@ -58,15 +66,7 @@ pub async fn delete_custombind_func(
             .title("Deletion Failed")
             .description(format!("Custombind with ID {} does not exist", args.id))
             .build();
-        ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
-    } else {
-        let embed = EmbedBuilder::new()
-            .color(DARK_GREEN)
-            .footer(EmbedFooterBuilder::new("RoWifi").build())
-            .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
-            .title("Deletion Successful")
-            .build();
-        ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+        ctx.respond(bot).embeds(&[embed]).unwrap().await?;
     }
 
     if let Some(log_channel) = guild.log_channel {

@@ -47,7 +47,7 @@ pub async fn update_all_func(bot: &BotContext, ctx: &CommandContext) -> CommandR
     let guild = bot.database.query_opt::<PartialRoGuild>("SELECT guild_id, kind, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, custombinds, assetbinds, deny_lists, default_template, log_channel FROM guilds WHERE guild_id = $1", &[&ctx.guild_id]).await?.unwrap_or_else(|| PartialRoGuild::new(ctx.guild_id));
     if guild.kind.unwrap() == GuildType::Free {
         let message = "Mass Update commands are only available to Premium servers";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -64,7 +64,7 @@ pub async fn update_all_func(bot: &BotContext, ctx: &CommandContext) -> CommandR
             SELECT row_num AS count FROM mass_update_counts WHERE guild_id = $1 LIMIT 1
         ", &[&ctx.guild_id]).await?;
         let message = format!("This server is currently present in the mass update queue.\nRemaining users: {}\nErrors: {}\nThere are {} user(s) ahead in the queue.", mass_update_guild.updates, mass_update_guild.errored, count[0].count - 1);
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
@@ -78,7 +78,7 @@ pub async fn update_all_func(bot: &BotContext, ctx: &CommandContext) -> CommandR
             &[&ctx.guild_id],
         )
         .await?;
-    ctx.respond(&bot)
+    ctx.respond(bot)
         .content(&format!(
             "`update-all` queue started. There are {} users ahead in the queue",
             count[0].count
@@ -122,7 +122,7 @@ pub async fn update_role_func(
     let guild = bot.database.query_opt::<PartialRoGuild>("SELECT guild_id, kind, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, custombinds, assetbinds, deny_lists, default_template, log_channel FROM guilds WHERE guild_id = $1", &[&ctx.guild_id]).await?.unwrap_or_else(|| PartialRoGuild::new(ctx.guild_id));
     if guild.kind.unwrap() == GuildType::Free {
         let message = "Mass Update commands are only available to Premium servers";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -139,7 +139,7 @@ pub async fn update_role_func(
             SELECT row_num AS count FROM mass_update_counts WHERE guild_id = $1 LIMIT 1
         ", &[&ctx.guild_id]).await?;
         let message = format!("This server is currently present in the mass update queue.\nRemaining users: {}\nErrors: {}\nThere are {} users ahead in the queue.", mass_update_guild.updates, mass_update_guild.errored, count[0].count);
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
@@ -153,7 +153,7 @@ pub async fn update_role_func(
             &[&ctx.guild_id, &RoleId::new(args.role)],
         )
         .await?;
-    ctx.respond(&bot)
+    ctx.respond(bot)
         .content(&format!(
             "`update-role` queue started. There are {} users ahead in the queue",
             count[0].count

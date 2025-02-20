@@ -74,7 +74,7 @@ async fn new_custombind_func(
     {
         Ok(r) => r,
         Err(AddCustombindError::Code(err)) => {
-            ctx.respond(&bot).content(&err).unwrap().await?;
+            ctx.respond(bot).content(&err).unwrap().await?;
             return Ok(());
         }
         Err(AddCustombindError::Other(err)) => return Err(err),
@@ -100,7 +100,7 @@ async fn new_custombind_func(
             .iter()
             .map(|r| r.0.mention().to_string())
             .collect::<String>();
-        description.push_str(&format!("\n\n🚫 Invalid Roles: {}", ignored_roles_str));
+        description.push_str(&format!("\n\n🚫 Invalid Roles: {ignored_roles_str}"));
     }
 
     let embed = EmbedBuilder::new()
@@ -110,7 +110,7 @@ async fn new_custombind_func(
         .title("Bind Addition Successful")
         .description(description)
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     if let Some(log_channel) = guild.log_channel {
         let embed = EmbedBuilder::new()

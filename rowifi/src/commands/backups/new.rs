@@ -43,7 +43,7 @@ pub async fn backup_new_func(
     )
     .await?;
 
-    ctx.respond(&bot)
+    ctx.respond(bot)
         .content(&format!("Backup {} has been created.", args.name))
         .unwrap()
         .await?;

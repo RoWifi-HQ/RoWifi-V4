@@ -43,7 +43,7 @@ pub async fn account_default_func(
         let message = r"
 Hey there, it looks like you're not verified with us. Please run `/verify` to register with RoWifi.
         ";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     };
 
@@ -60,7 +60,7 @@ Oh no! An account with the name `{}` does not seem to exist. Ensure you have spe
         ",
             args.username
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -71,7 +71,7 @@ Oh no! An account with the name `{}` does not seem to exist. Ensure you have spe
         ",
             roblox_user.name
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
@@ -91,7 +91,7 @@ Your default account was successfully set to **{}**.
     ",
         roblox_user.name
     );
-    ctx.respond(&bot).content(&message).unwrap().await?;
+    ctx.respond(bot).content(&message).unwrap().await?;
 
     Ok(())
 }

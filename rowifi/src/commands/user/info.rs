@@ -43,14 +43,13 @@ pub async fn userinfo_func(
         // Should not ever happen since slash command guarantees that the user exists.
         // But handling this nonetheless is useful.
         let message = format!(
-            r#"
+            r"
         <:rowifi:733311296732266577> **Oh no!**
 
-        Looks like there is no member with the id {}. 
-        "#,
-            user_id
+        Looks like there is no member with the id {user_id}. 
+        "
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
     let guild = bot
@@ -68,19 +67,17 @@ pub async fn userinfo_func(
         tracing::debug!("user is not in the database");
         let message = if args.user.is_some() {
             format!(
-                r#"
-Oops, I did not find <@{}> in my database. They are not verified with RoWifi.
-            "#,
-                user_id
+                r"
+Oops, I did not find <@{user_id}> in my database. They are not verified with RoWifi.
+            "
             )
         } else {
-            format!(
-                r#"
+            r"
 Hey there, it looks like you're not verified with us. Please run `/verify` to register with RoWifi.
-            "#
-            )
+            "
+            .to_string()
         };
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -142,7 +139,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         ))
         .thumbnail(ImageSource::url(thumbnail).unwrap())
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     Ok(())
 }

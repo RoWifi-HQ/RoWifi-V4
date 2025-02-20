@@ -42,7 +42,7 @@ pub async fn log_event(
 ) -> Result<EventLog, EventLogError> {
     if !event_types.iter().any(|e| e.id == args.event_type) {
         return Err(EventLogError::InvalidEventType);
-    };
+    }
 
     let mut new_event = EventLog {
         guild_id,

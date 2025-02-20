@@ -50,14 +50,13 @@ pub async fn update_func(
         // Should not ever happen since slash command guarantees that the user exists.
         // But handling this nonetheless is useful.
         let message = format!(
-            r#"
+            r"
         <:rowifi:733311296732266577> **Oh no!**
 
-        Looks like there is no member with the id {}. 
-        "#,
-            user_id
+        Looks like there is no member with the id {user_id}. 
+        "
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -66,7 +65,7 @@ pub async fn update_func(
         let message = r"
         👋 Hey there Server Owner, Discord prevents bots from modifying a server owner's nickname. Hence, RoWifi does not allow running the `/update` command on server owners.
         ";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -85,14 +84,14 @@ pub async fn update_func(
         {
             tracing::debug!("detected bypass role({}). aborting...", bypass_role.role_id);
             let message = format!(
-                r#"
+                r"
 <:rowifi:733311296732266577> **Update Bypass Detected**
 
 You have a role (<@&{}>) which has been marked as a bypass role.
-            "#,
+            ",
                 bypass_role.role_id
             );
-            ctx.respond(&bot).content(&message).unwrap().await?;
+            ctx.respond(bot).content(&message).unwrap().await?;
             return Ok(());
         }
     }
@@ -108,19 +107,18 @@ You have a role (<@&{}>) which has been marked as a bypass role.
         tracing::debug!("user is not in the database");
         let message = if args.user_id.is_some() {
             format!(
-                r#"
+                r"
 Oops, I did not find <@{}> in my database. They are not verified with RoWifi.
-            "#,
+            ",
                 discord_member.id
             )
         } else {
-            format!(
-                r#"
+            r"
 Hey there, it looks like you're not verified with us. Please run `/verify` to register with RoWifi.
-            "#
-            )
+            "
+            .to_string()
         };
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
     tracing::trace!(user = ?user);
@@ -169,20 +167,20 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                 tracing::debug!("user on a deny list. {:?}", deny_list);
                 let message = if args.user_id.is_some() {
                     format!(
-                        r#"
+                        r"
     <@{}> is not allowed to be updated since they were found on a deny list. Reason: {}
-                    "#,
+                    ",
                         discord_member.id, deny_list.reason
                     )
                 } else {
                     format!(
-                        r#"
+                        r"
     You are not allowed to run `/update` due to being on a deny list. Reason: {}
-                    "#,
+                    ",
                         deny_list.reason
                     )
                 };
-                ctx.respond(&bot).content(&message).unwrap().await?;
+                ctx.respond(bot).content(&message).unwrap().await?;
 
                 match deny_list.action_type {
                     DenyListActionType::None => {}
@@ -237,35 +235,32 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                 let message = if args.user_id.is_some() {
                     if nickname.is_empty() {
                         format!(
-                            r#"
+                            r"
 <@{}>'s supposed nickname is empty. Hence, they cannot be updated.
-                        "#,
+                        ",
                             discord_member.id
                         )
                     } else {
                         format!(
-                            r#"
+                            r"
 <@{}>'s supposed nickname ({nickname}) is greater than 32 characters. Hence, they cannot be updated.
-                    "#,
+                    ",
                             discord_member.id
                         )
                     }
+                } else if nickname.is_empty() {
+                    r"
+                Your supposed nickname is empty. Hence, you cannot be updated.
+                                    "
+                    .to_string()
                 } else {
-                    if nickname.is_empty() {
-                        format!(
-                            r#"
-Your supposed nickname is empty. Hence, you cannot be updated.
-                    "#,
-                        )
-                    } else {
-                        format!(
-                            r#"
-Your supposed nickname ({nickname}) is greater than 32 characters. Hence, you cannot be updated.
-                    "#,
-                        )
-                    }
+                    format!(
+                        r"
+                Your supposed nickname ({nickname}) is greater than 32 characters. Hence, you cannot be updated.
+                                    ",
+                    )
                 };
-                ctx.respond(&bot).content(&message).unwrap().await?;
+                ctx.respond(bot).content(&message).unwrap().await?;
 
                 return Ok(());
             }
@@ -282,7 +277,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, you ca
                     {
                         if *status == 403 {
                             let message = "There was an error in updating. Run `/debug update` to find potential issues";
-                            ctx.respond(&bot).content(message).unwrap().await?;
+                            ctx.respond(bot).content(message).unwrap().await?;
                             return Ok(());
                         }
                     }
@@ -290,47 +285,37 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, you ca
                 return Err(err);
             }
             UpdateUserError::CustombindParsing { id, err } => {
-                let message = format!(
-                    "There was an error in parsing the custombind with ID {}.",
-                    id
-                );
+                let message = format!("There was an error in parsing the custombind with ID {id}.");
                 tracing::error!("{}", err);
-                ctx.respond(&bot).content(&message).unwrap().await?;
+                ctx.respond(bot).content(&message).unwrap().await?;
                 return Ok(());
             }
             UpdateUserError::CustombindEvaluation { id, err } => {
-                let message = format!(
-                    "There was an error in evaluating the custombind with ID {}.",
-                    id
-                );
+                let message =
+                    format!("There was an error in evaluating the custombind with ID {id}.");
                 tracing::error!("{}", err);
-                ctx.respond(&bot).content(&message).unwrap().await?;
+                ctx.respond(bot).content(&message).unwrap().await?;
                 return Ok(());
             }
             UpdateUserError::CustomDenylistEvaluation { id, err } => {
-                let message = format!(
-                    "There was an error in evaluating the custom denylist with ID {}.",
-                    id
-                );
+                let message =
+                    format!("There was an error in evaluating the custom denylist with ID {id}.");
                 tracing::error!("{}", err);
-                ctx.respond(&bot).content(&message).unwrap().await?;
+                ctx.respond(bot).content(&message).unwrap().await?;
                 return Ok(());
             }
             UpdateUserError::CustomDenylistParsing { id, err } => {
-                let message = format!(
-                    "There was an error in parsing the custom denylist with ID {}.",
-                    id
-                );
+                let message =
+                    format!("There was an error in parsing the custom denylist with ID {id}.");
                 tracing::error!("{}", err);
-                ctx.respond(&bot).content(&message).unwrap().await?;
+                ctx.respond(bot).content(&message).unwrap().await?;
                 return Ok(());
             }
             UpdateUserError::BannedAccount(user_id) => {
                 let message = format!(
-                    "Your selected Roblox account for this server is {}. It is believed to be a banned or suspected account. If this is not the case, please contact the RoWifi support server.",
-                    user_id
+                    "Your selected Roblox account for this server is {user_id}. It is believed to be a banned or suspected account. If this is not the case, please contact the RoWifi support server."
                 );
-                ctx.respond(&bot).content(&message).unwrap().await?;
+                ctx.respond(bot).content(&message).unwrap().await?;
                 return Ok(());
             }
         },
@@ -338,11 +323,11 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, you ca
     tracing::trace!(added_roles = ?added_roles, removed_roles = ?removed_roles, nickname = ?nickname);
 
     let mut added_str = added_roles.iter().fold(String::new(), |mut s, a| {
-        let _ = write!(s, "- <@&{}>\n", a.0);
+        let _ = writeln!(s, "- <@&{}>", a.0);
         s
     });
     let mut removed_str = removed_roles.iter().fold(String::new(), |mut s, a| {
-        let _ = write!(s, "- <@&{}>\n", a.0);
+        let _ = writeln!(s, "- <@&{}>", a.0);
         s
     });
     if added_str.is_empty() {
@@ -361,7 +346,7 @@ Your supposed nickname ({nickname}) is greater than 32 characters. Hence, you ca
         .field(EmbedFieldBuilder::new("Added Roles", &added_str))
         .field(EmbedFieldBuilder::new("Removed Roles", &removed_str))
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     if let Some(log_channel) = guild.log_channel {
         let log_embed = EmbedBuilder::new()

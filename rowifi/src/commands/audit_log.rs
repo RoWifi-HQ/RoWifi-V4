@@ -33,6 +33,7 @@ pub async fn audit_logs(
     })
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn audit_logs_func(
     bot: &BotContext,
     ctx: &CommandContext,
@@ -42,30 +43,27 @@ pub async fn audit_logs_func(
     let (statement, params): (_, Vec<&(dyn ToSql + Sync)>) = match (&args.user, &args.action) {
         (Some(user), Some(action)) => (
             format!(
-                "SELECT * FROM audit_logs WHERE guild_id = $1 AND user_id = $2 AND kind = $3 ORDER BY timestamp LIMIT 100 OFFSET {}",
-                items
-            ), 
+                "SELECT * FROM audit_logs WHERE guild_id = $1 AND user_id = $2 AND kind = $3 ORDER BY timestamp LIMIT 100 OFFSET {items}"
+            ),
             vec![&ctx.guild_id, user, action]
         ),
         (Some(user), None) => (
             format!(
-                "SELECT * FROM audit_logs WHERE guild_id = $1 AND user_id = $2 ORDER BY timestamp LIMIT 100 OFFSET {}",
-                items
-            ), 
+                "SELECT * FROM audit_logs WHERE guild_id = $1 AND user_id = $2 ORDER BY timestamp LIMIT 100 OFFSET {items}"
+            ),
             vec![&ctx.guild_id, user]
         ),
         (None, Some(action)) => (
             format!(
-                "SELECT * FROM audit_logs WHERE guild_id = $1 AND action = $2 ORDER BY timestamp LIMIT 100 OFFSET {}",
-                items
-            ), 
+                "SELECT * FROM audit_logs WHERE guild_id = $1 AND action = $2 ORDER BY timestamp LIMIT 100 OFFSET {items}"
+            ),
             vec![&ctx.guild_id, action]
         ),
         (None, None) => (
             format!(
-                "SELECT * FROM audit_logs WHERE guild_id = $1 ORDER BY timestamp LIMIT 100 OFFSET {}",
-                items
-            ), vec![&ctx.guild_id]
+                "SELECT * FROM audit_logs WHERE guild_id = $1 ORDER BY timestamp LIMIT 100 OFFSET {items}"
+            ),
+            vec![&ctx.guild_id]
         )
     };
 
@@ -79,7 +77,13 @@ pub async fn audit_logs_func(
         .into_iter()
         .map(|u| (u.id, u))
         .collect::<HashMap<_, _>>();
-    let users = bot.cache.users(user_ids).await?.into_iter().map(|u| (u.id, u)).collect::<HashMap<_, _>>();
+    let users = bot
+        .cache
+        .users(user_ids)
+        .await?
+        .into_iter()
+        .map(|u| (u.id, u))
+        .collect::<HashMap<_, _>>();
 
     let roblox_user_ids = audit_logs.iter().filter_map(|a| match &a.metadata {
         AuditLogData::XPAdd(xp) => Some(xp.target_roblox_user),
@@ -102,12 +106,10 @@ pub async fn audit_logs_func(
             if let Some(member) = members.get(&user_id) {
                 if let Some(nickname) = &member.nickname {
                     nickname.clone()
+                } else if let Some(user) = users.get(&user_id) {
+                    user.username.clone()
                 } else {
-                    if let Some(user) = users.get(&user_id) {
-                        user.username.clone()
-                    } else {
-                        user_id.to_string()
-                    }
+                    user_id.to_string()
                 }
             } else if let Some(user) = users.get(&user_id) {
                 user.username.clone()
@@ -139,25 +141,23 @@ pub async fn audit_logs_func(
             AuditLogData::XPAdd(xp) => {
                 let target_user = roblox_users
                     .get(&xp.target_roblox_user)
-                    .map(|u| u.name.clone())
-                    .unwrap_or_else(|| xp.target_roblox_user.to_string());
+                    .map_or_else(|| xp.target_roblox_user.to_string(), |u| u.name.clone());
                 description.push_str(&format!("- {} added {} XP to {}", user, xp.xp, target_user));
             }
             AuditLogData::XPRemove(xp) => {
                 let target_user = roblox_users
                     .get(&xp.target_roblox_user)
-                    .map(|u| u.name.clone())
-                    .unwrap_or_else(|| xp.target_roblox_user.to_string());
+                    .map_or_else(|| xp.target_roblox_user.to_string(), |u| u.name.clone());
                 description.push_str(&format!(
                     "- {} removed {} XP from {}",
                     user, xp.xp, target_user
                 ));
             }
             AuditLogData::SetRank(set_rank) => {
-                let target_user = roblox_users
-                    .get(&set_rank.target_roblox_user)
-                    .map(|u| u.name.clone())
-                    .unwrap_or_else(|| set_rank.target_roblox_user.to_string());
+                let target_user = roblox_users.get(&set_rank.target_roblox_user).map_or_else(
+                    || set_rank.target_roblox_user.to_string(),
+                    |u| u.name.clone(),
+                );
                 description.push_str(&format!(
                     "- {} set {}'s rank in {} to {}",
                     user, target_user, set_rank.group_id, set_rank.group_rank_id
@@ -166,18 +166,20 @@ pub async fn audit_logs_func(
             AuditLogData::XPSet(xp) => {
                 let target_user = roblox_users
                     .get(&xp.target_roblox_user)
-                    .map(|u| u.name.clone())
-                    .unwrap_or_else(|| xp.target_roblox_user.to_string());
+                    .map_or_else(|| xp.target_roblox_user.to_string(), |u| u.name.clone());
                 description.push_str(&format!("- {} set {}'s XP to {}", user, target_user, xp.xp));
             }
             AuditLogData::DenylistCreate(denylist) => {
                 description.push_str(&format!("- {} created a {} denylist", user, denylist.kind));
             }
             AuditLogData::DenylistDelete(denylist) => {
-                description.push_str(&format!("- {} deleted {} denylist(s)", user, denylist.count));
+                description.push_str(&format!(
+                    "- {} deleted {} denylist(s)",
+                    user, denylist.count
+                ));
             }
             AuditLogData::EventLog(_) => {
-                description.push_str(&format!("- {} logged an event", user));
+                description.push_str(&format!("- {user} logged an event"));
             }
             AuditLogData::SettingModify(setting) => {
                 description.push_str(&format!(
@@ -186,16 +188,15 @@ pub async fn audit_logs_func(
                 ));
             }
             AuditLogData::EventTypeCreate(_) => {
-                description.push_str(&format!("- {} created an Event Type", user));
+                description.push_str(&format!("- {user} created an Event Type"));
             }
             AuditLogData::EventTypeModify(_) => {
-                description.push_str(&format!("- {} modified an Event Type", user));
+                description.push_str(&format!("- {user} modified an Event Type"));
             }
             AuditLogData::GroupAccept(group) => {
                 let target_user = roblox_users
                     .get(&group.target_roblox_user)
-                    .map(|u| u.name.clone())
-                    .unwrap_or_else(|| group.target_roblox_user.to_string());
+                    .map_or_else(|| group.target_roblox_user.to_string(), |u| u.name.clone());
                 description.push_str(&format!(
                     "- {} accepted {} to {}",
                     user, target_user, group.group_id
@@ -204,15 +205,14 @@ pub async fn audit_logs_func(
             AuditLogData::GroupDecline(group) => {
                 let target_user = roblox_users
                     .get(&group.target_roblox_user)
-                    .map(|u| u.name.clone())
-                    .unwrap_or_else(|| group.target_roblox_user.to_string());
+                    .map_or_else(|| group.target_roblox_user.to_string(), |u| u.name.clone());
                 description.push_str(&format!(
                     "- {} declined {}'s join request to {}",
                     user, target_user, group.group_id
                 ));
             }
         }
-        description.push_str("\n");
+        description.push('\n');
     }
 
     let embed = EmbedBuilder::new()
@@ -222,7 +222,7 @@ pub async fn audit_logs_func(
         .title(format!("Audit Logs | Page {}", args.page))
         .description(description)
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     Ok(())
 }

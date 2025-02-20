@@ -41,6 +41,7 @@ pub enum EvaluationError {
     },
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn evaluate(
     expr: &Expression,
     context: &EvaluationContext<'_>,
@@ -57,7 +58,9 @@ pub fn evaluate(
                 Operator::LessEqual => EvaluationResult::Bool(lhs <= rhs),
                 Operator::Less => EvaluationResult::Bool(lhs < rhs),
                 Operator::Equal => EvaluationResult::Bool(lhs == rhs),
-                _ => return Err(EvaluationError::IncorrectOperator { op: Operator::Not }),
+                Operator::Not => {
+                    return Err(EvaluationError::IncorrectOperator { op: Operator::Not })
+                }
             };
             Ok(res)
         }
@@ -77,7 +80,7 @@ pub fn evaluate(
                             Expression::Function(_, _) | Expression::Operation(_, _, _) => {
                                 let res = evaluate(&args[0], context)?;
                                 match res {
-                                    EvaluationResult::Bool(b) => b as u64,
+                                    EvaluationResult::Bool(b) => u64::from(b),
                                     EvaluationResult::Number(n) => n,
                                 }
                             }
@@ -115,7 +118,7 @@ pub fn evaluate(
                             Expression::Function(_, _) | Expression::Operation(_, _, _) => {
                                 let res = evaluate(&args[0], context)?;
                                 match res {
-                                    EvaluationResult::Bool(b) => b as u64,
+                                    EvaluationResult::Bool(b) => u64::from(b),
                                     EvaluationResult::Number(n) => n,
                                 }
                             }
@@ -133,12 +136,13 @@ pub fn evaluate(
                             Expression::Function(_, _) | Expression::Operation(_, _, _) => {
                                 let res = evaluate(&args[1], context)?;
                                 match res {
-                                    EvaluationResult::Bool(b) => b as u64,
+                                    EvaluationResult::Bool(b) => u64::from(b),
                                     EvaluationResult::Number(n) => n,
                                 }
                             }
                         };
                         let success = match context.ranks.get(&GroupId(group)) {
+                            #[allow(clippy::cast_possible_truncation)]
                             Some(r) => *r == rank as u32,
                             None => false,
                         };
@@ -158,7 +162,7 @@ pub fn evaluate(
                             Expression::Function(_, _) | Expression::Operation(_, _, _) => {
                                 let res = evaluate(&args[0], context)?;
                                 match res {
-                                    EvaluationResult::Bool(b) => b as u64,
+                                    EvaluationResult::Bool(b) => u64::from(b),
                                     EvaluationResult::Number(n) => n,
                                 }
                             }
@@ -183,16 +187,13 @@ pub fn evaluate(
                 }
                 "WithString" => {
                     if args.len() == 1 {
-                        let name = match &args[0] {
-                            Expression::Constant(Atom::String(str)) => str,
-                            _ => {
-                                return Err(EvaluationError::IncorrectArgument {
-                                    name: "HasRole",
-                                    idx: 0,
-                                    found: "String",
-                                    expected: "Number",
-                                })
-                            }
+                        let Expression::Constant(Atom::String(name)) = &args[0] else {
+                            return Err(EvaluationError::IncorrectArgument {
+                                name: "HasRole",
+                                idx: 0,
+                                found: "String",
+                                expected: "Number",
+                            });
                         };
                         let success = context.username.contains(name.as_str());
                         Ok(EvaluationResult::Bool(success))
@@ -211,7 +212,7 @@ pub fn evaluate(
                             Expression::Function(_, _) | Expression::Operation(_, _, _) => {
                                 let res = evaluate(&args[0], context)?;
                                 match res {
-                                    EvaluationResult::Bool(b) => b as u64,
+                                    EvaluationResult::Bool(b) => u64::from(b),
                                     EvaluationResult::Number(n) => n,
                                 }
                             }
@@ -229,7 +230,7 @@ pub fn evaluate(
                             .get(&GroupId(group))
                             .copied()
                             .unwrap_or_default();
-                        Ok(EvaluationResult::Number(rank as u64))
+                        Ok(EvaluationResult::Number(u64::from(rank)))
                     } else {
                         return Err(EvaluationError::IncorrectArgumentCount {
                             name: "GetRank",
@@ -250,6 +251,7 @@ pub fn evaluate(
 }
 
 impl EvaluationResult {
+    #[must_use]
     pub fn and(self, rhs: Self) -> EvaluationResult {
         let res = match (self, rhs) {
             (Self::Bool(b), Self::Number(n)) | (Self::Number(n), Self::Bool(b)) => b && (n != 0),
@@ -259,6 +261,7 @@ impl EvaluationResult {
         EvaluationResult::Bool(res)
     }
 
+    #[must_use]
     pub fn or(self, rhs: Self) -> EvaluationResult {
         let res = match (self, rhs) {
             (Self::Bool(b), Self::Number(n)) | (Self::Number(n), Self::Bool(b)) => b || (n != 0),
@@ -272,10 +275,10 @@ impl EvaluationResult {
 impl PartialOrd for EvaluationResult {
     fn partial_cmp(&self, rhs: &Self) -> Option<Ordering> {
         match (self, rhs) {
-            (Self::Bool(b), Self::Number(n)) => (*b as u64).partial_cmp(&n),
-            (Self::Number(n), Self::Bool(b)) => n.partial_cmp(&(*b as u64)),
-            (Self::Bool(b1), Self::Bool(b2)) => b1.partial_cmp(&b2),
-            (Self::Number(n1), Self::Number(n2)) => n1.partial_cmp(&n2),
+            (Self::Bool(b), Self::Number(n)) => u64::from(*b).partial_cmp(n),
+            (Self::Number(n), Self::Bool(b)) => n.partial_cmp(&u64::from(*b)),
+            (Self::Bool(b1), Self::Bool(b2)) => b1.partial_cmp(b2),
+            (Self::Number(n1), Self::Number(n2)) => n1.partial_cmp(n2),
         }
     }
 }
@@ -283,8 +286,8 @@ impl PartialOrd for EvaluationResult {
 impl PartialEq for EvaluationResult {
     fn eq(&self, rhs: &Self) -> bool {
         match (self, rhs) {
-            (Self::Bool(b), Self::Number(n)) => (*b as u64).eq(n),
-            (Self::Number(n), Self::Bool(b)) => n.eq(&(*b as u64)),
+            (Self::Bool(b), Self::Number(n)) => u64::from(*b).eq(n),
+            (Self::Number(n), Self::Bool(b)) => n.eq(&u64::from(*b)),
             (Self::Bool(b1), Self::Bool(b2)) => b1.eq(b2),
             (Self::Number(n1), Self::Number(n2)) => n1.eq(n2),
         }
@@ -324,14 +327,13 @@ impl Display for EvaluationError {
                 found,
             } => write!(
                 f,
-                "Function {} is expected to have {} arguments. It has {} arguments currently",
-                name, expected, found
+                "Function {name} is expected to have {expected} arguments. It has {found} arguments currently"
             ),
             Self::UnknownFunction { name } => {
-                write!(f, "Function {} is not a valid function", name)
+                write!(f, "Function {name} is not a valid function")
             }
             Self::IncorrectOperator { op } => {
-                write!(f, "Did not expect `{}` operator", op)
+                write!(f, "Did not expect `{op}` operator")
             }
         }
     }

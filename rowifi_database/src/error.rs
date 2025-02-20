@@ -35,7 +35,6 @@ impl Display for DatabaseError {
 
 impl StdError for DatabaseError {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        Some(self.0
-            .as_ref())
+        Some(self.0.as_ref())
     }
 }

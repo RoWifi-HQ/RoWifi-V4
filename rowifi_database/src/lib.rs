@@ -64,7 +64,7 @@ impl Database {
     ) -> Result<Vec<T>, DatabaseError>
     where
         T: TryFrom<Row>,
-        T::Error: Error + Send + Sync + 'static
+        T::Error: Error + Send + Sync + 'static,
     {
         let conn = self.get().await?;
         let statement = conn.prepare_cached(statement).await?;

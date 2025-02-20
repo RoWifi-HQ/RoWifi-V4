@@ -38,11 +38,7 @@ pub async fn add_event_type(
     mut existing_event_types: Vec<EventType>,
     args: EventTypeArguments,
 ) -> Result<AddEventType, AddEventTypeError> {
-    if existing_event_types
-        .iter()
-        .find(|e| e.id == args.id)
-        .is_some()
-    {
+    if existing_event_types.iter().any(|e| e.id == args.id) {
         return Err(AddEventTypeError::IdAlreadyExists);
     }
 

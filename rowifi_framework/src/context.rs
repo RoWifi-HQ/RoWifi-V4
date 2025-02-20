@@ -99,7 +99,10 @@ impl BotContext {
         guild_id: GuildId,
         user_id: UserId,
     ) -> Result<Option<(CachedMember, CachedUser)>, RoError> {
-        if let (Some(member), Some(user)) = (self.cache.guild_member(guild_id, user_id).await?, self.cache.user(user_id).await?) {
+        if let (Some(member), Some(user)) = (
+            self.cache.guild_member(guild_id, user_id).await?,
+            self.cache.user(user_id).await?,
+        ) {
             return Ok(Some((member, user)));
         }
         let res = self.http.guild_member(guild_id.0, user_id.0).await;
@@ -175,6 +178,7 @@ impl Deref for BotContext {
 }
 
 impl CommandContext {
+    #[must_use]
     pub fn respond<'a>(&'a self, bot: &'a BotContext) -> Responder<'a> {
         Responder::new(self, bot)
     }
@@ -223,6 +227,7 @@ pub struct Responder<'a> {
 }
 
 impl<'a> Responder<'a> {
+    #[must_use]
     pub fn new(ctx: &'a CommandContext, bot: &'a BotContext) -> Self {
         Self {
             ctx,

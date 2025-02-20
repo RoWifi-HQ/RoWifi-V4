@@ -59,7 +59,7 @@ pub async fn add_rankbind(
         return Err(AddRankbindError::InvalidGroup);
     };
 
-    let Some(rank) = ranks.iter().find(|r| r.rank == u32::from(args.rank_id)) else {
+    let Some(rank) = ranks.iter().find(|r| r.rank == args.rank_id) else {
         return Err(AddRankbindError::InvalidRank);
     };
 
@@ -79,7 +79,7 @@ pub async fn add_rankbind(
     let new_bind = Rankbind {
         group_id: args.group_id,
         discord_roles: roles_to_add,
-        group_rank_id: u32::from(args.rank_id),
+        group_rank_id: args.rank_id,
         roblox_rank_id: rank.id.clone(),
         priority: args.priority.unwrap_or_default(),
         template: args.template,
@@ -92,7 +92,7 @@ pub async fn add_rankbind(
     {
         bind.priority = new_bind.priority;
         bind.template = new_bind.template.clone();
-        bind.discord_roles = new_bind.discord_roles.clone();
+        bind.discord_roles.clone_from(&new_bind.discord_roles);
         modified = true;
     } else {
         existing_rankbinds.push(new_bind.clone());

@@ -1886,7 +1886,6 @@ dependencies = [
  "bitflags 2.8.0",
  "bytes",
  "chrono",
- "lazy_static",
  "regex",
  "serde",
  "serde_json",

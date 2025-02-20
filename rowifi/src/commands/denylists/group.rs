@@ -53,12 +53,12 @@ pub async fn add_group_denylist_func(
         .is_none()
     {
         let message = format!(
-            r#"
+            r"
 Oh no! A group with the ID {} does not exist. Ensure you have entered the ID correctly and try again.
-            "#,
+            ",
             args.group_id
         );
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     }
 
@@ -106,7 +106,7 @@ Oh no! A group with the ID {} does not exist. Ensure you have entered the ID cor
         .title("Denylist Addition Successful")
         .field(EmbedFieldBuilder::new(&name, &desc))
         .build();
-    ctx.respond(&bot).embeds(&[embed])?.await?;
+    ctx.respond(bot).embeds(&[embed])?.await?;
 
     if let Some(log_channel) = guild.log_channel {
         let embed = EmbedBuilder::new()

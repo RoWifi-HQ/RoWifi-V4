@@ -41,7 +41,7 @@ pub async fn backup_restore_func(
     .await
     {
         Ok(()) => {
-            ctx.respond(&bot)
+            ctx.respond(bot)
                 .content(&format!(
                     "Backup {} has been restored to this server",
                     args.name
@@ -50,7 +50,7 @@ pub async fn backup_restore_func(
                 .await?;
         }
         Err(BackupError::NotFound) => {
-            ctx.respond(&bot)
+            ctx.respond(bot)
                 .content(&format!(
                     "There is no backup named {} linked to your account.",
                     args.name

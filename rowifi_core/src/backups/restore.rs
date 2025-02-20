@@ -24,6 +24,7 @@ pub struct BackupGuildRow {
     pub data: Json<BackupGuild>,
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn restore_backup(
     database: &Database,
     cache: &Cache,
@@ -51,29 +52,25 @@ pub async fn restore_backup(
         backup_guild
             .rankbinds
             .iter()
-            .map(|r| r.discord_roles.clone())
-            .flatten(),
+            .flat_map(|r| r.discord_roles.clone()),
     );
     all_roles.extend(
         backup_guild
             .groupbinds
             .iter()
-            .map(|r| r.discord_roles.clone())
-            .flatten(),
+            .flat_map(|r| r.discord_roles.clone()),
     );
     all_roles.extend(
         backup_guild
             .custombinds
             .iter()
-            .map(|r| r.discord_roles.clone())
-            .flatten(),
+            .flat_map(|r| r.discord_roles.clone()),
     );
     all_roles.extend(
         backup_guild
             .assetbinds
             .iter()
-            .map(|r| r.discord_roles.clone())
-            .flatten(),
+            .flat_map(|r| r.discord_roles.clone()),
     );
     all_roles.extend(backup_guild.unverified_roles.clone());
     all_roles.extend(backup_guild.verified_roles.clone());

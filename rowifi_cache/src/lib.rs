@@ -31,7 +31,11 @@ pub struct CacheInner {
 pub struct Cache(Arc<CacheInner>);
 
 impl Cache {
-    #[must_use]
+    /// Create a Cache client given a Redis client.
+    ///
+    /// # Errors
+    ///
+    /// See [`CacheError`] for details.
     pub async fn new(client: RedisClient) -> Result<Self, CacheError> {
         let conn = client.get_connection_manager().await?;
         Ok(Self(Arc::new(CacheInner { conn })))
@@ -51,6 +55,7 @@ impl Cache {
     /// # Errors
     ///
     /// See [`CacheError`] for details.
+    #[must_use]
     pub fn get(&self) -> ConnectionManager {
         self.0.conn.clone()
     }
@@ -60,10 +65,7 @@ impl Cache {
     /// # Errors
     ///
     /// See [`CacheError`] for details.
-    pub async fn user(
-        &self,
-        user_id: UserId,
-    ) -> Result<Option<CachedUser>, CacheError> {
+    pub async fn user(&self, user_id: UserId) -> Result<Option<CachedUser>, CacheError> {
         let mut conn = self.get();
         let res: Option<Vec<u8>> = conn.get(CachedUser::key(user_id)).await?;
 
@@ -194,7 +196,7 @@ impl Cache {
         let mut conn = self.get();
         let keys = user_ids
             .into_iter()
-            .map(|u| CachedUser::key(u))
+            .map(CachedUser::key)
             .collect::<Vec<_>>();
 
         if keys.is_empty() {

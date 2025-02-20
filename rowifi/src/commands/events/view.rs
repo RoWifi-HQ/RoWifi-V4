@@ -92,47 +92,42 @@ pub async fn view_attendee_events_func(
     let kind = guild.kind.unwrap_or_default();
     if kind != GuildType::Gamma {
         let message = "Event Logging is only available for Gamma Tier servers. You can upgrade the server on the dashboard.";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
-    let roblox_id = match &args.username {
-        Some(username) => {
-            if let Some(u) = bot
-                .roblox
-                .get_users_from_usernames([username.as_str()].into_iter())
-                .await?
-                .into_iter()
-                .next()
-            {
-                u.id
-            } else {
-                let message = format!(
-                    "{} does not appear to be associated with any Roblox user.",
-                    username
-                );
-                ctx.respond(&bot).content(&message)?.await?;
-                return Ok(());
-            }
+    let roblox_id = if let Some(username) = &args.username {
+        if let Some(u) = bot
+            .roblox
+            .get_users_from_usernames([username.as_str()].into_iter())
+            .await?
+            .into_iter()
+            .next()
+        {
+            u.id
+        } else {
+            let message =
+                format!("{username} does not appear to be associated with any Roblox user.");
+            ctx.respond(bot).content(&message)?.await?;
+            return Ok(());
         }
-        None => {
-            let Some(user) = bot
-                .database
-                .query_opt::<RoUser>(
-                    "SELECT * FROM roblox_users WHERE user_id = $1",
-                    &[&ctx.author_id],
-                )
-                .await?
-            else {
-                let message = "Only verified users may log events.";
-                ctx.respond(&bot).content(message).unwrap().await?;
-                return Ok(());
-            };
-            user.linked_accounts
-                .get(&ctx.guild_id)
-                .copied()
-                .unwrap_or(user.default_account_id)
-        }
+    } else {
+        let Some(user) = bot
+            .database
+            .query_opt::<RoUser>(
+                "SELECT * FROM roblox_users WHERE user_id = $1",
+                &[&ctx.author_id],
+            )
+            .await?
+        else {
+            let message = "Only verified users may log events.";
+            ctx.respond(bot).content(message).unwrap().await?;
+            return Ok(());
+        };
+        user.linked_accounts
+            .get(&ctx.guild_id)
+            .copied()
+            .unwrap_or(user.default_account_id)
     };
 
     let events = bot
@@ -177,7 +172,7 @@ pub async fn view_attendee_events_func(
         page_count += 1;
     }
 
-    paginate_embeds(&ctx, &bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
 
     Ok(())
 }
@@ -199,47 +194,42 @@ pub async fn view_host_events_func(
     let kind = guild.kind.unwrap_or_default();
     if kind != GuildType::Gamma {
         let message = "Event Logging is only available for Gamma Tier servers. You can upgrade the server on the dashboard.";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
-    let roblox_id = match &args.username {
-        Some(username) => {
-            if let Some(u) = bot
-                .roblox
-                .get_users_from_usernames([username.as_str()].into_iter())
-                .await?
-                .into_iter()
-                .next()
-            {
-                u.id
-            } else {
-                let message = format!(
-                    "{} does not appear to be associated with any Roblox user.",
-                    username
-                );
-                ctx.respond(&bot).content(&message)?.await?;
-                return Ok(());
-            }
+    let roblox_id = if let Some(username) = &args.username {
+        if let Some(u) = bot
+            .roblox
+            .get_users_from_usernames([username.as_str()].into_iter())
+            .await?
+            .into_iter()
+            .next()
+        {
+            u.id
+        } else {
+            let message =
+                format!("{username} does not appear to be associated with any Roblox user.");
+            ctx.respond(bot).content(&message)?.await?;
+            return Ok(());
         }
-        None => {
-            let Some(user) = bot
-                .database
-                .query_opt::<RoUser>(
-                    "SELECT * FROM roblox_users WHERE user_id = $1",
-                    &[&ctx.author_id],
-                )
-                .await?
-            else {
-                let message = "Only verified users may log events.";
-                ctx.respond(&bot).content(message).unwrap().await?;
-                return Ok(());
-            };
-            user.linked_accounts
-                .get(&ctx.guild_id)
-                .copied()
-                .unwrap_or(user.default_account_id)
-        }
+    } else {
+        let Some(user) = bot
+            .database
+            .query_opt::<RoUser>(
+                "SELECT * FROM roblox_users WHERE user_id = $1",
+                &[&ctx.author_id],
+            )
+            .await?
+        else {
+            let message = "Only verified users may log events.";
+            ctx.respond(bot).content(message).unwrap().await?;
+            return Ok(());
+        };
+        user.linked_accounts
+            .get(&ctx.guild_id)
+            .copied()
+            .unwrap_or(user.default_account_id)
     };
 
     let events = bot
@@ -284,7 +274,7 @@ pub async fn view_host_events_func(
         page_count += 1;
     }
 
-    paginate_embeds(&ctx, &bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
 
     Ok(())
 }
@@ -305,7 +295,7 @@ pub async fn view_event_func(
     let kind = guild.kind.unwrap_or_default();
     if kind != GuildType::Gamma {
         let message = "Event Logging is only available for Gamma Tier servers. You can upgrade the server on the dashboard.";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -319,7 +309,7 @@ pub async fn view_event_func(
         .await?
     else {
         let message = format!("There is no event with the ID {}", args.event_id);
-        ctx.respond(&bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
 
@@ -352,7 +342,7 @@ pub async fn view_event_func(
     } else {
         embed = embed.field(EmbedFieldBuilder::new(
             "Attendees",
-            attendees.iter().map(|a| format!("- {}", a)).join("\n"),
+            attendees.iter().map(|a| format!("- {a}")).join("\n"),
         ));
     }
 
@@ -360,7 +350,7 @@ pub async fn view_event_func(
         embed = embed.field(EmbedFieldBuilder::new("Notes", notes));
     }
 
-    ctx.respond(&bot).embeds(&[embed.build()]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed.build()]).unwrap().await?;
 
     Ok(())
 }

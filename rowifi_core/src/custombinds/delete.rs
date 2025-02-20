@@ -34,7 +34,7 @@ pub async fn delete_custombinds(
     args: Vec<CustombindArguments>,
 ) -> Result<DeleteCustombind, RoError> {
     let mut set = HashSet::new();
-    for custombind in custombinds.iter() {
+    for custombind in custombinds {
         set.insert(custombind.custom_bind_id);
     }
 

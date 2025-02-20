@@ -56,7 +56,7 @@ pub async fn add_groupbind(
         .is_none()
     {
         return Err(AddGroupbindError::InvalidGroup);
-    };
+    }
 
     let mut ignored_roles = Vec::new();
     let mut roles_to_add = Vec::new();
@@ -85,7 +85,7 @@ pub async fn add_groupbind(
     {
         bind.priority = new_bind.priority;
         bind.template = new_bind.template.clone();
-        bind.discord_roles = new_bind.discord_roles.clone();
+        bind.discord_roles.clone_from(&new_bind.discord_roles);
         modified = true;
     } else {
         existing_groupbinds.push(new_bind.clone());

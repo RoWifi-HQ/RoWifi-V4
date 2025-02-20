@@ -118,7 +118,7 @@ impl UpdateUser<'_> {
                 DenyListData::Custom(c) => {
                     // TODO: Figure out a better way to hold the expression of custom
                     // denylists in memory
-                    match parser(&c) {
+                    match parser(c) {
                         Ok(exp) => {
                             let res = match evaluate(
                                 &exp,
@@ -158,7 +158,7 @@ impl UpdateUser<'_> {
         let active_deny_list = active_deny_lists
             .iter()
             .sorted_by_key(|d| d.action_type)
-            .last();
+            .next_back();
         if let Some(deny_list) = active_deny_list {
             return Err(UpdateUserError::DenyList((
                 self.discord_member.id,
@@ -258,12 +258,10 @@ impl UpdateUser<'_> {
                     if !self.discord_member.roles.contains(bind_role) {
                         added_roles.push(*bind_role);
                     }
-                } else {
-                    if self.discord_member.roles.contains(bind_role)
-                        && !self.guild.sticky_roles.contains(bind_role)
-                    {
-                        removed_roles.push(*bind_role);
-                    }
+                } else if self.discord_member.roles.contains(bind_role)
+                    && !self.guild.sticky_roles.contains(bind_role)
+                {
+                    removed_roles.push(*bind_role);
                 }
             }
         }
@@ -272,11 +270,9 @@ impl UpdateUser<'_> {
             .http
             .update_guild_member(self.server.id.0, self.discord_member.id.0);
 
-        let has_role_bypass = self
-            .guild
-            .bypass_roles
-            .iter()
-            .any(|b| b.kind == BypassRoleKind::Roles && self.discord_member.roles.contains(&b.role_id));
+        let has_role_bypass = self.guild.bypass_roles.iter().any(|b| {
+            b.kind == BypassRoleKind::Roles && self.discord_member.roles.contains(&b.role_id)
+        });
         let mut new_roles = self.discord_member.roles.clone();
         new_roles.extend_from_slice(&added_roles);
         new_roles.retain(|r| !removed_roles.contains(r));
@@ -295,34 +291,36 @@ impl UpdateUser<'_> {
             .nickname
             .as_ref()
             .map_or_else(|| self.discord_user.username.as_str(), String::as_str);
-        let has_nickname_bypass =
-            self.guild.bypass_roles.iter().any(|b| {
-                b.kind == BypassRoleKind::Nickname && self.discord_member.roles.contains(&b.role_id)
-            });
+        let has_nickname_bypass = self.guild.bypass_roles.iter().any(|b| {
+            b.kind == BypassRoleKind::Nickname && self.discord_member.roles.contains(&b.role_id)
+        });
         let new_nickname = if let Some(nickname_bind) = nickname_bind {
             match nickname_bind {
-                Bind::Rank(r) => {
-                    r.template
-                        .nickname(&roblox_user, self.user.user_id, &self.discord_user.username)
-                }
-                Bind::Group(g) => {
-                    g.template
-                        .nickname(&roblox_user, self.user.user_id, &self.discord_user.username)
-                }
-                Bind::Asset(a) => {
-                    a.template
-                        .nickname(&roblox_user, self.user.user_id, &self.discord_user.username)
-                }
-                Bind::Custom(c) => {
-                    c.template
-                        .nickname(&roblox_user, self.user.user_id, &self.discord_user.username)
-                }
+                Bind::Rank(r) => r.template.nickname(
+                    &roblox_user,
+                    self.user.user_id,
+                    &self.discord_user.username,
+                ),
+                Bind::Group(g) => g.template.nickname(
+                    &roblox_user,
+                    self.user.user_id,
+                    &self.discord_user.username,
+                ),
+                Bind::Asset(a) => a.template.nickname(
+                    &roblox_user,
+                    self.user.user_id,
+                    &self.discord_user.username,
+                ),
+                Bind::Custom(c) => c.template.nickname(
+                    &roblox_user,
+                    self.user.user_id,
+                    &self.discord_user.username,
+                ),
             }
         } else {
             self.guild
                 .default_template
-                .as_ref()
-                .cloned()
+                .clone()
                 .unwrap_or_default()
                 .nickname(&roblox_user, self.user.user_id, &self.discord_user.username)
         };

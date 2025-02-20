@@ -81,22 +81,22 @@ async fn new_rankbind_func(
         Ok(res) => res,
         Err(AddRankbindError::InvalidRank) => {
             let message = format!(
-                r#"
+                r"
     Oh no! There does not seem to be a rank with ID {} in the group {}.
-            "#,
+            ",
                 args.rank_id, args.group_id
             );
-            ctx.respond(&bot).content(&message).unwrap().await?;
+            ctx.respond(bot).content(&message).unwrap().await?;
             return Ok(());
         }
         Err(AddRankbindError::InvalidGroup) => {
             let message = format!(
-                r#"
+                r"
     Oh no! There does not seem to be a group with ID {}.
-            "#,
+            ",
                 args.group_id
             );
-            ctx.respond(&bot).content(&message).unwrap().await?;
+            ctx.respond(bot).content(&message).unwrap().await?;
             return Ok(());
         }
         Err(AddRankbindError::Generic(err)) => return Err(err),
@@ -124,7 +124,7 @@ async fn new_rankbind_func(
             .iter()
             .map(|r| r.0.mention().to_string())
             .collect::<String>();
-        description.push_str(&format!("\n\n🚫 Invalid Roles: {}", ignored_roles_str));
+        description.push_str(&format!("\n\n🚫 Invalid Roles: {ignored_roles_str}"));
     }
 
     let embed = EmbedBuilder::new()
@@ -134,7 +134,7 @@ async fn new_rankbind_func(
         .title("Bind Addition Successful")
         .description(description)
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     if let Some(log_channel) = guild.log_channel {
         let embed = EmbedBuilder::new()

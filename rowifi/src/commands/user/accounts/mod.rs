@@ -42,7 +42,7 @@ pub async fn account_view_func(bot: &BotContext, ctx: &CommandContext) -> Comman
         let message = r"
 Hey there, it looks like you're not verified with us. Please run `/verify` to register with RoWifi.
         ";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     };
 
@@ -82,7 +82,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
     }
 
     let embed = embed.description(acc_string).build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     Ok(())
 }

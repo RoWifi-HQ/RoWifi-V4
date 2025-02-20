@@ -43,7 +43,7 @@ pub async fn analytics_register_func(
 
     if guild.kind.unwrap_or_default() != GuildType::Gamma {
         let message = "Analytics is only available for Gamma Tier servers. You can upgrade the server on the dashboard.";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -63,7 +63,7 @@ pub async fn analytics_register_func(
         .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Group Added For Analytics")
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     Ok(())
 }
@@ -98,7 +98,7 @@ pub async fn analytics_unregister_func(
 
     if guild.kind.unwrap_or_default() != GuildType::Gamma {
         let message = "Analytics is only available for Gamma Tier servers. You can upgrade the server on the dashboard.";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -122,7 +122,7 @@ pub async fn analytics_unregister_func(
         .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
         .title("Group Added For Analytics")
         .build();
-    ctx.respond(&bot).embeds(&[embed]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed]).unwrap().await?;
 
     Ok(())
 }

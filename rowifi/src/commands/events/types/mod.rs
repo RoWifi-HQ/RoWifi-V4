@@ -47,7 +47,7 @@ pub async fn view_event_types_func(
     let kind = guild.kind.unwrap_or_default();
     if kind != GuildType::Gamma {
         let message = "The Events module is only available for Gamma Tier servers. You can upgrade the server on the dashboard.";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -55,7 +55,7 @@ pub async fn view_event_types_func(
         let message = r"
 This server has no event types configured. Looking to add one? Use the command `/event-types new`.
         ";
-        ctx.respond(&bot).content(message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     }
 
@@ -78,7 +78,7 @@ This server has no event types configured. Looking to add one? Use the command `
         page_count += 1;
     }
 
-    paginate_embeds(&ctx, &bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
 
     Ok(())
 }

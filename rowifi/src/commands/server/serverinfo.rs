@@ -77,7 +77,7 @@ pub async fn serverinfo_func(bot: &BotContext, ctx: &CommandContext) -> CommandR
             .inline(),
         )
         .field(EmbedFieldBuilder::new("Settings", settings));
-    ctx.respond(&bot).embeds(&[embed.build()]).unwrap().await?;
+    ctx.respond(bot).embeds(&[embed.build()]).unwrap().await?;
 
     Ok(())
 }
