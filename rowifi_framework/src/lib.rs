@@ -56,7 +56,9 @@ where
 
         let interaction = serde_json::from_slice::<Interaction>(&bytes)
             .map_err(|_err| StatusCode::BAD_REQUEST.into_response())?;
-        if interaction.kind == InteractionType::ApplicationCommand {
+        if interaction.kind == InteractionType::ApplicationCommand
+            || interaction.kind == InteractionType::ApplicationCommandAutocomplete
+        {
             let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
                 unreachable!()
             };
@@ -90,7 +92,7 @@ where
             let args = A::from_interaction(data).unwrap();
             Ok(Command { ctx, args })
         } else {
-            todo!()
+            unreachable!()
         }
     }
 }

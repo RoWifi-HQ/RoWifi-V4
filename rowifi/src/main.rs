@@ -246,6 +246,31 @@ async fn rewrite_request_uri(req: Request) -> Request {
             uri_parts.path_and_query = Some("/standby".parse().unwrap());
             let new_uri = Uri::from_parts(uri_parts).unwrap();
             parts.uri = new_uri;
+        },
+        InteractionType::ApplicationCommandAutocomplete => {
+            let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
+                unreachable!()
+            };
+            let subcommand_name = if let Some(option) = data.options.first() {
+                if option.value.kind() == CommandOptionType::SubCommand
+                    || option.value.kind() == CommandOptionType::SubCommandGroup
+                {
+                    Some(&option.name)
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+            let command_name = if let Some(subcommand_name) = subcommand_name {
+                format!("/{}/{subcommand_name}/autocomplete", data.name)
+            } else {
+                format!("/{}/autocomplete", data.name)
+            };
+            let mut uri_parts = parts.uri.into_parts();
+            uri_parts.path_and_query = Some(command_name.parse().unwrap());
+            let new_uri = Uri::from_parts(uri_parts).unwrap();
+            parts.uri = new_uri;
         }
         _ => {}
     }

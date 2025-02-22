@@ -64,6 +64,12 @@ impl<T: Argument> Argument for Option<T> {
     }
 }
 
+impl Argument for CommandDataOption {
+    fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
+        Ok(option.clone())
+    }
+}
+
 impl Argument for UserId {
     fn from_interaction(option: &CommandDataOption) -> Result<Self, ArgumentError> {
         match &option.value {
