@@ -18,13 +18,19 @@ use axum::{
     extract::FromRequest,
     http::{Request, StatusCode},
     response::{IntoResponse, Response},
+    Json,
 };
 use context::BotContext;
 use rowifi_core::error::RoError;
 use rowifi_models::{
-    discord::application::interaction::{
-        application_command::{CommandDataOption, CommandOptionValue},
-        Interaction, InteractionData, InteractionType,
+    discord::{
+        application::interaction::{
+            application_command::{CommandDataOption, CommandOptionValue},
+            Interaction, InteractionData, InteractionType,
+        },
+        http::interaction::{
+            InteractionResponse, InteractionResponseData, InteractionResponseType,
+        },
     },
     id::{ChannelId, GuildId, UserId},
 };
@@ -54,13 +60,25 @@ where
             let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
                 unreachable!()
             };
+            let Some(guild_id) = interaction.guild_id else {
+                return Err(Json(InteractionResponse {
+                    kind: InteractionResponseType::ChannelMessageWithSource,
+                    data: Some(InteractionResponseData {
+                        content: Some(
+                            "Commands are only allowed to be run in a guild context".into(),
+                        ),
+                        ..Default::default()
+                    }),
+                })
+                .into_response());
+            };
             let ctx = CommandContext {
                 name: parts
                     .uri
                     .path_and_query()
                     .map(std::string::ToString::to_string)
                     .unwrap_or_default(),
-                guild_id: GuildId(interaction.guild_id.unwrap()),
+                guild_id: GuildId(guild_id),
                 channel_id: ChannelId(interaction.channel.as_ref().unwrap().id),
                 author_id: UserId(interaction.author_id().unwrap()),
                 interaction_id: interaction.id,
