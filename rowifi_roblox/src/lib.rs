@@ -1033,6 +1033,72 @@ impl RobloxClient {
         Ok(json)
     }
 
+    /// Lists the datastore entries of a datastore. Supports filtering based on entries.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn list_datastore_entry_revisions(
+        &self,
+        universe_id: UniverseId,
+        datastore_id: &str,
+        entry_id: &str,
+        page_token: &str,
+        page_size: u32,
+    ) -> Result<PaginatedResponse<PartialDatastoreEntry>, RobloxError> {
+        let route = Route::ListDatastoreEntryRevisions {
+            universe_id: universe_id.0,
+            datastore_id,
+            entry_id,
+            page_token,
+            page_size,
+        };
+
+        let request = Request::new()
+            .uri(route.to_string())
+            .method(Method::GET)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
+            .proxy_uri(self.proxy_url.clone())
+            .body(Full::default())
+            .build()
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json =
+            serde_json::from_slice::<DatastoreEntriesResponse>(&bytes).map_err(|source| {
+                RobloxError {
+                    source: Some(Box::new(DeserializeBodyError {
+                        source: Some(Box::new(source)),
+                        bytes,
+                    })),
+                    kind: ErrorKind::Deserialize,
+                }
+            })?;
+
+        Ok(PaginatedResponse {
+            data: json.datastore_entries,
+            next_page_token: json.next_page_token,
+        })
+    }
+
     /// Make a request to the Roblox API.
     ///
     /// # Errors
