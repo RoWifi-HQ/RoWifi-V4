@@ -968,6 +968,71 @@ impl RobloxClient {
         Ok(())
     }
 
+    /// Creates a datastore entry.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn create_datastore_entry(
+        &self,
+        universe_id: UniverseId,
+        datastore_id: &str,
+        entry_id: &str,
+        args: UpdateDatastoreEntryArgs,
+    ) -> Result<DatastoreEntry, RobloxError> {
+        let route = Route::CreateDatastoreEntry {
+            universe_id: universe_id.0,
+            datastore_id,
+            entry_id,
+        };
+
+        let json = serde_json::json!({"value": args.value, "users": args.users, "attributes": args.attributes});
+        let body = serde_json::to_vec(&json).map_err(|source| RobloxError {
+            source: Some(Box::new(source)),
+            kind: ErrorKind::BuildingRequest,
+        })?;
+
+        let request = Request::new()
+            .uri(route.to_string())
+            .method(Method::POST)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
+            .header(CONTENT_TYPE, HeaderValue::from_static("application/json"))
+            .header(CONTENT_LENGTH, body.len())
+            .proxy_uri(self.proxy_url.clone())
+            .body(Full::new(Bytes::from(body)))
+            .build()
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        let json = serde_json::from_slice(&bytes).map_err(|source| RobloxError {
+            source: Some(Box::new(DeserializeBodyError {
+                source: Some(Box::new(source)),
+                bytes,
+            })),
+            kind: ErrorKind::Deserialize,
+        })?;
+
+        Ok(json)
+    }
+
     /// Make a request to the Roblox API.
     ///
     /// # Errors

@@ -1,6 +1,11 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
 pub enum Route<'a> {
+    CreateDatastoreEntry {
+        universe_id: u64,
+        datastore_id: &'a str,
+        entry_id: &'a str,
+    },
     DeleteDatastoreEntry {
         universe_id: u64,
         datastore_id: &'a str,
@@ -58,6 +63,7 @@ pub enum Route<'a> {
 impl<'a> Display for Route<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
+            Route::CreateDatastoreEntry { universe_id, datastore_id, entry_id } => write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries?id={entry_id}"),
             Route::DeleteDatastoreEntry { universe_id, datastore_id, entry_id } => write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries/{entry_id}"), 
             Route::GetDatastoreEntry { universe_id, datastore_id, entry_id, revision_id } => write!(
                 f,
