@@ -45,6 +45,13 @@ pub enum Route<'a> {
         page_size: u32,
         filter: Option<&'a str>,
     },
+    ListDatastoreEntryRevisions {
+        universe_id: u64,
+        datastore_id: &'a str,
+        entry_id: &'a str,
+        page_token: &'a str,
+        page_size: u32,
+    },
     ListInventoryItems {
         user_id: u64,
         filter: &'a str,
@@ -85,6 +92,9 @@ impl<'a> Display for Route<'a> {
                 // Encoding the entire filter causes it to give an invalid filter. So, just pre-encode the quotes.
                 let filter = filter.map(|f| format!("&filter=id.startsWith(%22{f}%22)")).unwrap_or_default();
                 write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries?maxPageSize={page_size}&pageToken={page_token}{filter}")
+            },
+            Route::ListDatastoreEntryRevisions { universe_id, datastore_id, entry_id, page_token, page_size } => {
+                write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries/{entry_id}:listRevisions?maxPageSize={page_size}&pageToken={page_token}")
             },
             Route::ListInventoryItems { user_id, filter } => write!(f, "https://apis.roblox.com/cloud/v2/users/{user_id}/inventory-items?maxPageSize=100&{filter}"),
             Route::ListGroupRanks { group_id } => write!(f, "https://apis.roblox.com/cloud/v2/groups/{group_id}/roles?maxPageSize=20"),
