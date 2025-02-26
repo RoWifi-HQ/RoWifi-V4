@@ -731,7 +731,7 @@ impl RobloxClient {
         })
     }
 
-    /// Lists the datastore entries of a datastore. Supports filtering based on entries.
+    /// Lists the entries of a datastore. Supports filtering based on entry IDs.
     ///
     /// # Errors
     ///
@@ -1033,7 +1033,7 @@ impl RobloxClient {
         Ok(json)
     }
 
-    /// Lists the datastore entries of a datastore. Supports filtering based on entries.
+    /// Lists the revisions of an entry.
     ///
     /// # Errors
     ///
