@@ -11,6 +11,7 @@ tower = ["dep:rowifi_tower"]
 axum = { workspace = true }
 dashmap = { version = "6" }
 ed25519-dalek = { version = "2" }
+futures-util = { version = "0.3" }
 hex = { version = "0.4" }
 image = { version = "0.25", default-features = false, features = ["png"] }
 itertools = { workspace = true }

@@ -1,10 +1,17 @@
 mod debug;
 
+use futures_util::FutureExt;
 use itertools::Itertools;
 use rowifi_core::user::update::{UpdateUser, UpdateUserError};
 use rowifi_framework::prelude::*;
 use rowifi_models::{
-    deny_list::DenyListActionType, discord::util::Timestamp, guild::BypassRoleKind, id::UserId,
+    deny_list::{DenyList, DenyListActionType},
+    discord::{
+        cache::{CachedGuild, CachedMember},
+        util::Timestamp,
+    },
+    guild::BypassRoleKind,
+    id::UserId,
     user::RoUser,
 };
 use std::{error::Error, fmt::Write};
@@ -182,48 +189,50 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                 };
                 ctx.respond(bot).content(&message).unwrap().await?;
 
+                async fn dm_member(
+                    bot: &BotContext,
+                    server: &CachedGuild,
+                    discord_member: &CachedMember,
+                    deny_list: &DenyList,
+                ) {
+                    if let Ok(private_channel) =
+                        bot.http.create_private_channel(discord_member.id.0).await
+                    {
+                        if let Ok(private_channel) = private_channel.model().await {
+                            let _ = bot
+                                .http
+                                .create_message(private_channel.id)
+                                .content(&format!(
+                                    "You have been kicked from {}. Reason: {}",
+                                    server.name, deny_list.reason
+                                ))
+                                .await;
+                        }
+                    }
+                }
+
                 match deny_list.action_type {
                     DenyListActionType::None => {}
                     DenyListActionType::Kick => {
                         tracing::trace!("kicking them");
-                        if let Ok(private_channel) =
-                            bot.http.create_private_channel(discord_member.id.0).await
-                        {
-                            if let Ok(private_channel) = private_channel.model().await {
+                        dm_member(bot, &server, &discord_member, &deny_list)
+                            .then(|_| async move {
                                 let _ = bot
                                     .http
-                                    .create_message(private_channel.id)
-                                    .content(&format!(
-                                        "You have been kicked from {}. Reason: {}",
-                                        server.name, deny_list.reason
-                                    ))
+                                    .remove_guild_member(ctx.guild_id.0, discord_member.id.0)
                                     .await;
-                            }
-                        }
-                        let _ = bot
-                            .http
-                            .remove_guild_member(ctx.guild_id.0, discord_member.id.0)
+                            })
                             .await;
                     }
                     DenyListActionType::Ban => {
                         tracing::trace!("banning them");
-                        if let Ok(private_channel) =
-                            bot.http.create_private_channel(discord_member.id.0).await
-                        {
-                            if let Ok(private_channel) = private_channel.model().await {
+                        dm_member(bot, &server, &discord_member, &deny_list)
+                            .then(|_| async move {
                                 let _ = bot
                                     .http
-                                    .create_message(private_channel.id)
-                                    .content(&format!(
-                                        "You have been banned from {}. Reason: {}",
-                                        server.name, deny_list.reason
-                                    ))
+                                    .create_ban(ctx.guild_id.0, discord_member.id.0)
                                     .await;
-                            }
-                        }
-                        let _ = bot
-                            .http
-                            .create_ban(ctx.guild_id.0, discord_member.id.0)
+                            })
                             .await;
                     }
                 }

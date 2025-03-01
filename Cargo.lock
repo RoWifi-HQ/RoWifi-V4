@@ -1771,6 +1771,7 @@ dependencies = [
  "axum",
  "dashmap",
  "ed25519-dalek",
+ "futures-util",
  "hex",
  "image",
  "itertools 0.14.0",
