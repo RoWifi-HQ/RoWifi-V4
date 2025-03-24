@@ -129,7 +129,7 @@ pub async fn update_role_func(
     let mass_update_guild = bot
         .database
         .query_opt::<MassUpdateGuild>(
-            "SELECT guild_id FROM mass_update_guilds WHERE guild_id = $1",
+            "SELECT * FROM mass_update_guilds WHERE guild_id = $1",
             &[&ctx.guild_id],
         )
         .await?;
