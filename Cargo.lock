@@ -72,13 +72,13 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "axum"
-version = "0.7.9"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edca88bc138befd0323b20752846e6587272d3b03b0343c8ea28a6f819e6e71f"
+checksum = "6d6fd624c75e18b3b4c6b9caf42b1afe24437daaee904069137d8bab077be8b8"
 dependencies = [
- "async-trait",
  "axum-core",
  "bytes",
+ "form_urlencoded",
  "futures-util",
  "http",
  "http-body",
@@ -106,11 +106,10 @@ dependencies = [
 
 [[package]]
 name = "axum-core"
-version = "0.4.5"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09f2bd6146b97ae3359fa0cc6d6b376d9539582c7b4220f041a33ec24c226199"
+checksum = "df1362f362fd16024ae199c1970ce98f9661bf5ef94b9808fee734bc3698b733"
 dependencies = [
- "async-trait",
  "bytes",
  "futures-util",
  "http",
@@ -1189,7 +1188,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -1235,9 +1234,9 @@ dependencies = [
 
 [[package]]
 name = "matchit"
-version = "0.7.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e7465ac9959cc2b1404e8e2367b43684a6d13790fe23056cc8c6c5a6b7bcb94"
+checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 
 [[package]]
 name = "md-5"
@@ -1926,7 +1925,7 @@ dependencies = [
 [[package]]
 name = "rowifi_tower"
 version = "4.2.0"
-source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#ac2729498fc01c86ff9a10cbceff947dcab4c7ea"
+source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#cb7cdc930d36024cf369a40e13f63454a3377562"
 dependencies = [
  "axum",
  "bytes",
@@ -2537,7 +2536,7 @@ checksum = "17f77d76d837a7830fe1d4f12b7b4ba4192c1888001c7164257e4bc6d21d96b4"
 [[package]]
 name = "twilight-http"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#4507b77a2eadcbaac78f4f235c68edb479a1ac95"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
 dependencies = [
  "fastrand",
  "http",
@@ -2559,7 +2558,7 @@ dependencies = [
 [[package]]
 name = "twilight-http-ratelimiting"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#4507b77a2eadcbaac78f4f235c68edb479a1ac95"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
 dependencies = [
  "tokio",
  "tracing",
@@ -2568,7 +2567,7 @@ dependencies = [
 [[package]]
 name = "twilight-mention"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#4507b77a2eadcbaac78f4f235c68edb479a1ac95"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
 dependencies = [
  "twilight-model",
 ]
@@ -2576,7 +2575,7 @@ dependencies = [
 [[package]]
 name = "twilight-model"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#4507b77a2eadcbaac78f4f235c68edb479a1ac95"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
 dependencies = [
  "bitflags 2.8.0",
  "serde",
@@ -2588,7 +2587,7 @@ dependencies = [
 [[package]]
 name = "twilight-standby"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#4507b77a2eadcbaac78f4f235c68edb479a1ac95"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
 dependencies = [
  "dashmap",
  "futures-core",
@@ -2600,7 +2599,7 @@ dependencies = [
 [[package]]
 name = "twilight-util"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#4507b77a2eadcbaac78f4f235c68edb479a1ac95"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
 dependencies = [
  "twilight-model",
  "twilight-validate",
@@ -2609,7 +2608,7 @@ dependencies = [
 [[package]]
 name = "twilight-validate"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#4507b77a2eadcbaac78f4f235c68edb479a1ac95"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
 dependencies = [
  "twilight-model",
 ]

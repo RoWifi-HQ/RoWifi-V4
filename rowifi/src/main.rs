@@ -246,8 +246,16 @@ async fn rewrite_request_uri(req: Request) -> Request {
             parts.uri = new_uri;
         }
         InteractionType::MessageComponent => {
+            let Some(InteractionData::MessageComponent(data)) = &interaction.data else {
+                unreachable!()
+            };
+            tracing::trace!("received interacton from component {}", data.custom_id);
+            let path = match data.custom_id.as_str() {
+                "update" => data.custom_id.as_str(),
+                _ => "standby"
+            };
             let mut uri_parts = parts.uri.into_parts();
-            uri_parts.path_and_query = Some("/standby".parse().unwrap());
+            uri_parts.path_and_query = Some(format!("/{path}").parse().unwrap());
             let new_uri = Uri::from_parts(uri_parts).unwrap();
             parts.uri = new_uri;
         }

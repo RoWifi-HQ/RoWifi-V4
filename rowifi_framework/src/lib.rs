@@ -13,7 +13,6 @@ pub mod utils;
 use std::sync::{atomic::AtomicBool, Arc};
 
 use axum::{
-    async_trait,
     body::Body,
     extract::FromRequest,
     http::{Request, StatusCode},
@@ -26,7 +25,7 @@ use rowifi_models::{
     discord::{
         application::interaction::{
             application_command::{CommandDataOption, CommandOptionValue},
-            Interaction, InteractionData, InteractionType,
+            Interaction as DiscordInteraction, InteractionData, InteractionType,
         },
         http::interaction::{
             InteractionResponse, InteractionResponseData, InteractionResponseType,
@@ -42,7 +41,11 @@ pub struct Command<A> {
     pub args: A,
 }
 
-#[async_trait]
+pub struct Interaction<A> {
+    pub ctx: CommandContext,
+    pub args: Option<A>,
+}
+
 impl<S, A> FromRequest<S, Body> for Command<A>
 where
     S: Send + Sync,
@@ -54,7 +57,7 @@ where
         let (parts, body) = req.into_parts();
         let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
 
-        let interaction = serde_json::from_slice::<Interaction>(&bytes)
+        let interaction = serde_json::from_slice::<DiscordInteraction>(&bytes)
             .map_err(|_err| StatusCode::BAD_REQUEST.into_response())?;
         if interaction.kind == InteractionType::ApplicationCommand
             || interaction.kind == InteractionType::ApplicationCommandAutocomplete
@@ -91,6 +94,86 @@ where
             let data = recurse_skip_subcommands(&data.options);
             let args = A::from_interaction(data).unwrap();
             Ok(Command { ctx, args })
+        } else {
+            unreachable!()
+        }
+    }
+}
+
+impl<S, A> FromRequest<S, Body> for Interaction<A>
+where
+    S: Send + Sync,
+    A: Arguments,
+{
+    type Rejection = Response;
+
+    async fn from_request(req: Request<Body>, _state: &S) -> Result<Self, Self::Rejection> {
+        let (parts, body) = req.into_parts();
+        let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+
+        let interaction = serde_json::from_slice::<DiscordInteraction>(&bytes)
+            .map_err(|_err| StatusCode::BAD_REQUEST.into_response())?;
+
+        let Some(guild_id) = interaction.guild_id else {
+            return Err(Json(InteractionResponse {
+                kind: InteractionResponseType::ChannelMessageWithSource,
+                data: Some(InteractionResponseData {
+                    content: Some(
+                        "Commands are only allowed to be run in a guild context".into(),
+                    ),
+                    ..Default::default()
+                }),
+            })
+            .into_response());
+        };
+
+        if interaction.kind == InteractionType::ApplicationCommand
+            || interaction.kind == InteractionType::ApplicationCommandAutocomplete
+        {
+            let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
+                unreachable!()
+            };
+            
+            let ctx = CommandContext {
+                name: parts
+                    .uri
+                    .path_and_query()
+                    .map(std::string::ToString::to_string)
+                    .unwrap_or_default(),
+                guild_id: GuildId(guild_id),
+                channel_id: ChannelId(interaction.channel.as_ref().unwrap().id),
+                author_id: UserId(interaction.author_id().unwrap()),
+                interaction_id: interaction.id,
+                interaction_token: interaction.token,
+                resolved: data.resolved.clone(),
+                callback_invoked: Arc::new(AtomicBool::new(false)),
+            };
+            let data = recurse_skip_subcommands(&data.options);
+            let args = A::from_interaction(data).unwrap();
+            Ok(Interaction {
+                ctx,
+                args: Some(args),
+            })
+        } else if interaction.kind == InteractionType::MessageComponent {
+            let Some(InteractionData::MessageComponent(data)) = &interaction.data else {
+                unreachable!()
+            };
+
+            let ctx = CommandContext {
+                name: parts
+                    .uri
+                    .path_and_query()
+                    .map(std::string::ToString::to_string)
+                    .unwrap_or_default(),
+                guild_id: GuildId(guild_id),
+                channel_id: ChannelId(interaction.channel.as_ref().unwrap().id),
+                author_id: UserId(interaction.author_id().unwrap()),
+                interaction_id: interaction.id,
+                interaction_token: interaction.token,
+                resolved: data.resolved.clone(),
+                callback_invoked: Arc::new(AtomicBool::new(false)),
+            };
+            Ok(Interaction { ctx, args: None })
         } else {
             unreachable!()
         }

@@ -3,7 +3,7 @@ mod debug;
 use futures_util::FutureExt;
 use itertools::Itertools;
 use rowifi_core::user::update::{UpdateUser, UpdateUserError};
-use rowifi_framework::prelude::*;
+use rowifi_framework::{prelude::*, Interaction};
 use rowifi_models::{
     deny_list::{DenyList, DenyListActionType},
     discord::{
@@ -19,17 +19,25 @@ use twilight_http::error::{Error as DiscordHttpError, ErrorType as DiscordErrorT
 
 pub use debug::debug_update;
 
-#[derive(Arguments, Debug)]
+#[derive(Arguments, Default, Debug)]
 pub struct UpdateArguments {
     pub user_id: Option<UserId>,
 }
 
 pub async fn update_route(
     bot: Extension<BotContext>,
-    command: Command<UpdateArguments>,
+    command: Interaction<UpdateArguments>,
 ) -> impl IntoResponse {
+    let ephemeral = command.args.is_none();
     let _ = tokio::spawn(async move {
-        if let Err(err) = update_func(&bot, &command.ctx, command.args).await {
+        if let Err(err) = update_func(
+            &bot,
+            &command.ctx,
+            command.args.unwrap_or_default(),
+            ephemeral,
+        )
+        .await
+        {
             handle_error(bot.0, command.ctx, err).await;
         }
     })
@@ -42,8 +50,17 @@ pub async fn update_func(
     bot: &BotContext,
     ctx: &CommandContext,
     args: UpdateArguments,
+    ephemeral: bool,
 ) -> CommandResult {
-    ctx.defer_response(bot, DeferredResponse::Normal).await?;
+    ctx.defer_response(
+        bot,
+        if ephemeral {
+            DeferredResponse::Ephemeral
+        } else {
+            DeferredResponse::Normal
+        },
+    )
+    .await?;
     tracing::debug!("update command invoked");
     let server = bot.server(ctx.guild_id).await?;
 
