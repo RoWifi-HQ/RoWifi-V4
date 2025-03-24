@@ -1,6 +1,6 @@
 use serde::{
-    Deserialize, Serialize,
     de::{Deserializer, Error as DeError, Unexpected, Visitor},
+    Deserialize, Serialize,
 };
 use std::{
     fmt::{Display, Formatter, Result as FmtResult},
@@ -10,7 +10,7 @@ use std::{
 #[cfg(feature = "postgres")]
 use bytes::BytesMut;
 #[cfg(feature = "postgres")]
-use postgres_types::{ToSql, to_sql_checked, IsNull, Type, FromSql};
+use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
 #[cfg(feature = "postgres")]
 use std::error::Error as StdError;
 

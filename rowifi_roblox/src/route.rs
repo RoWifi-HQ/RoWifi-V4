@@ -67,7 +67,7 @@ pub enum Route<'a> {
     },
 }
 
-impl<'a> Display for Route<'a> {
+impl Display for Route<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             Route::CreateDatastoreEntry { universe_id, datastore_id, entry_id } => write!(f, "https://apis.roblox.com/cloud/v2/universes/{universe_id}/data-stores/{datastore_id}/entries?id={entry_id}"),

@@ -116,7 +116,7 @@ pub async fn handle_error(bot: BotContext, ctx: CommandContext, err: RoError) {
         .content("Something went wrong. Please try again. If the issue persists, please contact the RoWifi support server.")
         .unwrap()
         .await;
-    send_error_log(bot, ctx, err).await
+    send_error_log(bot, ctx, err).await;
 }
 
 pub async fn send_error_log(bot: BotContext, ctx: CommandContext, err: RoError) {

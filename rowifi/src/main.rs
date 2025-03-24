@@ -1,5 +1,9 @@
 #![deny(clippy::all, clippy::pedantic)]
-#![allow(clippy::module_name_repetitions, clippy::format_push_string)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::format_push_string,
+    clippy::items_after_statements
+)]
 
 mod commands;
 
@@ -246,7 +250,7 @@ async fn rewrite_request_uri(req: Request) -> Request {
             uri_parts.path_and_query = Some("/standby".parse().unwrap());
             let new_uri = Uri::from_parts(uri_parts).unwrap();
             parts.uri = new_uri;
-        },
+        }
         InteractionType::ApplicationCommandAutocomplete => {
             let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
                 unreachable!()

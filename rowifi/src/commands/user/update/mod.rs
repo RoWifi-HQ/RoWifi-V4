@@ -216,7 +216,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                     DenyListActionType::Kick => {
                         tracing::trace!("kicking them");
                         dm_member(bot, &server, &discord_member, &deny_list)
-                            .then(|_| async move {
+                            .then(|()| async move {
                                 let _ = bot
                                     .http
                                     .remove_guild_member(ctx.guild_id.0, discord_member.id.0)
@@ -227,7 +227,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
                     DenyListActionType::Ban => {
                         tracing::trace!("banning them");
                         dm_member(bot, &server, &discord_member, &deny_list)
-                            .then(|_| async move {
+                            .then(|()| async move {
                                 let _ = bot
                                     .http
                                     .create_ban(ctx.guild_id.0, discord_member.id.0)

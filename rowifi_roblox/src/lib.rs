@@ -1,5 +1,9 @@
 #![deny(clippy::all, clippy::pedantic)]
-#![allow(clippy::module_name_repetitions, clippy::missing_panics_doc)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::missing_panics_doc,
+    clippy::match_same_arms
+)]
 
 pub mod error;
 pub mod filter;

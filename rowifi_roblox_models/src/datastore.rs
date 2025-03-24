@@ -104,15 +104,18 @@ mod tests {
     #[test]
     fn test_datastore_entry_state_deserialization() {
         let json = "\"ACTIVE\"";
-        let deserialized: DatastoreEntryState = serde_json::from_str(json).expect("Deserialization failed");
+        let deserialized: DatastoreEntryState =
+            serde_json::from_str(json).expect("Deserialization failed");
         assert_eq!(deserialized, DatastoreEntryState::Active);
 
         let json = "\"DELETED\"";
-        let deserialized: DatastoreEntryState = serde_json::from_str(json).expect("Deserialization failed");
+        let deserialized: DatastoreEntryState =
+            serde_json::from_str(json).expect("Deserialization failed");
         assert_eq!(deserialized, DatastoreEntryState::Deleted);
 
         let json = "\"STATE_UNSPECIFIED\"";
-        let deserialized: DatastoreEntryState = serde_json::from_str(json).expect("Deserialization failed");
+        let deserialized: DatastoreEntryState =
+            serde_json::from_str(json).expect("Deserialization failed");
         assert_eq!(deserialized, DatastoreEntryState::Unspecified);
     }
 }
