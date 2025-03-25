@@ -339,7 +339,7 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
             }
             UpdateUserError::BannedAccount(user_id) => {
                 let message = format!(
-                    "Your selected Roblox account for this server is {user_id}. It is believed to be a banned or suspected account. If this is not the case, please contact the RoWifi support server."
+                    "Your selected Roblox account for this server is [this](https://www.roblox.com/users/{user_id}/profile). It seems that Roblox has banned or suspended this account. If this is not the case, please contact the RoWifi support server."
                 );
                 ctx.respond(bot).content(&message).unwrap().await?;
                 return Ok(());
