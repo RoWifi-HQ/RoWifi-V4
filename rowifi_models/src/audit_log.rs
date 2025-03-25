@@ -43,6 +43,8 @@ pub enum AuditLogKind {
     EventTypeModify = 13,
     GroupAccept = 14,
     GroupDecline = 15,
+    XPLock = 16,
+    XPUnlock = 17,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -63,6 +65,8 @@ pub enum AuditLogData {
     EventTypeModify(EventTypeModify),
     GroupAccept(GroupAccept),
     GroupDecline(GroupDecline),
+    XPLock(XPLock),
+    XPUnlock(XPUnlock),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -157,6 +161,16 @@ pub enum AuditLogDeserializeError {
     Postgres(tokio_postgres::Error),
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct XPLock {
+    pub target_roblox_user: RobloxUserId,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct XPUnlock {
+    pub target_roblox_user: RobloxUserId,
+}
+
 impl TryFrom<tokio_postgres::Row> for AuditLog {
     type Error = AuditLogDeserializeError;
 
@@ -208,6 +222,10 @@ impl TryFrom<tokio_postgres::Row> for AuditLog {
             }
             AuditLogKind::GroupDecline => {
                 AuditLogData::GroupDecline(GroupDecline::deserialize(metadata.0.as_ref())?)
+            }
+            AuditLogKind::XPLock => AuditLogData::XPLock(XPLock::deserialize(metadata.0.as_ref())?),
+            AuditLogKind::XPUnlock => {
+                AuditLogData::XPUnlock(XPUnlock::deserialize(metadata.0.as_ref())?)
             }
         };
 

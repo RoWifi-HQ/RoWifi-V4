@@ -211,6 +211,24 @@ pub async fn audit_logs_func(
                     user, target_user, group.group_id
                 ));
             }
+            AuditLogData::XPLock(xp) => {
+                let target_user = roblox_users
+                    .get(&xp.target_roblox_user)
+                    .map_or_else(|| xp.target_roblox_user.to_string(), |u| u.name.clone());
+                description.push_str(&format!(
+                    "- {} locked {} from receiving XP",
+                    user, target_user
+                ));
+            }
+            AuditLogData::XPUnlock(xp) => {
+                let target_user = roblox_users
+                    .get(&xp.target_roblox_user)
+                    .map_or_else(|| xp.target_roblox_user.to_string(), |u| u.name.clone());
+                description.push_str(&format!(
+                    "- {} unlocked {} from receiving XP",
+                    user, target_user
+                ));
+            }
         }
         description.push('\n');
     }
