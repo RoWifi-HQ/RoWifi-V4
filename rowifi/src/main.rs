@@ -162,7 +162,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         use rowifi_tower::{
             commands::{
                 group_accept, group_decline, set_rank, xp_add, xp_bind_add, xp_bind_delete,
-                xp_binds_view, xp_remove, xp_set, xp_view,
+                xp_binds_view, xp_lock, xp_remove, xp_set, xp_unlock, xp_view,
             },
             init_tower,
         };
@@ -171,6 +171,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             .route("/xp/add", post(xp_add))
             .route("/xp/remove", post(xp_remove))
             .route("/xp/set", post(xp_set))
+            .route("/xp/lock", post(xp_lock))
+            .route("/xp/unlock", post(xp_unlock))
             .route("/view/xp", post(xp_view))
             .route("/xpbinds/add", post(xp_bind_add))
             .route("/xpbinds/delete", post(xp_bind_delete))
@@ -252,7 +254,7 @@ async fn rewrite_request_uri(req: Request) -> Request {
             tracing::trace!("received interacton from component {}", data.custom_id);
             let path = match data.custom_id.as_str() {
                 "update" => data.custom_id.as_str(),
-                _ => "standby"
+                _ => "standby",
             };
             let mut uri_parts = parts.uri.into_parts();
             uri_parts.path_and_query = Some(format!("/{path}").parse().unwrap());

@@ -1925,7 +1925,7 @@ dependencies = [
 [[package]]
 name = "rowifi_tower"
 version = "4.2.0"
-source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#cb7cdc930d36024cf369a40e13f63454a3377562"
+source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#0cdcc6d4e1abbbcded113a0ce090a9615b9b04ba"
 dependencies = [
  "axum",
  "bytes",
