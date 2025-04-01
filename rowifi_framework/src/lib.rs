@@ -118,9 +118,7 @@ where
             return Err(Json(InteractionResponse {
                 kind: InteractionResponseType::ChannelMessageWithSource,
                 data: Some(InteractionResponseData {
-                    content: Some(
-                        "Commands are only allowed to be run in a guild context".into(),
-                    ),
+                    content: Some("Commands are only allowed to be run in a guild context".into()),
                     ..Default::default()
                 }),
             })
@@ -133,7 +131,7 @@ where
             let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
                 unreachable!()
             };
-            
+
             let ctx = CommandContext {
                 name: parts
                     .uri

@@ -2,7 +2,8 @@
 #![allow(
     clippy::module_name_repetitions,
     clippy::missing_panics_doc,
-    clippy::match_same_arms
+    clippy::match_same_arms,
+    clippy::struct_field_names
 )]
 
 pub mod error;
