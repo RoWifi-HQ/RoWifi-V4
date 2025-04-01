@@ -1814,11 +1814,13 @@ dependencies = [
  "chrono",
  "itertools 0.14.0",
  "nom",
+ "regex",
  "rowifi_cache",
  "rowifi_database",
  "rowifi_models",
  "rowifi_roblox",
  "serde",
+ "serde_json",
  "tracing",
  "twilight-http",
  "twilight-validate",
@@ -1925,14 +1927,14 @@ dependencies = [
 [[package]]
 name = "rowifi_tower"
 version = "4.2.0"
-source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#0cdcc6d4e1abbbcded113a0ce090a9615b9b04ba"
 dependencies = [
  "axum",
  "bytes",
  "chrono",
  "http-body-util",
  "hyper",
- "itertools 0.14.0",
+ "itertools 0.13.0",
+ "regex",
  "rowifi_cache",
  "rowifi_core",
  "rowifi_database",

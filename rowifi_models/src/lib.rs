@@ -11,6 +11,7 @@ pub mod events;
 pub mod guild;
 pub mod id;
 pub mod user;
+pub mod custom;
 
 pub mod roblox {
     pub use rowifi_roblox_models::*;

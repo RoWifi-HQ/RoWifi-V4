@@ -162,7 +162,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         use rowifi_tower::{
             commands::{
                 group_accept, group_decline, set_rank, xp_add, xp_bind_add, xp_bind_delete,
-                xp_binds_view, xp_lock, xp_remove, xp_set, xp_unlock, xp_view,
+                xp_binds_view, xp_lock, xp_remove, xp_set, xp_unlock, xp_view, custom
             },
             init_tower,
         };
@@ -178,7 +178,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             .route("/xpbinds/delete", post(xp_bind_delete))
             .route("/xpbinds/view", post(xp_binds_view))
             .route("/group/accept", post(group_accept))
-            .route("/group/decline", post(group_decline));
+            .route("/group/decline", post(group_decline))
+            .route("/{command_name}", post(custom));
         router = init_tower(router);
     }
 
