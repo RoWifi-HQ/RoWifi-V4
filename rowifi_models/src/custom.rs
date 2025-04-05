@@ -63,6 +63,7 @@ pub struct Field {
 #[derive(Clone, Debug, Serialize)]
 pub struct ActionInput {
     pub name: String,
+    pub description: String,
     pub source: ActionInputSource,
     pub kind: ActionInputSourceType,
 }
@@ -253,6 +254,7 @@ impl<'de> Deserialize<'de> for ActionInput {
         #[serde(field_identifier, rename_all = "snake_case")]
         enum Field {
             Name,
+            Description,
             Source,
             Kind,
         }
@@ -268,6 +270,7 @@ impl<'de> Deserialize<'de> for ActionInput {
 
             fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
                 let mut name = None;
+                let mut description = None;
                 let mut source = None::<Box<RawValue>>;
                 let mut kind = None;
 
@@ -290,6 +293,13 @@ impl<'de> Deserialize<'de> for ActionInput {
 
                             name = Some(map.next_value()?);
                         }
+                        Field::Description => {
+                            if description.is_some() {
+                                return Err(DeError::duplicate_field("description"));
+                            }
+
+                            description = Some(map.next_value()?);
+                        }
                         Field::Source => {
                             if source.is_some() {
                                 return Err(DeError::duplicate_field("source"));
@@ -308,6 +318,8 @@ impl<'de> Deserialize<'de> for ActionInput {
                 }
 
                 let name = name.ok_or_else(|| DeError::missing_field("name"))?;
+                let description =
+                    description.ok_or_else(|| DeError::missing_field("description"))?;
                 let source = source.ok_or_else(|| DeError::missing_field("source"))?;
                 let kind = kind.ok_or_else(|| DeError::missing_field("kind"))?;
 
@@ -325,7 +337,12 @@ impl<'de> Deserialize<'de> for ActionInput {
                     }
                 };
 
-                Ok(ActionInput { name, source, kind })
+                Ok(ActionInput {
+                    name,
+                    description,
+                    source,
+                    kind,
+                })
             }
         }
 

@@ -225,6 +225,9 @@ pub async fn audit_logs_func(
                     "- {user} unlocked {target_user} from receiving XP",
                 ));
             }
+            AuditLogData::CustomCommandCreate(command) => {
+                description.push_str(&format!("- {} created a custom command `{}`", user, command.name));
+            }
         }
         description.push('\n');
     }

@@ -45,6 +45,7 @@ pub enum AuditLogKind {
     GroupDecline = 15,
     XPLock = 16,
     XPUnlock = 17,
+    CustomCommandCreate = 18,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -67,6 +68,7 @@ pub enum AuditLogData {
     GroupDecline(GroupDecline),
     XPLock(XPLock),
     XPUnlock(XPUnlock),
+    CustomCommandCreate(CustomCommandCreate),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -171,6 +173,11 @@ pub struct XPUnlock {
     pub target_roblox_user: RobloxUserId,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CustomCommandCreate {
+    pub name: String,
+}
+
 impl TryFrom<tokio_postgres::Row> for AuditLog {
     type Error = AuditLogDeserializeError;
 
@@ -227,6 +234,9 @@ impl TryFrom<tokio_postgres::Row> for AuditLog {
             AuditLogKind::XPUnlock => {
                 AuditLogData::XPUnlock(XPUnlock::deserialize(metadata.0.as_ref())?)
             }
+            AuditLogKind::CustomCommandCreate => AuditLogData::CustomCommandCreate(
+                CustomCommandCreate::deserialize(metadata.0.as_ref())?,
+            ),
         };
 
         Ok(Self {
@@ -259,6 +269,9 @@ impl TryFrom<u32> for AuditLogKind {
             13 => Ok(Self::EventTypeModify),
             14 => Ok(Self::GroupAccept),
             15 => Ok(Self::GroupDecline),
+            16 => Ok(Self::XPLock),
+            17 => Ok(Self::XPUnlock),
+            18 => Ok(Self::CustomCommandCreate),
             _ => Err(()),
         }
     }
