@@ -161,8 +161,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     {
         use rowifi_tower::{
             commands::{
-                group_accept, group_decline, set_rank, xp_add, xp_bind_add, xp_bind_delete,
-                xp_binds_view, xp_lock, xp_remove, xp_set, xp_unlock, xp_view, custom
+                custom, group_accept, group_decline, set_rank, xp_add, xp_bind_add, xp_bind_delete,
+                xp_binds_view, xp_lock, xp_remove, xp_set, xp_unlock, xp_view,
             },
             init_tower,
         };

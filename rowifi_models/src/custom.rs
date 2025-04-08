@@ -113,13 +113,14 @@ pub enum ValueType {
 impl Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::String(s) => f.write_str(&s),
+            Self::String(s) => f.write_str(s),
             Self::Number(n) => f.write_str(&n.to_string()),
         }
     }
 }
 
 impl<'de> Deserialize<'de> for WorkflowNode {
+    #[allow(clippy::too_many_lines)]
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         #[derive(Debug, Deserialize)]
         #[serde(field_identifier, rename_all = "snake_case")]
@@ -230,7 +231,7 @@ impl<'de> Deserialize<'de> for WorkflowNode {
                     ActionType::GetDatastoreEntry => ActionMetadata::GetDatastoreEntry,
                     ActionType::SendMessage => ActionMetadata::SendMessage(
                         action::SendMessage::deserialize(metadata.as_ref())
-                            .map_err(|err| DeError::custom(err))?,
+                            .map_err(DeError::custom)?,
                     ),
                     ActionType::UpdateDatastoreEntry => ActionMetadata::UpdateDatastoreEntry,
                 };
@@ -332,15 +333,13 @@ impl<'de> Deserialize<'de> for ActionInput {
 
                 let source = match kind {
                     ActionInputSourceType::External => ActionInputSource::External(
-                        ValueType::deserialize(source.as_ref())
-                            .map_err(|err| DeError::custom(err))?,
+                        ValueType::deserialize(source.as_ref()).map_err(DeError::custom)?,
                     ),
                     ActionInputSourceType::Static => ActionInputSource::Static(
-                        Value::deserialize(source.as_ref()).map_err(|err| DeError::custom(err))?,
+                        Value::deserialize(source.as_ref()).map_err(DeError::custom)?,
                     ),
                     ActionInputSourceType::Action => {
-                        ActionInputSource::deserialize(source.as_ref())
-                            .map_err(|err| DeError::custom(err))?
+                        ActionInputSource::deserialize(source.as_ref()).map_err(DeError::custom)?
                     }
                 };
 

@@ -226,7 +226,10 @@ pub async fn audit_logs_func(
                 ));
             }
             AuditLogData::CustomCommandCreate(command) => {
-                description.push_str(&format!("- {} created a custom command `{}`", user, command.name));
+                description.push_str(&format!(
+                    "- {} created a custom command `{}`",
+                    user, command.name
+                ));
             }
         }
         description.push('\n');

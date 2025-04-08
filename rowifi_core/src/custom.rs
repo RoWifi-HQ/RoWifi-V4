@@ -1,7 +1,16 @@
-use std::{collections::{HashMap, VecDeque}, sync::LazyLock};
 use regex::Regex;
-use rowifi_models::{custom::{action, ActionInputSource, ActionMetadata, ActionType, Value, ValueType, Workflow, WorkflowNode}, roblox::id::{UniverseId, UserId}};
+use rowifi_models::{
+    custom::{
+        action, ActionInputSource, ActionMetadata, ActionType, Value, ValueType, Workflow,
+        WorkflowNode,
+    },
+    roblox::id::{UniverseId, UserId},
+};
 use rowifi_roblox::{error::RobloxError, RobloxClient, UpdateDatastoreEntryArgs};
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::LazyLock,
+};
 use twilight_http::Client as TwilightClient;
 
 static TEMPLATE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\{(.*?)\}").unwrap());
@@ -115,6 +124,7 @@ pub async fn execute_workflow(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn execute_node(
     node: &WorkflowNode,
     workflow_context: &WorkflowContext<'_>,
@@ -130,7 +140,7 @@ pub async fn execute_node(
         }
         ActionMetadata::SendMessage(action::SendMessage { message, channel }) => {
             let mut new_message = message.clone();
-            for template_match in TEMPLATE_REGEX.find_iter(&message) {
+            for template_match in TEMPLATE_REGEX.find_iter(message) {
                 let slug = template_match.as_str();
                 if let Some(input) = execution_node.inputs.get(&slug[1..slug.len() - 1]) {
                     new_message.replace_range(template_match.range(), &input.to_string());
@@ -149,7 +159,7 @@ pub async fn execute_node(
             }
             let output = node
                 .outputs
-                .get(0)
+                .first()
                 .ok_or(WorkflowNodeExecutionError::OutputNotFound)?;
             execution_node
                 .outputs
@@ -161,6 +171,7 @@ pub async fn execute_node(
                 .get("universe_id")
                 .ok_or(WorkflowNodeExecutionError::InputNotFound)?
             {
+                #[allow(clippy::cast_sign_loss)]
                 Value::Number(n) => UniverseId((*n) as u64),
                 Value::String(_) => return Err(WorkflowNodeExecutionError::InputTypeMismatch),
             };
@@ -218,7 +229,7 @@ pub async fn execute_node(
             }
             let output = node
                 .outputs
-                .get(0)
+                .first()
                 .ok_or(WorkflowNodeExecutionError::OutputNotFound)?;
             execution_node
                 .outputs
@@ -230,6 +241,7 @@ pub async fn execute_node(
                 .get("universe_id")
                 .ok_or(WorkflowNodeExecutionError::InputNotFound)?
             {
+                #[allow(clippy::cast_sign_loss)]
                 Value::Number(n) => UniverseId((*n) as u64),
                 Value::String(_) => return Err(WorkflowNodeExecutionError::InputTypeMismatch),
             };
