@@ -38,6 +38,3 @@ rowifi_framework = { path = "rowifi_framework" }
 rowifi_models = { path = "rowifi_models" }
 rowifi_roblox_models = { path = "rowifi_roblox_models" }
 rowifi_roblox = { path = "rowifi_roblox" }
-
-[patch.'https://github.com/RoWifi-HQ/rowifi_extras']
-rowifi_tower = { path = "../extras/rowifi_tower" }
