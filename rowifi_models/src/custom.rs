@@ -3,11 +3,13 @@ use serde::{
     Deserialize, Serialize,
 };
 use serde_json::value::RawValue;
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Workflow {
     pub name: String,
+    pub description: String,
     pub nodes: Vec<WorkflowNode>,
 }
 
@@ -22,7 +24,8 @@ pub struct WorkflowNode {
     pub metadata: ActionMetadata,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
+#[repr(u16)]
 pub enum ActionType {
     Start = 0,
     SendMessage = 1,
@@ -33,6 +36,7 @@ pub enum ActionType {
 }
 
 #[derive(Clone, Debug, Serialize)]
+#[serde(untagged)]
 pub enum ActionMetadata {
     Start,
     SendMessage(action::SendMessage),
@@ -68,7 +72,8 @@ pub struct ActionInput {
     pub kind: ActionInputSourceType,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
+#[repr(u8)]
 pub enum ActionInputSourceType {
     Static,
     Action,
@@ -76,6 +81,7 @@ pub enum ActionInputSourceType {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
 pub enum ActionInputSource {
     Static(Value),
     Action {
@@ -97,7 +103,8 @@ pub enum Value {
     Number(i64),
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr)]
+#[repr(u8)]
 pub enum ValueType {
     Number,
     String,
