@@ -11,11 +11,13 @@ edition = "2021"
 chrono = { workspace = true, features = ["serde"] }
 itertools = { workspace = true }
 nom = { version = "7" }
+regex = { version = "1" }
 rowifi_cache = { path = "../rowifi_cache" }
 rowifi_database = { path = "../rowifi_database" }
 rowifi_models = { path = "../rowifi_models" }
 rowifi_roblox = { path = "../rowifi_roblox" }
 serde = { workspace = true }
+serde_json = { workspace = true }
 tracing = { workspace = true }
 twilight-http = { workspace = true }
 twilight-validate = { workspace = true }
