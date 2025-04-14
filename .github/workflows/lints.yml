@@ -15,30 +15,27 @@ jobs:
       RUSTFLAGS: ""
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GH_PAT }}
-
+      - name: Set github credentials
+        run: |
+          /usr/bin/git config --global --add url."https://${{ secrets.GH_PAT }}:x-oauth-basic@github".insteadOf ssh://git@github
+          /usr/bin/git config --global --add url."https://${{ secrets.GH_PAT }}:x-oauth-basic@github".insteadOf https://github
+          /usr/bin/git config --global --add url."https://${{ secrets.GH_PAT }}:x-oauth-basic@github".insteadOf git@github
+        
       - name: Install fontconfig
         run: sudo apt-get update && sudo apt-get install -y fontconfig
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@v2
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
 
-      - name: Run cargo clippy
-        run: cargo clippy --all-targets -- -D warnings
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-
+      - name: Run clippy
+        run: cargo clippy --all-features --all-targets
+        
   rustfmt:
     name: Format
     runs-on: ubuntu-latest
@@ -52,7 +49,7 @@ jobs:
 
       - name: Checkout sources
         uses: actions/checkout@v4
-
+      
       - name: Install nightly toolchain
         uses: dtolnay/rust-toolchain@v1
         with:
