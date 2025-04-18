@@ -283,7 +283,7 @@ pub async fn debug_update_func(
             roles_to_add.extend(rankbind.discord_roles.iter().copied());
             for role in &rankbind.discord_roles {
                 if !role_addition_tracking.contains_key(role) {
-                    role_addition_tracking.insert(*role, BindRef::Rank(&rankbind));
+                    role_addition_tracking.insert(*role, BindRef::Rank(rankbind));
                 }
             }
         }
@@ -298,7 +298,7 @@ pub async fn debug_update_func(
                 roles_to_add.extend(groupbind.discord_roles.iter().copied());
                 for role in &groupbind.discord_roles {
                     if !role_addition_tracking.contains_key(role) {
-                        role_addition_tracking.insert(*role, BindRef::Group(&groupbind));
+                        role_addition_tracking.insert(*role, BindRef::Group(groupbind));
                     }
                 }
             }
@@ -344,7 +344,7 @@ pub async fn debug_update_func(
             roles_to_add.extend(custombind.discord_roles.iter().copied());
             for role in &custombind.discord_roles {
                 if !role_addition_tracking.contains_key(role) {
-                    role_addition_tracking.insert(*role, BindRef::Custom(&custombind));
+                    role_addition_tracking.insert(*role, BindRef::Custom(custombind));
                 }
             }
         }
@@ -362,7 +362,7 @@ pub async fn debug_update_func(
             roles_to_add.extend(assetbind.discord_roles.iter().copied());
             for role in &assetbind.discord_roles {
                 if !role_addition_tracking.contains_key(role) {
-                    role_addition_tracking.insert(*role, BindRef::Asset(&assetbind));
+                    role_addition_tracking.insert(*role, BindRef::Asset(assetbind));
                 }
             }
         }
@@ -449,7 +449,7 @@ pub async fn debug_update_func(
             ),
             Checks::Denylist => message.push_str(":white_check_mark: You are not on a denylist.\n"),
             Checks::ServerOwner => {
-                message.push_str(":white_check_mark: You are not the server owner.\n")
+                message.push_str(":white_check_mark: You are not the server owner.\n");
             }
         }
     }
@@ -457,17 +457,17 @@ pub async fn debug_update_func(
     for check in failed_checks {
         match check {
             Checks::BypassRole => {
-                let _ = write!(
+                let _ = writeln!(
                     message,
-                    ":x: You have a role <@&{}> marked as bypass\n",
+                    ":x: You have a role <@&{}> marked as bypass",
                     active_bypass_role.unwrap()
                 );
             }
             Checks::Denylist => {
                 let active_denylist = active_deny_list.unwrap();
-                let _ = write!(
+                let _ = writeln!(
                     message,
-                    ":x: You are on a denylist: Id {}, Action: {}\n",
+                    ":x: You are on a denylist: Id {}, Action: {}",
                     active_denylist.id, active_denylist.action_type
                 );
             }
@@ -486,7 +486,7 @@ pub async fn debug_update_func(
             Bind::Custom(custom) => format!("Custombind (Id: {})", custom.custom_bind_id),
             Bind::Asset(asset) => format!("Assetbind (Asset Id: {})", asset.asset_id),
         };
-        let _ = write!(message, " - Decided by {}", bind);
+        let _ = write!(message, " - Decided by {bind}");
 
         if new_nickname.is_empty() {
             message.push_str("- :warning: Nickname has no characters and is considered invalid. This will cause an error.");
@@ -502,7 +502,7 @@ pub async fn debug_update_func(
 
     message.push_str("\nAdded Roles:\n");
     for role in &added_roles {
-        let _ = write!(message, "- <@&{}> ", role);
+        let _ = write!(message, "- <@&{role}> ");
         if warning_roles.contains(role) {
             message.push_str(" :warning: ");
         }
@@ -517,7 +517,7 @@ pub async fn debug_update_func(
             BindRef::Asset(asset) => format!("Assetbind (Asset Id: {})", asset.asset_id),
             BindRef::Verified => "Verified Roles".into(),
         };
-        let _ = write!(message, "[Added by {}]\n", bind_string);
+        let _ = writeln!(message, "[Added by {bind_string}]");
     }
     if added_roles.is_empty() {
         message.push_str("None\n");
@@ -526,7 +526,7 @@ pub async fn debug_update_func(
     message.push_str("\nRemoved Roles:\n");
     let mut removed_str = String::new();
     for role in removed_roles {
-        let _ = writeln!(removed_str, "- <@&{}>", role);
+        let _ = writeln!(removed_str, "- <@&{role}>");
         if warning_roles.contains(&role) {
             message.push_str(" :warning:");
         }

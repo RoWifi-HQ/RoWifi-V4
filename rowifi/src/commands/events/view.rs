@@ -76,6 +76,7 @@ pub async fn view_event(
     })
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn view_attendee_events_func(
     bot: &BotContext,
     standby: Arc<Standby>,
@@ -196,6 +197,7 @@ pub async fn view_attendee_events_func(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn view_host_events_func(
     bot: &BotContext,
     standby: Arc<Standby>,
@@ -317,6 +319,7 @@ pub async fn view_host_events_func(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn view_event_func(
     bot: &BotContext,
     ctx: &CommandContext,
