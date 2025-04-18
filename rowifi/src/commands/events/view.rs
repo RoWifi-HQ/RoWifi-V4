@@ -11,6 +11,7 @@ use rowifi_models::{
     guild::GuildType,
     user::RoUser,
 };
+use rowifi_roblox::error::ErrorKind;
 use twilight_standby::Standby;
 
 #[derive(Arguments, Debug)]
@@ -158,11 +159,29 @@ pub async fn view_attendee_events_func(
                 .iter()
                 .find(|e| e.id == event.event_type as u32)
                 .unwrap();
-            let host = bot.roblox.get_user(event.host_id).await?;
+            let host = match bot.roblox.get_user(event.host_id).await {
+                Ok(u) => Some(u),
+                Err(err) => {
+                    if let ErrorKind::Response {
+                        route: _,
+                        status,
+                        bytes: _,
+                    } = err.kind()
+                    {
+                        if status.as_u16() == 404 {
+                            None
+                        } else {
+                            return Err(err.into());
+                        }
+                    } else {
+                        return Err(err.into());
+                    }
+                }
+            };
             let desc = format!(
                 "Event Type: {}\nHost: {}\nTimestamp: <t:{}:f>",
                 event_type.name,
-                host.name,
+                host.map(|h| h.name).unwrap_or(event.host_id.to_string()),
                 event.timestamp.timestamp()
             );
 
@@ -243,7 +262,25 @@ pub async fn view_host_events_func(
     let mut pages = Vec::new();
     let mut page_count = 0;
 
-    let host = bot.roblox.get_user(roblox_id).await?;
+    let host = match bot.roblox.get_user(roblox_id).await {
+        Ok(u) => Some(u),
+        Err(err) => {
+            if let ErrorKind::Response {
+                route: _,
+                status,
+                bytes: _,
+            } = err.kind()
+            {
+                if status.as_u16() == 404 {
+                    None
+                } else {
+                    return Err(err.into());
+                }
+            } else {
+                return Err(err.into());
+            }
+        }
+    };
     for events in events.chunks(12) {
         let mut embed = EmbedBuilder::new()
             .color(DARK_GREEN)
@@ -264,7 +301,8 @@ pub async fn view_host_events_func(
             let desc = format!(
                 "Event Type: {}\nHost: {}\nTimestamp: <t:{}:f>",
                 event_type.name,
-                host.name,
+                host.as_ref()
+                    .map_or_else(|| roblox_id.to_string(), |h| h.name.clone()),
                 event.timestamp.timestamp()
             );
 
@@ -319,11 +357,47 @@ pub async fn view_event_func(
         .iter()
         .find(|e| e.id == event.event_type as u32)
         .unwrap();
-    let host = bot.roblox.get_user(event.host_id).await?;
+    let host = match bot.roblox.get_user(event.host_id).await {
+        Ok(u) => Some(u),
+        Err(err) => {
+            if let ErrorKind::Response {
+                route: _,
+                status,
+                bytes: _,
+            } = err.kind()
+            {
+                if status.as_u16() == 404 {
+                    None
+                } else {
+                    return Err(err.into());
+                }
+            } else {
+                return Err(err.into());
+            }
+        }
+    };
     let mut attendees = Vec::new();
     for attendee in event.attendees {
-        let user = bot.roblox.get_user(attendee).await?;
-        attendees.push(user.name);
+        let user = match bot.roblox.get_user(attendee).await {
+            Ok(u) => Some(u),
+            Err(err) => {
+                if let ErrorKind::Response {
+                    route: _,
+                    status,
+                    bytes: _,
+                } = err.kind()
+                {
+                    if status.as_u16() == 404 {
+                        None
+                    } else {
+                        return Err(err.into());
+                    }
+                } else {
+                    return Err(err.into());
+                }
+            }
+        };
+        attendees.push(user.map_or_else(|| attendee.to_string(), |u| u.name));
     }
 
     let mut embed = EmbedBuilder::new()
@@ -334,7 +408,10 @@ pub async fn view_event_func(
             "Event Type",
             event_type.name.clone(),
         ))
-        .field(EmbedFieldBuilder::new("Host", host.name))
+        .field(EmbedFieldBuilder::new(
+            "Host",
+            host.map_or_else(|| event.host_id.to_string(), |h| h.name),
+        ))
         .timestamp(Timestamp::from_secs(event.timestamp.timestamp()).unwrap());
 
     if attendees.is_empty() {

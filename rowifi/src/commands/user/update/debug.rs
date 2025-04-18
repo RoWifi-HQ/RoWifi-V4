@@ -13,7 +13,7 @@ use rowifi_models::{
     roblox::inventory::InventoryItem,
     user::RoUser,
 };
-use rowifi_roblox::filter::AssetFilterBuilder;
+use rowifi_roblox::{error::ErrorKind, filter::AssetFilterBuilder};
 use std::{
     collections::{HashMap, HashSet},
     fmt::Write,
@@ -161,7 +161,24 @@ pub async fn debug_update_func(
         .map(|r| (r.group.id, r.role.rank))
         .collect::<HashMap<_, _>>();
 
-    let roblox_user = bot.roblox.get_user(*user_id).await?;
+    let roblox_user = match bot.roblox.get_user(*user_id).await {
+        Ok(u) => u,
+        Err(err) => {
+            if let ErrorKind::Response {
+                route: _,
+                status,
+                bytes: _,
+            } = err.kind()
+            {
+                if status.as_u16() == 404 {
+                    let message = format!("Your selected Roblox account for this server is [this](https://www.roblox.com/users/{user_id}/profile). It seems that Roblox has banned or suspended this account. If this is not the case, please contact the RoWifi support server.");
+                    ctx.respond(bot).content(&message).unwrap().await?;
+                    return Ok(());
+                }
+            }
+            return Err(err.into());
+        }
+    };
 
     let mut active_deny_lists = Vec::new();
     let mut evaluation_failed = Vec::new();

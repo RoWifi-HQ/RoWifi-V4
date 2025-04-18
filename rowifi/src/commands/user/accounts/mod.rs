@@ -13,6 +13,7 @@ use rowifi_models::{
 
 pub use default::account_default;
 pub use delete::account_delete;
+use rowifi_roblox::error::ErrorKind;
 pub use switch::account_switch;
 
 pub async fn account_view(bot: Extension<BotContext>, command: Command<()>) -> impl IntoResponse {
@@ -54,8 +55,30 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
 
     let mut acc_string = String::new();
 
-    let main_user = bot.roblox.get_user(user.default_account_id).await?;
-    acc_string.push_str(&main_user.display_name.unwrap_or(main_user.name));
+    let main_user = match bot.roblox.get_user(user.default_account_id).await {
+        Ok(u) => Some(u),
+        Err(err) => {
+            if let ErrorKind::Response {
+                route: _,
+                status,
+                bytes: _,
+            } = err.kind()
+            {
+                if status.as_u16() == 404 {
+                    None
+                } else {
+                    return Err(err.into());
+                }
+            } else {
+                return Err(err.into());
+            }
+        }
+    };
+    let display_name = main_user.map_or_else(
+        || user.default_account_id.to_string(),
+        |m| m.display_name.unwrap_or(m.name),
+    );
+    acc_string.push_str(&display_name);
     acc_string.push_str(" - `Default`");
 
     // Check if there is an linked account for this server
@@ -71,8 +94,30 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
     acc_string.push('\n');
 
     for account in user.other_accounts {
-        let alt_user = bot.roblox.get_user(account).await?;
-        acc_string.push_str(&alt_user.name);
+        let alt_user = match bot.roblox.get_user(user.default_account_id).await {
+            Ok(u) => Some(u),
+            Err(err) => {
+                if let ErrorKind::Response {
+                    route: _,
+                    status,
+                    bytes: _,
+                } = err.kind()
+                {
+                    if status.as_u16() == 404 {
+                        None
+                    } else {
+                        return Err(err.into());
+                    }
+                } else {
+                    return Err(err.into());
+                }
+            }
+        };
+        let display_name = alt_user.map_or_else(
+            || user.default_account_id.to_string(),
+            |m| m.display_name.unwrap_or(m.name),
+        );
+        acc_string.push_str(&display_name);
         if let Some(linked_user) = user.linked_accounts.get(&ctx.guild_id) {
             if *linked_user == account {
                 acc_string.push_str(" - `This Server`");

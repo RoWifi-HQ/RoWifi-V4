@@ -8,6 +8,7 @@ use rowifi_models::{
     id::UserId,
     user::{RoUser, UserFlags},
 };
+use rowifi_roblox::error::ErrorKind;
 use std::collections::HashSet;
 
 #[derive(Arguments, Debug)]
@@ -85,7 +86,24 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         .linked_accounts
         .get(&ctx.guild_id)
         .unwrap_or(&database_user.default_account_id);
-    let roblox_user = bot.roblox.get_user(*roblox_id).await?;
+    let roblox_user = match bot.roblox.get_user(*roblox_id).await {
+        Ok(u) => u,
+        Err(err) => {
+            if let ErrorKind::Response {
+                route: _,
+                status,
+                bytes: _,
+            } = err.kind()
+            {
+                if status.as_u16() == 404 {
+                    let message = format!("Your selected Roblox account for this server is [this](https://www.roblox.com/users/{user_id}/profile). It seems that Roblox has banned or suspended this account. If this is not the case, please contact the RoWifi support server.");
+                    ctx.respond(bot).content(&message).unwrap().await?;
+                    return Ok(());
+                }
+            }
+            return Err(err.into());
+        }
+    };
     let ranks = bot.roblox.get_user_roles(*roblox_id).await?;
     let thumbnail = bot.roblox.get_user_thumbnail(*roblox_id).await?;
 
