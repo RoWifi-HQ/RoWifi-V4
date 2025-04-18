@@ -20,6 +20,9 @@ jobs:
           /usr/bin/git config --global --add url."https://${{ secrets.GH_PAT }}:x-oauth-basic@github".insteadOf ssh://git@github
           /usr/bin/git config --global --add url."https://${{ secrets.GH_PAT }}:x-oauth-basic@github".insteadOf https://github
           /usr/bin/git config --global --add url."https://${{ secrets.GH_PAT }}:x-oauth-basic@github".insteadOf git@github
+        
+      - name: Install fontconfig
+        run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev
 
       - name: Checkout sources
         uses: actions/checkout@v4
