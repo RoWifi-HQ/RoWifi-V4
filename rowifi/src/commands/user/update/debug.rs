@@ -5,7 +5,7 @@ use rowifi_core::custombinds::{
 };
 use rowifi_framework::prelude::*;
 use rowifi_models::{
-    bind::{AssetType, Bind},
+    bind::{AssetType, Assetbind, Bind, Custombind, Groupbind, Rankbind},
     deny_list::DenyListData,
     discord::http::interaction::{InteractionResponse, InteractionResponseType},
     guild::BypassRoleKind,
@@ -40,6 +40,20 @@ pub async fn debug_update(
     })
 }
 
+enum Checks {
+    ServerOwner,
+    BypassRole,
+    Denylist,
+}
+
+enum BindRef<'b> {
+    Rank(&'b Rankbind),
+    Group(&'b Groupbind),
+    Custom(&'b Custombind),
+    Asset(&'b Assetbind),
+    Verified,
+}
+
 #[tracing::instrument(skip_all, fields(args = ?args))]
 pub async fn debug_update_func(
     bot: &BotContext,
@@ -47,6 +61,8 @@ pub async fn debug_update_func(
     args: UpdateArguments,
 ) -> CommandResult {
     let server = bot.server(ctx.guild_id).await?;
+    let mut success_checks = Vec::new();
+    let mut failed_checks = Vec::new();
 
     let user_id = match args.user_id {
         Some(s) => s,
@@ -56,50 +72,10 @@ pub async fn debug_update_func(
     let Some((discord_member, discord_user)) = bot.member(server.id, user_id).await? else {
         // Should not ever happen since slash command guarantees that the user exists.
         // But handling this nonetheless is useful.
-        let message = format!(
-            r"
-**Checks**:
-:x: Discord User with id {user_id}  does not exist
-        "
-        );
+        let message = format!("Discord User with id {user_id}  does not exist");
         ctx.respond(bot).content(&message).unwrap().await?;
         return Ok(());
     };
-
-    if server.owner_id == discord_member.id {
-        let message = r"
-**Checks**:
-:white_check_mark: Discord User Exists.
-:x: The command is being run on the server owner. Discord has significant limitations around server owners.
-        ";
-        ctx.respond(bot).content(message).unwrap().await?;
-        return Ok(());
-    }
-
-    let guild = bot
-        .get_guild(
-            "SELECT guild_id, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, custombinds, assetbinds, deny_lists, default_template, sticky_roles FROM guilds WHERE guild_id = $1",
-            server.id,
-        )
-        .await?;
-
-    for bypass_role in &guild.bypass_roles {
-        if bypass_role.kind == BypassRoleKind::All
-            && discord_member.roles.contains(&bypass_role.role_id)
-        {
-            let message = format!(
-                r"
-**Checks**:
-:white_check_mark: Discord User Exists.
-:white_check_mark: You are not the server owner.
-:x: You have a role (<@&{}>) which has been marked as a bypass role.
-    ",
-                bypass_role.role_id
-            );
-            ctx.respond(bot).content(&message).unwrap().await?;
-            return Ok(());
-        }
-    }
 
     let Some(user) = bot
         .database
@@ -109,23 +85,41 @@ pub async fn debug_update_func(
         )
         .await?
     else {
-        let verify_message = if args.user_id.is_some() {
-            "This user has not linked any Roblox account."
+        let message = if args.user_id.is_some() {
+            "This user is not verified with RoWifi."
         } else {
-            "You have not linked any Roblox account."
+            "You are not verified with RoWifi."
         };
-        let message = format!(
-            r"
-**Checks**:
-:white_check_mark: Discord User Exists.
-:white_check_mark: You are not the server owner.
-:white_check_mark: You do not have a role which has been marked as bypass.
-:x: {verify_message}
-"
-        );
-        ctx.respond(bot).content(&message).unwrap().await?;
+        ctx.respond(bot).content(message).unwrap().await?;
         return Ok(());
     };
+
+    if server.owner_id == discord_member.id {
+        failed_checks.push(Checks::ServerOwner);
+    } else {
+        success_checks.push(Checks::ServerOwner);
+    }
+
+    let guild = bot
+        .get_guild(
+            "SELECT guild_id, bypass_roles, unverified_roles, verified_roles, rankbinds, groupbinds, custombinds, assetbinds, deny_lists, default_template, sticky_roles FROM guilds WHERE guild_id = $1",
+            server.id,
+        )
+        .await?;
+
+    let mut active_bypass_role = None;
+    for bypass_role in &guild.bypass_roles {
+        if bypass_role.kind == BypassRoleKind::All
+            && discord_member.roles.contains(&bypass_role.role_id)
+        {
+            active_bypass_role = Some(bypass_role.role_id);
+            failed_checks.push(Checks::BypassRole);
+            break;
+        }
+    }
+    if active_bypass_role.is_none() {
+        success_checks.push(Checks::BypassRole);
+    }
 
     let mut all_roles = guild
         .rankbinds
@@ -212,53 +206,14 @@ pub async fn debug_update_func(
         }
     }
 
-    if !evaluation_failed.is_empty() || !parsing_failed.is_empty() {
-        let mut message = r"
-**Checks**:
-:white_check_mark: Discord User Exists.
-:white_check_mark: You are not the server owner.
-:white_check_mark: You do not have a role which has been marked as bypass.
-:white_check_mark: You have a valid linked Roblox account.
-"
-        .to_string();
-        if !evaluation_failed.is_empty() {
-            let mut eval_message =
-                "\n:x: Following Custom Denylists failed to evaluate:\n".to_string();
-            for (id, err) in &evaluation_failed {
-                eval_message.push_str(&format!("- ID: {id} -> Error: {err}"));
-            }
-            message.push_str(&eval_message);
-        }
-        if !parsing_failed.is_empty() {
-            let mut eval_message =
-                "\n:x: Following Custom Denylists failed to parse:\n".to_string();
-            for (id, err) in &evaluation_failed {
-                eval_message.push_str(&format!("- ID: {id} -> Error: {err}"));
-            }
-            message.push_str(&eval_message);
-        }
-        ctx.respond(bot).content(&message).unwrap().await?;
-        return Ok(());
-    }
-
     let active_deny_list = active_deny_lists
         .iter()
         .sorted_by_key(|d| d.action_type)
         .next_back();
-    if let Some(deny_list) = active_deny_list {
-        let message = format!(
-            "
-**Checks**:
-:white_check_mark: Discord User Exists.
-:white_check_mark: You are not the server owner.
-:white_check_mark: You do not have a role which has been marked as bypass.
-:white_check_mark: You have a valid linked Roblox account.
-:x: You are on a denylist (ID: {})
-",
-            deny_list.id
-        );
-        ctx.respond(bot).content(&message).unwrap().await?;
-        return Ok(());
+    if active_deny_list.is_none() {
+        success_checks.push(Checks::Denylist);
+    } else {
+        failed_checks.push(Checks::Denylist);
     }
 
     let mut asset_filter = AssetFilterBuilder::new();
@@ -283,10 +238,12 @@ pub async fn debug_update_func(
 
     let mut roles_to_add = HashSet::<RoleId>::new();
     let mut nickname_bind: Option<Bind> = None;
+    let mut role_addition_tracking = HashMap::new();
 
     for verified_role in &guild.verified_roles {
         if server.roles.contains(verified_role) {
             roles_to_add.insert(*verified_role);
+            role_addition_tracking.insert(*verified_role, BindRef::Verified);
         }
     }
 
@@ -307,6 +264,11 @@ pub async fn debug_update_func(
                 nickname_bind = Some(Bind::Rank(rankbind.clone()));
             }
             roles_to_add.extend(rankbind.discord_roles.iter().copied());
+            for role in &rankbind.discord_roles {
+                if !role_addition_tracking.contains_key(role) {
+                    role_addition_tracking.insert(*role, BindRef::Rank(&rankbind));
+                }
+            }
         }
     }
 
@@ -317,18 +279,22 @@ pub async fn debug_update_func(
                     nickname_bind = Some(Bind::Group(groupbind.clone()));
                 }
                 roles_to_add.extend(groupbind.discord_roles.iter().copied());
+                for role in &groupbind.discord_roles {
+                    if !role_addition_tracking.contains_key(role) {
+                        role_addition_tracking.insert(*role, BindRef::Group(&groupbind));
+                    }
+                }
             }
         }
     }
 
-    // TODO: Have parsed custombinds stored somewhere
-    evaluation_failed.clear();
-    parsing_failed.clear();
+    let mut custombind_evaluation_failed = Vec::new();
+    let mut custombind_parsing_failed = Vec::new();
     for custombind in &guild.custombinds {
         let exp = match parser(&custombind.code) {
             Ok(e) => e,
             Err(err) => {
-                parsing_failed.push((custombind.custom_bind_id, err.to_string()));
+                custombind_parsing_failed.push((custombind.custom_bind_id, err.to_string()));
                 continue;
             }
         };
@@ -342,7 +308,7 @@ pub async fn debug_update_func(
         ) {
             Ok(res) => res,
             Err(err) => {
-                evaluation_failed.push((custombind.custom_bind_id, err.to_string()));
+                custombind_evaluation_failed.push((custombind.custom_bind_id, err.to_string()));
                 continue;
             }
         };
@@ -359,6 +325,11 @@ pub async fn debug_update_func(
                 nickname_bind = Some(Bind::Custom(custombind.clone()));
             }
             roles_to_add.extend(custombind.discord_roles.iter().copied());
+            for role in &custombind.discord_roles {
+                if !role_addition_tracking.contains_key(role) {
+                    role_addition_tracking.insert(*role, BindRef::Custom(&custombind));
+                }
+            }
         }
     }
 
@@ -372,40 +343,17 @@ pub async fn debug_update_func(
                 nickname_bind = Some(Bind::Asset(assetbind.clone()));
             }
             roles_to_add.extend(assetbind.discord_roles.iter().copied());
-        }
-    }
-
-    if !evaluation_failed.is_empty() || !parsing_failed.is_empty() {
-        let mut message = r"
-**Checks**:
-:white_check_mark: Discord User Exists.
-:white_check_mark: You are not the server owner.
-:white_check_mark: You do not have a role which has been marked as bypass.
-:white_check_mark: You have a valid linked Roblox account.
-:white_check_mark: You are not on a denylist.
-"
-        .to_string();
-        if !evaluation_failed.is_empty() {
-            let mut eval_message = "\n:x: Following Custombinds failed to evaluate:\n".to_string();
-            for (id, err) in &evaluation_failed {
-                eval_message.push_str(&format!("- ID: {id} -> Error: {err}"));
+            for role in &assetbind.discord_roles {
+                if !role_addition_tracking.contains_key(role) {
+                    role_addition_tracking.insert(*role, BindRef::Asset(&assetbind));
+                }
             }
-            message.push_str(&eval_message);
         }
-        if !parsing_failed.is_empty() {
-            let mut eval_message = "\n:x: Following Custombinds failed to parse:\n".to_string();
-            for (id, err) in &evaluation_failed {
-                eval_message.push_str(&format!("- ID: {id} -> Error: {err}"));
-            }
-            message.push_str(&eval_message);
-        }
-        ctx.respond(bot).content(&message).unwrap().await?;
-        return Ok(());
     }
 
     let all_guild_roles = bot
         .cache
-        .guild_roles(all_roles.clone().into_iter())
+        .guild_roles(server.roles.clone().into_iter())
         .await?
         .into_iter()
         .map(|r| (r.id, r.position))
@@ -425,7 +373,7 @@ pub async fn debug_update_func(
 
     let mut added_roles = Vec::new();
     let mut removed_roles = Vec::new();
-    let mut warning_roles = Vec::new();
+    let mut warning_roles = HashSet::new();
     for bind_role in all_roles {
         if server.roles.contains(&bind_role) {
             let role_position = all_guild_roles.get(&bind_role).copied().unwrap_or_default();
@@ -433,7 +381,7 @@ pub async fn debug_update_func(
                 if !discord_member.roles.contains(&bind_role) {
                     added_roles.push(bind_role);
                     if role_position > highest_bot_position {
-                        warning_roles.push(bind_role);
+                        warning_roles.insert(bind_role);
                     }
                 }
             } else if discord_member.roles.contains(&bind_role)
@@ -441,13 +389,13 @@ pub async fn debug_update_func(
             {
                 removed_roles.push(bind_role);
                 if role_position > highest_bot_position {
-                    warning_roles.push(bind_role);
+                    warning_roles.insert(bind_role);
                 }
             }
         }
     }
 
-    let new_nickname = if let Some(nickname_bind) = nickname_bind {
+    let new_nickname = if let Some(nickname_bind) = &nickname_bind {
         match nickname_bind {
             Bind::Rank(r) => {
                 r.template
@@ -474,49 +422,109 @@ pub async fn debug_update_func(
         )
     };
 
-    let mut message = r"
-**Checks**:
-:white_check_mark: Discord User Exists.
-:white_check_mark: You are not the server owner.
-:white_check_mark: You do not have a role which has been marked as bypass.
-:white_check_mark: You have a valid linked Roblox account.
-:white_check_mark: You are not on a denylist.
-"
-    .to_string();
+    let mut message = String::new();
 
-    if new_nickname.len() > 32 {
-        message.push_str("\n:exclamation: Supposed nickname is greater than 32 characters");
+    message.push_str("**Checks**:\n");
+    for check in success_checks {
+        match check {
+            Checks::BypassRole => message.push_str(
+                ":white_check_mark: You do not have a role which has been marked as bypass.\n",
+            ),
+            Checks::Denylist => message.push_str(":white_check_mark: You are not on a denylist.\n"),
+            Checks::ServerOwner => {
+                message.push_str(":white_check_mark: You are not the server owner.\n")
+            }
+        }
     }
 
-    message.push_str(&format!("\n\nNickname: {new_nickname}"));
+    for check in failed_checks {
+        match check {
+            Checks::BypassRole => {
+                let _ = write!(
+                    message,
+                    ":x: You have a role <@&{}> marked as bypass\n",
+                    active_bypass_role.unwrap()
+                );
+            }
+            Checks::Denylist => {
+                let active_denylist = active_deny_list.unwrap();
+                let _ = write!(
+                    message,
+                    ":x: You are on a denylist: Id {}, Action: {}\n",
+                    active_denylist.id, active_denylist.action_type
+                );
+            }
+            Checks::ServerOwner => message.push_str(":x: You are the server owner\n"),
+        }
+    }
 
-    let mut added_str = added_roles.iter().fold(String::new(), |mut s, a| {
-        let _ = writeln!(s, "- <@&{}>", a.0);
-        s
-    });
-    let mut removed_str = removed_roles.iter().fold(String::new(), |mut s, a| {
-        let _ = writeln!(s, "- <@&{}>", a.0);
-        s
-    });
-    if added_str.is_empty() {
-        added_str = "None".into();
+    message.push_str(&format!("\nNickname: {new_nickname}"));
+    if let Some(nickname_bind) = nickname_bind {
+        let bind = match nickname_bind {
+            Bind::Rank(rank) => format!(
+                "Rankbind (Group Id: {}, Rank Id: {})",
+                rank.group_id, rank.group_rank_id
+            ),
+            Bind::Group(group) => format!("Groupbind (Group Id: {})", group.group_id),
+            Bind::Custom(custom) => format!("Custombind (Id: {})", custom.custom_bind_id),
+            Bind::Asset(asset) => format!("Assetbind (Asset Id: {})", asset.asset_id),
+        };
+        let _ = write!(message, " - Decided by {}", bind);
+
+        if new_nickname.is_empty() {
+            message.push_str("- :warning: Nickname has no characters and is considered invalid. This will cause an error.");
+        } else if new_nickname.len() > 32 {
+            message.push_str(
+                "- :warning: Nickname is more than 32 characters. This will cause an error.",
+            );
+        }
+    } else {
+        message.push_str("- Decided by Default Template");
+    }
+    message.push('\n');
+
+    message.push_str("\nAdded Roles:\n");
+    for role in &added_roles {
+        let _ = write!(message, "- <@&{}> ", role);
+        if warning_roles.contains(role) {
+            message.push_str(" :warning: ");
+        }
+        let bind = role_addition_tracking.get(role).unwrap();
+        let bind_string = match bind {
+            BindRef::Rank(rank) => format!(
+                "Rankbind (Group Id: {}, Rank Id: {})",
+                rank.group_id, rank.group_rank_id
+            ),
+            BindRef::Group(group) => format!("Groupbind (Group Id: {})", group.group_id),
+            BindRef::Custom(custom) => format!("Custombind (Id: {})", custom.custom_bind_id),
+            BindRef::Asset(asset) => format!("Assetbind (Asset Id: {})", asset.asset_id),
+            BindRef::Verified => "Verified Roles".into(),
+        };
+        let _ = write!(message, "[Added by {}]\n", bind_string);
+    }
+    if added_roles.is_empty() {
+        message.push_str("None\n");
+    }
+
+    message.push_str("\nRemoved Roles:\n");
+    let mut removed_str = String::new();
+    for role in removed_roles {
+        let _ = writeln!(removed_str, "- <@&{}>", role);
+        if warning_roles.contains(&role) {
+            message.push_str(" :warning:");
+        }
+        message.push('\n');
     }
     if removed_str.is_empty() {
-        removed_str = "None".into();
+        removed_str = "None\n".into();
     }
+    message.push_str(&removed_str);
 
-    message.push_str(&format!(
-        "\n\n**Roles to add**:\n{added_str}\n**Roles to remove**:\n{removed_str}"
-    ));
+    message.push_str(
+        "\nRoles marked :warning: are above the bot and may cause issues while updating\n",
+    );
 
-    if !warning_roles.is_empty() {
-        message.push_str(&format!(
-            "\n\nThe bot will attempt to add/remove ({}) which will result in an error. These roles are higher than the bot's highest role. To resolve this, make sure the bot's highest role is higher than these roles or unbind these roles",
-            warning_roles.iter().map(|r| format!("<@&{r}>")).join(",")
-        ));
-    }
-
-    message.push_str("\n\n⚠️ This list of checks is not exhaustive. Despite these checks, if you’re unable to resolve your issue, please contact the support server for assistance.");
+    message.push_str("\nThis list of checks is not exhaustive. Despite these checks, if you’re unable to resolve your issue, please contact the support server for assistance.");
 
     ctx.respond(bot).content(&message).unwrap().await?;
 
