@@ -1190,7 +1190,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -1771,7 +1771,7 @@ dependencies = [
 
 [[package]]
 name = "rowifi"
-version = "4.2.0"
+version = "4.3.1"
 dependencies = [
  "axum",
  "dashmap",
@@ -1804,7 +1804,7 @@ dependencies = [
 
 [[package]]
 name = "rowifi_cache"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "async-trait",
  "redis",
@@ -1815,7 +1815,7 @@ dependencies = [
 
 [[package]]
 name = "rowifi_core"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "chrono",
  "itertools 0.14.0",
@@ -1834,7 +1834,7 @@ dependencies = [
 
 [[package]]
 name = "rowifi_database"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "deadpool-postgres",
  "tokio-postgres",
@@ -1843,7 +1843,7 @@ dependencies = [
 
 [[package]]
 name = "rowifi_derive"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1852,7 +1852,7 @@ dependencies = [
 
 [[package]]
 name = "rowifi_framework"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "axum",
  "chrono",
@@ -1876,7 +1876,7 @@ dependencies = [
 
 [[package]]
 name = "rowifi_lemonsqueezy"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "http-body-util",
  "hyper",
@@ -1889,7 +1889,7 @@ dependencies = [
 
 [[package]]
 name = "rowifi_models"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "bitflags 2.9.0",
  "bytes",
@@ -1905,7 +1905,7 @@ dependencies = [
 
 [[package]]
 name = "rowifi_roblox"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "http-body-util",
  "hyper",
@@ -1932,8 +1932,8 @@ dependencies = [
 
 [[package]]
 name = "rowifi_tower"
-version = "4.2.0"
-source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#2234a70e926a36e04128c21fdfe84537a270a655"
+version = "4.3.0"
+source = "git+https://github.com/RoWifi-HQ/rowifi_extras?branch=main#64ca73cd3d46d905cd5acacf9382bf02e004cfa4"
 dependencies = [
  "axum",
  "bytes",
@@ -2539,7 +2539,7 @@ checksum = "17f77d76d837a7830fe1d4f12b7b4ba4192c1888001c7164257e4bc6d21d96b4"
 [[package]]
 name = "twilight-http"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#7bf33b72f3853f28a220b1e0c288a74fda154e7a"
 dependencies = [
  "fastrand",
  "http",
@@ -2561,7 +2561,7 @@ dependencies = [
 [[package]]
 name = "twilight-http-ratelimiting"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#7bf33b72f3853f28a220b1e0c288a74fda154e7a"
 dependencies = [
  "tokio",
  "tracing",
@@ -2570,7 +2570,7 @@ dependencies = [
 [[package]]
 name = "twilight-mention"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#7bf33b72f3853f28a220b1e0c288a74fda154e7a"
 dependencies = [
  "twilight-model",
 ]
@@ -2578,7 +2578,7 @@ dependencies = [
 [[package]]
 name = "twilight-model"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#7bf33b72f3853f28a220b1e0c288a74fda154e7a"
 dependencies = [
  "bitflags 2.9.0",
  "serde",
@@ -2590,7 +2590,7 @@ dependencies = [
 [[package]]
 name = "twilight-standby"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#7bf33b72f3853f28a220b1e0c288a74fda154e7a"
 dependencies = [
  "dashmap",
  "futures-core",
@@ -2602,7 +2602,7 @@ dependencies = [
 [[package]]
 name = "twilight-util"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#7bf33b72f3853f28a220b1e0c288a74fda154e7a"
 dependencies = [
  "twilight-model",
  "twilight-validate",
@@ -2611,7 +2611,7 @@ dependencies = [
 [[package]]
 name = "twilight-validate"
 version = "0.16.0"
-source = "git+https://github.com/twilight-rs/twilight?branch=main#fb4f59093dbde10a520a9eb9510ca7a9f1aebd71"
+source = "git+https://github.com/twilight-rs/twilight?branch=main#7bf33b72f3853f28a220b1e0c288a74fda154e7a"
 dependencies = [
  "twilight-model",
 ]
