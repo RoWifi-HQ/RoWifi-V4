@@ -8,7 +8,7 @@ use rowifi_models::{
 };
 use rowifi_roblox::{error::RobloxError, RobloxClient, UpdateDatastoreEntryArgs};
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     sync::LazyLock,
 };
 use twilight_http::Client as TwilightClient;
@@ -32,13 +32,37 @@ pub struct WorkflowNodeExecution {
 
 #[derive(Debug)]
 pub enum WorkflowExecutionError {
-    NodeNotFound,
-    InputNotFound,
+    NodeNotFound {
+        id: usize,
+    },
+    NodeTypeNotFound {
+        kind: ActionType,
+    },
+    InputNotFound {
+        id: usize,
+        name: String,
+    },
+    OutputNotFound {
+        id: usize,
+        name: String,
+        source_id: usize,
+        source_name: String,
+    },
     IncorrectInputType,
     Node {
         id: usize,
         err: WorkflowNodeExecutionError,
     },
+}
+
+pub struct ValidationContext {
+    pub nodes: Vec<WorkflowNodeValidation>,
+}
+
+pub struct WorkflowNodeValidation {
+    pub id: usize,
+    pub inputs: HashSet<String>,
+    pub outputs: HashSet<String>,
 }
 
 #[derive(Debug)]
@@ -52,6 +76,35 @@ pub enum WorkflowNodeExecutionError {
     Roblox(RobloxError),
 }
 
+#[derive(Debug)]
+pub enum WorkflowNodeValidationError {
+    InputNotFound { name: String },
+    OutputNotFound,
+    IncorrectInputs { actual: u32, expected: u32 },
+    IncorrectOutputs { actual: u32, expected: u32 },
+}
+
+#[derive(Debug)]
+pub enum WorkflowValidationError {
+    NodeNotFound {
+        id: usize,
+    },
+    NodeTypeNotFound {
+        kind: ActionType,
+    },
+    OutputNotFound {
+        id: usize,
+        name: String,
+        source_id: usize,
+        source_name: String,
+    },
+    IncorrectInputType,
+    Node {
+        id: usize,
+        err: WorkflowNodeValidationError,
+    },
+}
+
 pub async fn execute_workflow(
     workflow: &Workflow,
     workflow_context: &WorkflowContext<'_>,
@@ -62,7 +115,9 @@ pub async fn execute_workflow(
         .nodes
         .iter()
         .find(|n| n.kind == ActionType::Start)
-        .ok_or(WorkflowExecutionError::NodeNotFound)?;
+        .ok_or(WorkflowExecutionError::NodeTypeNotFound {
+            kind: ActionType::Start,
+        })?;
 
     let mut queue = VecDeque::new();
     queue.push_back(start);
@@ -78,16 +133,24 @@ pub async fn execute_workflow(
                         .nodes
                         .iter()
                         .find(|n| n.id == *action_id)
-                        .ok_or(WorkflowExecutionError::NodeNotFound)?
+                        .ok_or(WorkflowExecutionError::NodeNotFound { id: *action_id })?
                         .outputs
                         .get(output_name)
-                        .ok_or(WorkflowExecutionError::InputNotFound)?;
+                        .ok_or(WorkflowExecutionError::OutputNotFound {
+                            id: node.id,
+                            name: input.name.clone(),
+                            source_id: *action_id,
+                            source_name: output_name.clone(),
+                        })?;
                     output.clone()
                 }
                 ActionInputSource::External(_v) => {
-                    let input_value = args
-                        .get(&input.name)
-                        .ok_or(WorkflowExecutionError::InputNotFound)?;
+                    let input_value =
+                        args.get(&input.name)
+                            .ok_or(WorkflowExecutionError::InputNotFound {
+                                id: node.id,
+                                name: input.name.clone(),
+                            })?;
                     input_value.clone()
                 }
             };
@@ -116,7 +179,7 @@ pub async fn execute_workflow(
                 .nodes
                 .iter()
                 .find(|n| n.id == *next)
-                .ok_or(WorkflowExecutionError::NodeNotFound)?;
+                .ok_or(WorkflowExecutionError::NodeNotFound { id: *next })?;
             queue.push_back(n);
         }
     }
@@ -323,6 +386,169 @@ pub async fn execute_node(
                 execution_node
                     .outputs
                     .insert(output.name.clone(), output_value);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub fn validate_workflow(
+    workflow: &Workflow,
+    execution_context: &mut ValidationContext,
+) -> Result<(), WorkflowValidationError> {
+    let start = workflow
+        .nodes
+        .iter()
+        .find(|n| n.kind == ActionType::Start)
+        .ok_or(WorkflowValidationError::NodeTypeNotFound {
+            kind: ActionType::Start,
+        })?;
+
+    let mut queue = VecDeque::new();
+    queue.push_back(start);
+    while let Some(node) = queue.pop_front() {
+        for input in &node.inputs {
+            match &input.source {
+                ActionInputSource::Static(_) => {}
+                ActionInputSource::Action {
+                    action_id,
+                    output_name,
+                } => {
+                    let Some(previous_node) =
+                        execution_context.nodes.iter().find(|n| n.id == *action_id)
+                    else {
+                        return Err(WorkflowValidationError::NodeNotFound { id: *action_id });
+                    };
+                    if !previous_node.outputs.contains(output_name) {
+                        return Err(WorkflowValidationError::OutputNotFound {
+                            id: node.id,
+                            name: input.name.clone(),
+                            source_id: *action_id,
+                            source_name: output_name.clone(),
+                        });
+                    }
+                }
+                ActionInputSource::External(_v) => {}
+            };
+            let execution_node = execution_context
+                .nodes
+                .iter_mut()
+                .find(|n| n.id == node.id)
+                .unwrap();
+            execution_node.inputs.insert(input.name.clone());
+        }
+
+        let execution_node = execution_context
+            .nodes
+            .iter_mut()
+            .find(|n| n.id == node.id)
+            .unwrap();
+
+        validate_node(node, execution_node)
+            .map_err(|err| WorkflowValidationError::Node { id: node.id, err })?;
+
+        for next in &node.next {
+            let n = workflow
+                .nodes
+                .iter()
+                .find(|n| n.id == *next)
+                .ok_or(WorkflowValidationError::NodeNotFound { id: *next })?;
+            queue.push_back(n);
+        }
+    }
+
+    Ok(())
+}
+
+pub fn validate_node(
+    node: &WorkflowNode,
+    execution_node: &mut WorkflowNodeValidation,
+) -> Result<(), WorkflowNodeValidationError> {
+    match &node.metadata {
+        ActionMetadata::Start => {
+            for input in &execution_node.inputs {
+                execution_node.outputs.insert(input.clone());
+            }
+        }
+        ActionMetadata::SendMessage(_) => {}
+        ActionMetadata::JoinString => {
+            if node.inputs.is_empty() {
+                return Err(WorkflowNodeValidationError::IncorrectInputs {
+                    actual: 0,
+                    expected: 1,
+                });
+            }
+            if node.outputs.len() != 1 {
+                return Err(WorkflowNodeValidationError::IncorrectOutputs {
+                    actual: node.outputs.len() as u32,
+                    expected: 1,
+                });
+            }
+            execution_node.outputs.insert(node.outputs[0].name.clone());
+        }
+        ActionMetadata::GetDatastoreEntry => {
+            if !execution_node.inputs.contains("universe_id") {
+                return Err(WorkflowNodeValidationError::InputNotFound {
+                    name: "universe_id".to_string(),
+                });
+            }
+            if !execution_node.inputs.contains("datastore_id") {
+                return Err(WorkflowNodeValidationError::InputNotFound {
+                    name: "datastore_id".to_string(),
+                });
+            }
+            if !execution_node.inputs.contains("entry_id") {
+                return Err(WorkflowNodeValidationError::InputNotFound {
+                    name: "entry_id".to_string(),
+                });
+            }
+
+            for output in &node.outputs {
+                execution_node.outputs.insert(output.name.clone());
+            }
+        }
+        ActionMetadata::Add => {
+            if node.inputs.is_empty() {
+                return Err(WorkflowNodeValidationError::IncorrectInputs {
+                    actual: 0,
+                    expected: 1,
+                });
+            }
+            if node.outputs.len() != 1 {
+                return Err(WorkflowNodeValidationError::IncorrectOutputs {
+                    actual: node.outputs.len() as u32,
+                    expected: 1,
+                });
+            }
+            execution_node.outputs.insert(node.outputs[0].name.clone());
+        }
+        ActionMetadata::UpdateDatastoreEntry => {
+            if !execution_node.inputs.contains("universe_id") {
+                return Err(WorkflowNodeValidationError::InputNotFound {
+                    name: "universe_id".to_string(),
+                });
+            }
+            if !execution_node.inputs.contains("datastore_id") {
+                return Err(WorkflowNodeValidationError::InputNotFound {
+                    name: "datastore_id".to_string(),
+                });
+            }
+            if !execution_node.inputs.contains("entry_id") {
+                return Err(WorkflowNodeValidationError::InputNotFound {
+                    name: "entry_id".to_string(),
+                });
+            }
+
+            if execution_node.inputs.len() <= 3 {
+                return Err(WorkflowNodeValidationError::IncorrectInputs {
+                    actual: execution_node.inputs.len() as u32,
+                    expected: 4,
+                });
+            }
+
+            for output in &node.outputs {
+                execution_node.outputs.insert(output.name.clone());
             }
         }
     }
