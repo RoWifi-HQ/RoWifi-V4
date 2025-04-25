@@ -13,6 +13,7 @@ use rowifi_roblox::{
     error::{ErrorKind, RobloxError},
     RobloxClient, UpdateDatastoreEntryArgs,
 };
+use serde::Serialize;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     sync::LazyLock,
@@ -89,7 +90,8 @@ pub enum WorkflowNodeExecutionError {
     Database(DatabaseError),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
+#[serde(tag = "type")]
 pub enum WorkflowNodeValidationError {
     InputNotFound { name: String },
     OutputNotFound,
@@ -97,7 +99,8 @@ pub enum WorkflowNodeValidationError {
     IncorrectOutputs { actual: u32, expected: u32 },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
+#[serde(tag = "type")]
 pub enum WorkflowValidationError {
     NodeNotFound {
         id: usize,
