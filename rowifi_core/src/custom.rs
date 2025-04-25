@@ -1,12 +1,18 @@
 use regex::Regex;
+use rowifi_database::{Database, DatabaseError};
 use rowifi_models::{
     custom::{
         action, ActionInputSource, ActionMetadata, ActionType, Value, ValueType, Workflow,
         WorkflowNode,
     },
-    roblox::id::{UniverseId, UserId},
+    id::{GuildId, UserId},
+    roblox::id::{UniverseId, UserId as RobloxUserId},
+    user::RoUser,
 };
-use rowifi_roblox::{error::RobloxError, RobloxClient, UpdateDatastoreEntryArgs};
+use rowifi_roblox::{
+    error::{ErrorKind, RobloxError},
+    RobloxClient, UpdateDatastoreEntryArgs,
+};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     sync::LazyLock,
@@ -22,12 +28,18 @@ pub struct ExecutionContext {
 pub struct WorkflowContext<'a> {
     pub bot: &'a TwilightClient,
     pub roblox: &'a RobloxClient,
+    pub database: &'a Database,
+    pub guild_id: GuildId,
 }
 
 pub struct WorkflowNodeExecution {
     pub id: usize,
     pub inputs: HashMap<String, Value>,
     pub outputs: HashMap<String, Value>,
+}
+
+pub struct WorkflowExecutionNodeResult {
+    pub outcome: String,
 }
 
 #[derive(Debug)]
@@ -74,6 +86,7 @@ pub enum WorkflowNodeExecutionError {
     IncorrectOutputFormat,
     Discord(twilight_http::Error),
     Roblox(RobloxError),
+    Database(DatabaseError),
 }
 
 #[derive(Debug)]
@@ -170,17 +183,19 @@ pub async fn execute_workflow(
             .find(|n| n.id == node.id)
             .unwrap();
 
-        execute_node(node, workflow_context, execution_node)
+        let result = execute_node(node, workflow_context, execution_node)
             .await
             .map_err(|err| WorkflowExecutionError::Node { id: node.id, err })?;
 
-        for next in &node.next {
-            let n = workflow
-                .nodes
-                .iter()
-                .find(|n| n.id == *next)
-                .ok_or(WorkflowExecutionError::NodeNotFound { id: *next })?;
-            queue.push_back(n);
+        let next_node = node.next.get(&result.outcome).copied();
+        if let Some(next) = next_node {
+            queue.push_back(
+                workflow
+                    .nodes
+                    .iter()
+                    .find(|n| n.id == next)
+                    .ok_or(WorkflowExecutionError::NodeNotFound { id: next })?,
+            );
         }
     }
 
@@ -192,7 +207,7 @@ pub async fn execute_node(
     node: &WorkflowNode,
     workflow_context: &WorkflowContext<'_>,
     execution_node: &mut WorkflowNodeExecution,
-) -> Result<(), WorkflowNodeExecutionError> {
+) -> Result<WorkflowExecutionNodeResult, WorkflowNodeExecutionError> {
     match &node.metadata {
         ActionMetadata::Start => {
             for input in &execution_node.inputs {
@@ -356,7 +371,7 @@ pub async fn execute_node(
                         users: entry
                             .users
                             .into_iter()
-                            .map(|u| UserId(u.parse().unwrap()))
+                            .map(|u| RobloxUserId(u.parse().unwrap()))
                             .collect(),
                         attributes: Some(entry.attributes),
                     },
@@ -388,9 +403,165 @@ pub async fn execute_node(
                     .insert(output.name.clone(), output_value);
             }
         }
+        ActionMetadata::GetRoWifiUser => {
+            let (_, user_id) = execution_node
+                .inputs
+                .iter()
+                .next()
+                .ok_or(WorkflowNodeExecutionError::InputNotFound)?;
+            let user_id = match user_id {
+                Value::Number(n) => UserId::new(*n as u64),
+                Value::String(_) => return Err(WorkflowNodeExecutionError::IncorrectInputFormat),
+            };
+
+            let user = workflow_context
+                .database
+                .query_opt::<RoUser>("SELECT * FROM roblox_users WHERE user_id = $1", &[&user_id])
+                .await?;
+            if let Some(user) = user {
+                execution_node.outputs.insert(
+                    "discord_id".into(),
+                    Value::Number(user.user_id.get() as i64),
+                );
+                let roblox_id = user
+                    .linked_accounts
+                    .get(&workflow_context.guild_id)
+                    .copied()
+                    .unwrap_or(user.default_account_id);
+                execution_node
+                    .outputs
+                    .insert("roblox_id".into(), Value::Number(roblox_id.0 as i64));
+
+                return Ok(WorkflowExecutionNodeResult {
+                    outcome: "success".into(),
+                });
+            } else {
+                return Ok(WorkflowExecutionNodeResult {
+                    outcome: "failure".into(),
+                });
+            }
+        }
+        ActionMetadata::PublishUniverseMessage => {
+            let universe_id = match execution_node
+                .inputs
+                .get("universe_id")
+                .ok_or(WorkflowNodeExecutionError::InputNotFound)?
+            {
+                #[allow(clippy::cast_sign_loss)]
+                Value::Number(n) => UniverseId((*n) as u64),
+                Value::String(_) => return Err(WorkflowNodeExecutionError::InputTypeMismatch),
+            };
+            let topic = execution_node
+                .inputs
+                .get("topic")
+                .ok_or(WorkflowNodeExecutionError::InputNotFound)?
+                .to_string();
+            let message = execution_node
+                .inputs
+                .get("message")
+                .ok_or(WorkflowNodeExecutionError::InputNotFound)?
+                .to_string();
+
+            if let Err(err) = workflow_context
+                .roblox
+                .publish_universe_message(universe_id, &topic, &message)
+                .await
+            {
+                tracing::error!(err = ?err);
+                return Ok(WorkflowExecutionNodeResult {
+                    outcome: "failure".into(),
+                });
+            } else {
+                return Ok(WorkflowExecutionNodeResult {
+                    outcome: "success".into(),
+                });
+            }
+        }
+        ActionMetadata::GetIdFromUsername => {
+            let (_, username) = execution_node
+                .inputs
+                .iter()
+                .next()
+                .ok_or(WorkflowNodeExecutionError::InputNotFound)?;
+            let username = match username {
+                Value::Number(_) => return Err(WorkflowNodeExecutionError::IncorrectInputFormat),
+                Value::String(s) => s,
+            };
+            let output_name = node
+                .outputs
+                .iter()
+                .next()
+                .ok_or(WorkflowNodeExecutionError::OutputNotFound)?;
+
+            let roblox_user = workflow_context
+                .roblox
+                .get_users_from_usernames([username.as_str()].into_iter())
+                .await?;
+            if roblox_user.is_empty() {
+                return Ok(WorkflowExecutionNodeResult {
+                    outcome: "failure".into(),
+                });
+            }
+
+            execution_node.outputs.insert(
+                output_name.name.clone(),
+                Value::Number(roblox_user[0].id.0 as i64),
+            );
+            return Ok(WorkflowExecutionNodeResult {
+                outcome: "success".into(),
+            });
+        }
+        ActionMetadata::GetUsernameFromId => {
+            let (_, user_id) = execution_node
+                .inputs
+                .iter()
+                .next()
+                .ok_or(WorkflowNodeExecutionError::InputNotFound)?;
+            let user_id = match user_id {
+                Value::Number(n) => *n as u64,
+                Value::String(_) => return Err(WorkflowNodeExecutionError::IncorrectInputFormat),
+            };
+            let output_name = node
+                .outputs
+                .iter()
+                .next()
+                .ok_or(WorkflowNodeExecutionError::OutputNotFound)?;
+
+            let roblox_user = match workflow_context
+                .roblox
+                .get_user(RobloxUserId(user_id))
+                .await
+            {
+                Ok(u) => u,
+                Err(err) => {
+                    if let ErrorKind::Response {
+                        route: _,
+                        status,
+                        bytes: _,
+                    } = err.kind()
+                    {
+                        if status.as_u16() == 404 {
+                            return Ok(WorkflowExecutionNodeResult {
+                                outcome: "failure".into(),
+                            });
+                        }
+                    }
+                    return Err(err.into());
+                }
+            };
+
+            execution_node
+                .outputs
+                .insert(output_name.name.clone(), Value::String(roblox_user.name));
+            return Ok(WorkflowExecutionNodeResult {
+                outcome: "success".into(),
+            });
+        }
     }
 
-    Ok(())
+    Ok(WorkflowExecutionNodeResult {
+        outcome: "next".into(),
+    })
 }
 
 pub fn validate_workflow(
@@ -448,13 +619,14 @@ pub fn validate_workflow(
         validate_node(node, execution_node)
             .map_err(|err| WorkflowValidationError::Node { id: node.id, err })?;
 
-        for next in &node.next {
-            let n = workflow
-                .nodes
-                .iter()
-                .find(|n| n.id == *next)
-                .ok_or(WorkflowValidationError::NodeNotFound { id: *next })?;
-            queue.push_back(n);
+        for next in node.next.values() {
+            queue.push_back(
+                workflow
+                    .nodes
+                    .iter()
+                    .find(|n| n.id == *next)
+                    .ok_or(WorkflowValidationError::NodeNotFound { id: *next })?,
+            );
         }
     }
 
@@ -551,6 +723,49 @@ pub fn validate_node(
                 execution_node.outputs.insert(output.name.clone());
             }
         }
+        ActionMetadata::GetRoWifiUser => {
+            if execution_node.inputs.len() != 1 {
+                return Err(WorkflowNodeValidationError::IncorrectInputs {
+                    actual: execution_node.inputs.len() as u32,
+                    expected: 1,
+                });
+            }
+
+            execution_node.outputs.insert("roblox_id".into());
+            execution_node.outputs.insert("discord_id".into());
+        }
+        ActionMetadata::PublishUniverseMessage => {
+            if !execution_node.inputs.contains("universe_id") {
+                return Err(WorkflowNodeValidationError::InputNotFound {
+                    name: "universe_id".to_string(),
+                });
+            }
+            if !execution_node.inputs.contains("topic") {
+                return Err(WorkflowNodeValidationError::InputNotFound {
+                    name: "topic".to_string(),
+                });
+            }
+            if !execution_node.inputs.contains("message") {
+                return Err(WorkflowNodeValidationError::InputNotFound {
+                    name: "message".to_string(),
+                });
+            }
+        }
+        ActionMetadata::GetIdFromUsername | ActionMetadata::GetUsernameFromId => {
+            if execution_node.inputs.len() != 1 {
+                return Err(WorkflowNodeValidationError::IncorrectInputs {
+                    actual: execution_node.inputs.len() as u32,
+                    expected: 1,
+                });
+            }
+
+            if execution_node.outputs.len() != 1 {
+                return Err(WorkflowNodeValidationError::IncorrectOutputs {
+                    actual: execution_node.outputs.len() as u32,
+                    expected: 1,
+                });
+            }
+        }
     }
 
     Ok(())
@@ -565,5 +780,11 @@ impl From<twilight_http::Error> for WorkflowNodeExecutionError {
 impl From<RobloxError> for WorkflowNodeExecutionError {
     fn from(err: RobloxError) -> Self {
         Self::Roblox(err)
+    }
+}
+
+impl From<DatabaseError> for WorkflowNodeExecutionError {
+    fn from(err: DatabaseError) -> Self {
+        Self::Database(err)
     }
 }

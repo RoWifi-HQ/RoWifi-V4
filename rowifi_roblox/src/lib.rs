@@ -1104,6 +1104,58 @@ impl RobloxClient {
         })
     }
 
+    /// Publishes a message to a topic of an universe.
+    ///
+    /// # Errors
+    ///
+    /// See [`RobloxError`] for details.
+    pub async fn publish_universe_message(
+        &self,
+        universe_id: UniverseId,
+        topic: &str,
+        message: &str,
+    ) -> Result<(), RobloxError> {
+        let route = Route::PublishUniverseMessage {
+            universe_id: universe_id.0,
+        };
+
+        let body = serde_json::json!({ "topic": topic, "message": message });
+        let body = serde_json::to_vec(&body).map_err(|source| RobloxError {
+            source: Some(Box::new(source)),
+            kind: ErrorKind::BuildingRequest,
+        })?;
+
+        let request = Request::new()
+            .uri(route.to_string())
+            .method(Method::GET)
+            .header(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(&self.open_cloud_auth).unwrap(),
+            )
+            .proxy_uri(self.proxy_url.clone())
+            .body(Full::from(Bytes::from(body)))
+            .build()
+            .map_err(|source| RobloxError {
+                source: Some(Box::new(source)),
+                kind: ErrorKind::BuildingRequest,
+            })?;
+
+        let (parts, bytes) = self.request(request).await?;
+
+        if !parts.status.is_success() {
+            return Err(RobloxError {
+                source: None,
+                kind: ErrorKind::Response {
+                    route: route.to_string(),
+                    status: parts.status,
+                    bytes,
+                },
+            });
+        }
+
+        Ok(())
+    }
+
     /// Make a request to the Roblox API.
     ///
     /// # Errors

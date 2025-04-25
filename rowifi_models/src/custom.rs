@@ -4,7 +4,7 @@ use serde::{
 };
 use serde_json::value::RawValue;
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::{collections::HashMap, fmt::{Display, Formatter, Result as FmtResult}};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Workflow {
@@ -17,7 +17,7 @@ pub struct Workflow {
 pub struct WorkflowNode {
     pub id: usize,
     pub name: String,
-    pub next: Vec<usize>,
+    pub next: HashMap<String, usize>,
     pub inputs: Vec<ActionInput>,
     pub outputs: Vec<ActionOutput>,
     pub kind: ActionType,
@@ -33,6 +33,10 @@ pub enum ActionType {
     GetDatastoreEntry = 3,
     Add = 4,
     UpdateDatastoreEntry = 5,
+    GetRoWifiUser = 6,
+    PublishUniverseMessage = 7,
+    GetUsernameFromId = 8,
+    GetIdFromUsername = 9,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -44,6 +48,10 @@ pub enum ActionMetadata {
     GetDatastoreEntry,
     Add,
     UpdateDatastoreEntry,
+    GetRoWifiUser,
+    PublishUniverseMessage,
+    GetUsernameFromId,
+    GetIdFromUsername,
 }
 
 pub mod action {
@@ -234,6 +242,10 @@ impl<'de> Deserialize<'de> for WorkflowNode {
                             .map_err(DeError::custom)?,
                     ),
                     ActionType::UpdateDatastoreEntry => ActionMetadata::UpdateDatastoreEntry,
+                    ActionType::GetRoWifiUser => ActionMetadata::GetRoWifiUser,
+                    ActionType::PublishUniverseMessage => ActionMetadata::PublishUniverseMessage,
+                    ActionType::GetUsernameFromId => ActionMetadata::GetUsernameFromId,
+                    ActionType::GetIdFromUsername => ActionMetadata::GetIdFromUsername,
                 };
 
                 Ok(WorkflowNode {
