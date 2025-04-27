@@ -4,13 +4,19 @@ use serde::{
 };
 use serde_json::value::RawValue;
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::{collections::HashMap, fmt::{Display, Formatter, Result as FmtResult}};
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter, Result as FmtResult},
+};
+
+use crate::id::CommandId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Workflow {
     pub name: String,
     pub description: String,
     pub nodes: Vec<WorkflowNode>,
+    pub command: CommandId,
 }
 
 #[derive(Clone, Debug, Serialize)]
