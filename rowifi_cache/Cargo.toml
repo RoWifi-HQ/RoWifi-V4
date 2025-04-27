@@ -1,13 +1,13 @@
 [package]
 name = "rowifi_cache"
-version = "4.3.0"
+version = "4.4.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 async-trait = { version = "0.1" }
-redis = { version = "0.27", default-features = false, features = ["aio", "tokio-comp", "connection-manager"] }
+redis = { version = "0.30", default-features = false, features = ["aio", "tokio-comp", "connection-manager"] }
 rmp-serde = { version = "1.1" }
 rowifi_models = { path = "../rowifi_models" }
 tracing = { workspace = true }

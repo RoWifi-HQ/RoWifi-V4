@@ -3,11 +3,11 @@ use nom::{
     bytes::complete::{is_not, tag},
     character::complete::{alphanumeric1, char, digit1, multispace0},
     combinator::{all_consuming, map, map_res},
-    error::VerboseError,
     multi::{many1, separated_list0},
-    sequence::{delimited, pair, preceded, tuple},
+    sequence::{delimited, pair, preceded},
     Err, IResult, Parser,
 };
+use nom_language::error::VerboseError;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -44,7 +44,8 @@ fn parse_operator(i: &str) -> IResult<&str, Operator, VerboseError<&str>> {
         tag("=="),
         tag("and"),
         tag("or"),
-    ))(i)?;
+    ))
+    .parse(i)?;
     let op = match t {
         ">=" => Operator::GreaterEqual,
         ">" => Operator::Greater,
@@ -84,7 +85,8 @@ fn parse_function_args(i: &str) -> IResult<&str, Vec<Expression>, VerboseError<&
     separated_list0(
         preceded(multispace0, char(',')),
         preceded(multispace0, map(parse_atom, Expression::Constant)),
-    )(i)
+    )
+    .parse(i)
 }
 
 fn parse_function(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
@@ -109,15 +111,15 @@ fn parse_brackets(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
 }
 
 fn parse_comparison(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
-    let (i, (e1, op, e2)) = tuple((
+    let (i, (e1, op, e2)) = (
         preceded(multispace0, parse_term),
         preceded(
             multispace0,
             alt((tag(">="), tag(">"), tag("<="), tag("<"), tag("=="))),
         ),
         preceded(multispace0, parse_term),
-    ))
-    .parse(i)?;
+    )
+        .parse(i)?;
 
     let operator = match op {
         ">=" => Operator::GreaterEqual,
@@ -149,12 +151,13 @@ fn parse_negation(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
 }
 
 fn parse_operation(i: &str) -> IResult<&str, Expression, VerboseError<&str>> {
-    let (i, e1) = preceded(multispace0, parse_expression)(i)?;
+    let (i, e1) = preceded(multispace0, parse_expression).parse(i)?;
     let (i, rest) = nom::multi::many0(|input| {
-        let (input, op) = preceded(multispace0, parse_operator)(input)?;
-        let (input, expr) = preceded(multispace0, parse_expression)(input)?;
+        let (input, op) = preceded(multispace0, parse_operator).parse(input)?;
+        let (input, expr) = preceded(multispace0, parse_expression).parse(input)?;
         Ok((input, (op, expr)))
-    })(i)?;
+    })
+    .parse(i)?;
 
     Ok((
         i,

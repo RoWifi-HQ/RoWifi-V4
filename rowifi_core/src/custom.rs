@@ -1,3 +1,9 @@
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap
+)]
+
 use regex::Regex;
 use rowifi_database::{Database, DatabaseError};
 use rowifi_models::{
@@ -438,11 +444,10 @@ pub async fn execute_node(
                 return Ok(WorkflowExecutionNodeResult {
                     outcome: "success".into(),
                 });
-            } else {
-                return Ok(WorkflowExecutionNodeResult {
-                    outcome: "failure".into(),
-                });
             }
+            return Ok(WorkflowExecutionNodeResult {
+                outcome: "failure".into(),
+            });
         }
         ActionMetadata::PublishUniverseMessage => {
             let universe_id = match execution_node
@@ -474,11 +479,10 @@ pub async fn execute_node(
                 return Ok(WorkflowExecutionNodeResult {
                     outcome: "failure".into(),
                 });
-            } else {
-                return Ok(WorkflowExecutionNodeResult {
-                    outcome: "success".into(),
-                });
             }
+            return Ok(WorkflowExecutionNodeResult {
+                outcome: "success".into(),
+            });
         }
         ActionMetadata::GetIdFromUsername => {
             let (_, username) = execution_node
@@ -492,8 +496,7 @@ pub async fn execute_node(
             };
             let output_name = node
                 .outputs
-                .iter()
-                .next()
+                .first()
                 .ok_or(WorkflowNodeExecutionError::OutputNotFound)?;
 
             let roblox_user = workflow_context
@@ -526,8 +529,7 @@ pub async fn execute_node(
             };
             let output_name = node
                 .outputs
-                .iter()
-                .next()
+                .first()
                 .ok_or(WorkflowNodeExecutionError::OutputNotFound)?;
 
             let roblox_user = match workflow_context
@@ -604,7 +606,7 @@ pub fn validate_workflow(
                     }
                 }
                 ActionInputSource::External(_v) => {}
-            };
+            }
             let execution_node = execution_context
                 .nodes
                 .iter_mut()
@@ -636,6 +638,7 @@ pub fn validate_workflow(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn validate_node(
     node: &WorkflowNode,
     execution_node: &mut WorkflowNodeValidation,
@@ -647,6 +650,7 @@ pub fn validate_node(
             }
         }
         ActionMetadata::SendMessage(_) => {}
+        #[allow(clippy::match_same_arms)]
         ActionMetadata::JoinString => {
             if node.inputs.is_empty() {
                 return Err(WorkflowNodeValidationError::IncorrectInputs {
@@ -683,6 +687,7 @@ pub fn validate_node(
                 execution_node.outputs.insert(output.name.clone());
             }
         }
+        #[allow(clippy::match_same_arms)]
         ActionMetadata::Add => {
             if node.inputs.is_empty() {
                 return Err(WorkflowNodeValidationError::IncorrectInputs {
