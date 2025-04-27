@@ -762,12 +762,13 @@ pub fn validate_node(
                 });
             }
 
-            if execution_node.outputs.len() != 1 {
+            if node.outputs.len() != 1 {
                 return Err(WorkflowNodeValidationError::IncorrectOutputs {
                     actual: execution_node.outputs.len() as u32,
                     expected: 1,
                 });
             }
+            execution_node.outputs.insert(node.outputs[0].name.clone());
         }
     }
 
