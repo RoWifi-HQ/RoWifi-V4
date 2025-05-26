@@ -295,11 +295,9 @@ pub async fn debug_update_func(
                 if highest.priority() < groupbind.priority {
                     nickname_bind = Some(Bind::Group(groupbind.clone()));
                 }
-            } else { // This is the new else block
+            } else {
                 nickname_bind = Some(Bind::Group(groupbind.clone()));
             }
-            // Ensure these lines are outside the `if let Some(ref highest)` block,
-            // but still inside `if user_ranks.contains_key(...)`
             roles_to_add.extend(groupbind.discord_roles.iter().copied());
             for role in &groupbind.discord_roles {
                 if !role_addition_tracking.contains_key(role) {
