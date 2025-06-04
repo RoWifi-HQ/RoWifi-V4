@@ -24,8 +24,11 @@ pub async fn paginate_embeds(
     standby: &Standby,
     pages: Vec<Embed>,
     page_count: usize,
+    empty_message: &str
 ) -> Result<(), RoError> {
-    if page_count <= 1 {
+    if page_count == 0 {
+        ctx.respond(bot).content(empty_message).unwrap().await?;
+    } else if page_count == 1 {
         ctx.respond(bot)
             .embeds(&[pages[0].clone()])
             .unwrap()
