@@ -295,11 +295,13 @@ pub async fn debug_update_func(
                 if highest.priority() < groupbind.priority {
                     nickname_bind = Some(Bind::Group(groupbind.clone()));
                 }
-                roles_to_add.extend(groupbind.discord_roles.iter().copied());
-                for role in &groupbind.discord_roles {
-                    if !role_addition_tracking.contains_key(role) {
-                        role_addition_tracking.insert(*role, BindRef::Group(groupbind));
-                    }
+            } else {
+                nickname_bind = Some(Bind::Group(groupbind.clone()));
+            }
+            roles_to_add.extend(groupbind.discord_roles.iter().copied());
+            for role in &groupbind.discord_roles {
+                if !role_addition_tracking.contains_key(role) {
+                    role_addition_tracking.insert(*role, BindRef::Group(groupbind));
                 }
             }
         }
