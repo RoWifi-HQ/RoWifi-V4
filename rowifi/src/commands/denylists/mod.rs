@@ -50,14 +50,6 @@ pub async fn view_denylists_func(
         )
         .await?;
 
-    if guild.deny_lists.is_empty() {
-        let message = r"
-This server has no denylists configured. Looking to add one? Use the command `/denylists new`.
-        ";
-        ctx.respond(bot).content(message).unwrap().await?;
-        return Ok(());
-    }
-
     let mut pages = Vec::new();
     let mut page_count = 0usize;
     let denylists = guild.deny_lists;
@@ -87,7 +79,7 @@ This server has no denylists configured. Looking to add one? Use the command `/d
         page_count += 1;
     }
 
-    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count, "This server has no denylists configured. Looking to add one? Use the command `/denylists new`.").await?;
 
     Ok(())
 }

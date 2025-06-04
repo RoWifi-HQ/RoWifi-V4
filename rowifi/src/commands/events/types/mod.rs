@@ -51,14 +51,6 @@ pub async fn view_event_types_func(
         return Ok(());
     }
 
-    if guild.event_types.is_empty() {
-        let message = r"
-This server has no event types configured. Looking to add one? Use the command `/event-types new`.
-        ";
-        ctx.respond(bot).content(message).unwrap().await?;
-        return Ok(());
-    }
-
     let mut pages = Vec::new();
     let mut page_count = 0usize;
     let event_types = guild.event_types;
@@ -78,7 +70,7 @@ This server has no event types configured. Looking to add one? Use the command `
         page_count += 1;
     }
 
-    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count, "This server has no event types configured. Looking to add one? Use the command `/event-types new`.").await?;
 
     Ok(())
 }

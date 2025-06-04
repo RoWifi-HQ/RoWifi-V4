@@ -44,14 +44,6 @@ pub async fn view_groupbinds_func(
         )
         .await?;
 
-    if guild.groupbinds.is_empty() {
-        let message = r"
-This server has no groupbinds configured. Looking to add one? Use the command `/groupbinds new`.
-        ";
-        ctx.respond(bot).content(message).unwrap().await?;
-        return Ok(());
-    }
-
     let mut pages = Vec::new();
     let mut page_count = 0usize;
     let groupbinds = guild.groupbinds;
@@ -79,7 +71,7 @@ This server has no groupbinds configured. Looking to add one? Use the command `/
         page_count += 1;
     }
 
-    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count, "This server has no groupbinds configured. Looking to add one? Use the command `/groupbinds new`.").await?;
 
     Ok(())
 }

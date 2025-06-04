@@ -192,7 +192,7 @@ pub async fn view_attendee_events_func(
         page_count += 1;
     }
 
-    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count, "This user has not attended any events.").await?;
 
     Ok(())
 }
@@ -314,7 +314,7 @@ pub async fn view_host_events_func(
         page_count += 1;
     }
 
-    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count,"This user has not hosted any events.").await?;
 
     Ok(())
 }

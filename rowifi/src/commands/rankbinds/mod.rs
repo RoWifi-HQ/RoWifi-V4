@@ -44,14 +44,6 @@ pub async fn view_rankbinds_func(
         )
         .await?;
 
-    if guild.rankbinds.is_empty() {
-        let message = r"
-This server has no rankbinds configured. Looking to add one? Use the command `/rankbinds new`.
-        ";
-        ctx.respond(bot).content(message).unwrap().await?;
-        return Ok(());
-    }
-
     let mut pages = Vec::new();
     let mut page_count = 0usize;
     let rankbinds = guild.rankbinds;
@@ -86,7 +78,7 @@ This server has no rankbinds configured. Looking to add one? Use the command `/r
         }
     }
 
-    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count, "This server has no rankbinds configured. Looking to add one? Use the command `/rankbinds new`.").await?;
 
     Ok(())
 }

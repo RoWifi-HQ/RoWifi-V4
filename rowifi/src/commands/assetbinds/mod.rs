@@ -44,13 +44,6 @@ pub async fn view_assetbinds_func(
         )
         .await?;
 
-    if guild.assetbinds.is_empty() {
-        let message = r"
-This server has no assetbinds configured. Looking to add one? Use the command `/assetbinds new`.
-        ";
-        ctx.respond(bot).content(message).unwrap().await?;
-    }
-
     let mut pages = Vec::new();
     let mut page_count = 0usize;
     let assetbinds = guild.assetbinds;
@@ -79,7 +72,7 @@ This server has no assetbinds configured. Looking to add one? Use the command `/
         page_count += 1;
     }
 
-    paginate_embeds(ctx, bot, &standby, pages, page_count).await?;
+    paginate_embeds(ctx, bot, &standby, pages, page_count, "This server has no assetbinds configured. Looking to add one? Use the command `/assetbinds new`.").await?;
 
     Ok(())
 }
