@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 async-trait = { version = "0.1" }
-redis = { version = "0.30", default-features = false, features = ["aio", "tokio-comp", "connection-manager"] }
+redis = { version = "0.32", default-features = false, features = ["aio", "tokio-comp", "connection-manager"] }
 rmp-serde = { version = "1.1" }
 rowifi_models = { path = "../rowifi_models" }
 tracing = { workspace = true }
