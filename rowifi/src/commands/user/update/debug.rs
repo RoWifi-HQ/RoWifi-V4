@@ -526,18 +526,29 @@ pub async fn debug_update_func(
     }
 
     message.push_str("\nRemoved Roles:\n");
-    let mut removed_str = String::new();
+    if removed_roles.is_empty() {
+        message.push_str("None\n");
+    }
     for role in removed_roles {
-        let _ = writeln!(removed_str, "- <@&{role}>");
+        let _ = writeln!(message, "- <@&{role}>");
         if warning_roles.contains(&role) {
             message.push_str(" :warning:");
         }
         message.push('\n');
     }
-    if removed_str.is_empty() {
-        removed_str = "None\n".into();
+
+    message.push_str("\nCurrent Roles:\n");
+    if discord_member.roles.is_empty() {
+        message.push_str("None\n");
     }
-    message.push_str(&removed_str);
+    for role in discord_member.roles {
+        let _ = write!(message, "- <@&{role}>");
+        let role_position = all_guild_roles.get(&role).copied().unwrap_or_default();
+        if role_position > highest_bot_position {
+            message.push_str(" :warning:");
+        }
+        message.push('\n');
+    }
 
     message.push_str(
         "\nRoles marked :warning: are above the bot and may cause issues while updating\n",
