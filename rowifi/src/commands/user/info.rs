@@ -131,9 +131,11 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         r"
 **Name:** {}
 **Created on:** <t:{}:D>
+**Id**: {}
     ",
         roblox_display_name,
-        roblox_user.create_time.unwrap().timestamp()
+        roblox_user.create_time.unwrap().timestamp(),
+        roblox_id
     );
 
     let mut badges = Vec::new();
@@ -144,11 +146,16 @@ Hey there, it looks like you're not verified with us. Please run `/verify` to re
         badges.push("<:rowifi_partner:1315831440121794590>");
     }
 
+    let title = format!(
+        "{} (ID: {})",
+        discord_member.nickname.unwrap_or(discord_user.username),
+        user_id
+    );
     let embed = EmbedBuilder::new()
         .color(BLUE)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
         .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
-        .title(discord_member.nickname.unwrap_or(discord_user.username))
+        .title(title)
         .field(EmbedFieldBuilder::new("Roblox Account", roblox_account).build())
         .field(EmbedFieldBuilder::new("Ranks", ranks_info))
         .field(EmbedFieldBuilder::new(
