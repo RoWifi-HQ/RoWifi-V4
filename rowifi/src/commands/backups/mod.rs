@@ -6,6 +6,7 @@ pub use delete::backup_delete;
 pub use new::backup_new;
 pub use restore::backup_restore;
 
+use itertools::Itertools;
 use rowifi_framework::prelude::*;
 use rowifi_models::discord::{
     http::interaction::{InteractionResponse, InteractionResponseType},
@@ -14,7 +15,6 @@ use rowifi_models::discord::{
 
 pub struct BackupRow {
     pub name: String,
-    pub description: String,
 }
 
 pub async fn backup_view(bot: Extension<BotContext>, command: Command<()>) -> impl IntoResponse {
@@ -39,22 +39,18 @@ pub async fn backup_view_func(bot: &BotContext, ctx: &CommandContext) -> Command
         )
         .await?;
 
-    let mut embed = EmbedBuilder::new()
+    let embed = EmbedBuilder::new()
         .color(BLUE)
         .footer(EmbedFooterBuilder::new("RoWifi").build())
         .timestamp(Timestamp::from_secs(Utc::now().timestamp()).unwrap())
-        .title("Backups");
-
-    for backup in backups {
-        embed = embed.field(
-            EmbedFieldBuilder::new(
-                format!("Name: {}", backup.name),
-                format!("Description: {}", backup.description),
-            )
-            .inline()
-            .build(),
+        .title("Backups")
+        .description(
+            backups
+                .into_iter()
+                .enumerate()
+                .map(|(i, b)| format!("{}: {}", i + 1, b.name))
+                .join("\n"),
         );
-    }
 
     ctx.respond(bot).embeds(&[embed.build()]).unwrap().await?;
     Ok(())
@@ -65,8 +61,7 @@ impl TryFrom<rowifi_database::postgres::Row> for BackupRow {
 
     fn try_from(row: rowifi_database::postgres::Row) -> Result<Self, Self::Error> {
         let name = row.try_get("name")?;
-        let description = row.try_get("description")?;
 
-        Ok(Self { name, description })
+        Ok(Self { name })
     }
 }
